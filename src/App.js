@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Header from './components/Header';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
 import PortfolioGrid from './components/PortfolioGrid';
@@ -6,6 +7,7 @@ import Modal from './components/Modal';
 import Technologies from './components/Technologies';
 import DomainsNiche from './components/DomainsNiche';
 import ProjectLifeCycle from './components/ProjectLifeCycle';
+import Footer from './components/Footer';
 
 function App() {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -206,6 +208,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-sand-light relative overflow-hidden">
+      {/* Header */}
+      <Header />
+
       {/* Floating Sand Particles - Back Layer */}
       <div className="fixed inset-0 pointer-events-none z-10">
         {particles.filter(p => p.layer === 'back').map(particle => (
@@ -356,6 +361,9 @@ function App() {
 
       {/* Project Delivery Life Cycle Section */}
       <ProjectLifeCycle />
+
+      {/* Footer */}
+      <Footer />
 
       {selectedProject && (
         <Modal 

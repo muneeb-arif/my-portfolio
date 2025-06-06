@@ -324,7 +324,7 @@ const ProjectLifeCycle = () => {
   };
 
   return (
-    <section className="bg-gray-50 py-20 relative overflow-hidden">
+    <section id="process" className="bg-gray-50 py-20 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" 

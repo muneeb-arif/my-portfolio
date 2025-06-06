@@ -38,7 +38,7 @@ const Hero = () => {
           <svg 
             viewBox="0 0 1200 600" 
             className="absolute bottom-0 w-full h-full opacity-20"
-            preserveAspectRatio="xMidYEnd slice"
+            preserveAspectRatio="xMidYMid slice"
           >
             <path 
               d="M0,600 L0,400 Q200,300 400,350 Q600,400 800,320 Q1000,240 1200,300 L1200,600 Z" 

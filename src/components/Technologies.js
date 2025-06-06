@@ -64,7 +64,7 @@ const Technologies = () => {
   ];
 
   return (
-    <section className="bg-sand-light py-20 relative overflow-hidden">
+    <section id="technologies" className="bg-sand-light py-20 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" 

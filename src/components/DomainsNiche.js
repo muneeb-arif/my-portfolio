@@ -139,7 +139,7 @@ const DomainsNiche = () => {
   };
 
   return (
-    <section className="bg-[#F5F1EB] py-20 relative overflow-hidden">
+    <section id="domains" className="bg-[#F5F1EB] py-20 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" 
