@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
 import PortfolioGrid from './components/PortfolioGrid';
@@ -7,8 +7,94 @@ import Modal from './components/Modal';
 function App() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
+  const [particles, setParticles] = useState([]);
 
   const filters = ['All', 'Web Development', 'UI/UX Design', 'Backend'];
+
+  // Initialize floating sand particles
+  useEffect(() => {
+    const generateParticles = () => {
+      const newParticles = [];
+      const particleCount = 40; // Reduced for better performance
+
+      for (let i = 0; i < particleCount; i++) {
+        newParticles.push({
+          id: i,
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          size: Math.random() * 8 + 3, // Slightly smaller
+          opacity: Math.random() * 0.6 + 0.3,
+          speedX: (Math.random() - 0.5) * 0.6, // Reduced speed
+          speedY: (Math.random() - 0.5) * 0.4,
+          color: ['#E9CBA7', '#C9A77D', '#B8936A', '#F5E6D3'][Math.floor(Math.random() * 4)],
+          layer: Math.random() > 0.4 ? 'front' : 'back',
+          rotationSpeed: (Math.random() - 0.5) * 1.5,
+          rotation: 0,
+          baseOpacity: Math.random() * 0.6 + 0.3,
+          // Pre-calculate wandering properties
+          wanderAngle: Math.random() * Math.PI * 2,
+          wanderRadius: Math.random() * 0.3 + 0.2,
+          wanderSpeed: Math.random() * 0.015 + 0.008,
+          lastDirectionChange: 0
+        });
+      }
+      setParticles(newParticles);
+    };
+
+    generateParticles();
+  }, []);
+
+  // Optimized animation with requestAnimationFrame
+  useEffect(() => {
+    let animationId;
+    let lastTime = 0;
+    const targetFPS = 12; // Reduced FPS for better performance
+    const interval = 1000 / targetFPS;
+
+    const animate = (currentTime) => {
+      if (currentTime - lastTime >= interval) {
+        setParticles(prev => 
+          prev.map(particle => {
+            // Less frequent direction changes
+            const timeSinceLastChange = currentTime - particle.lastDirectionChange;
+            const shouldChangeDirection = timeSinceLastChange > 3000 && Math.random() < 0.01;
+            
+            let newSpeedX = particle.speedX;
+            let newSpeedY = particle.speedY;
+            let lastDirectionChange = particle.lastDirectionChange;
+            
+            if (shouldChangeDirection) {
+              newSpeedX = (Math.random() - 0.5) * 0.6;
+              newSpeedY = (Math.random() - 0.5) * 0.4;
+              lastDirectionChange = currentTime;
+            }
+
+            // Simplified wandering
+            const wanderX = Math.cos(particle.wanderAngle) * particle.wanderRadius * 0.5;
+            const wanderY = Math.sin(particle.wanderAngle) * particle.wanderRadius * 0.5;
+
+            return {
+              ...particle,
+              x: (particle.x + newSpeedX + wanderX + 100) % 100,
+              y: (particle.y + newSpeedY + wanderY + 100) % 100,
+              speedX: newSpeedX,
+              speedY: newSpeedY,
+              rotation: particle.rotation + particle.rotationSpeed,
+              wanderAngle: particle.wanderAngle + particle.wanderSpeed,
+              lastDirectionChange,
+              // Simplified opacity animation
+              opacity: particle.baseOpacity + Math.sin(currentTime * 0.002 + particle.id) * 0.15
+            };
+          })
+        );
+        lastTime = currentTime;
+      }
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationId);
+  }, []);
 
   const projects = [
     {
@@ -116,7 +202,49 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-sand-light">
+    <div className="min-h-screen bg-sand-light relative overflow-hidden">
+      {/* Floating Sand Particles - Back Layer */}
+      <div className="fixed inset-0 pointer-events-none z-10">
+        {particles.filter(p => p.layer === 'back').map(particle => (
+          <div
+            key={`back-${particle.id}`}
+            className="absolute rounded-full"
+            style={{
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              width: `${particle.size * 0.9}px`,
+              height: `${particle.size * 0.9}px`,
+              backgroundColor: particle.color,
+              opacity: particle.opacity * 0.7,
+              transform: `rotate(${particle.rotation}deg)`,
+              transition: 'none',
+              filter: 'blur(0.5px)'
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Floating Sand Particles - Front Layer */}
+      <div className="fixed inset-0 pointer-events-none z-40">
+        {particles.filter(p => p.layer === 'front').map(particle => (
+          <div
+            key={`front-${particle.id}`}
+            className="absolute rounded-full"
+            style={{
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              backgroundColor: particle.color,
+              opacity: particle.opacity,
+              transform: `rotate(${particle.rotation}deg)`,
+              transition: 'none',
+              boxShadow: `0 0 ${particle.size}px ${particle.color}40`
+            }}
+          />
+        ))}
+      </div>
+
       <Hero />
       
       {/* Portfolio Section with Textural Background */}

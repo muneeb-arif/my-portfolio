@@ -54,82 +54,109 @@ a:focus-visible {
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Ripple Effect Animation */
-@keyframes ripple {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 0.4;
-  }
-  100% {
-    transform: scale(2.5);
-    opacity: 0;
-  }
-}
-
-@keyframes rippleLarge {
+/* Smooth Water Ripple Effects */
+@keyframes waterRipple {
   0% {
     transform: scale(1);
     opacity: 0.6;
   }
+  25% {
+    opacity: 0.4;
+  }
   50% {
     opacity: 0.3;
   }
+  75% {
+    opacity: 0.2;
+  }
   100% {
-    transform: scale(3.2);
+    transform: scale(1.8);
     opacity: 0;
   }
 }
 
-@keyframes rippleSmall {
+@keyframes waterRippleLarge {
   0% {
     transform: scale(1);
-    opacity: 1;
+    opacity: 0.4;
   }
-  50% {
-    opacity: 0.5;
+  30% {
+    opacity: 0.25;
+  }
+  60% {
+    opacity: 0.15;
   }
   100% {
-    transform: scale(2);
+    transform: scale(2.2);
     opacity: 0;
   }
 }
 
-/* Ripple Classes */
+@keyframes waterRippleSmall {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  40% {
+    opacity: 0.3;
+  }
+  80% {
+    opacity: 0.1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes waterRipplePulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.15;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Water Ripple Classes */
 .ripple {
   position: absolute;
   border-radius: 50%;
-  border: 2px solid #C9A77D;
+  border: 1px solid rgba(201, 167, 125, 0.6);
   pointer-events: none;
-  animation: ripple 3s ease-out infinite;
+  animation: waterRipple 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
 }
 
 .ripple-large {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid #E9CBA7;
+  border: 1px solid rgba(233, 203, 167, 0.4);
   pointer-events: none;
-  animation: rippleLarge 3s ease-out infinite;
-  animation-delay: 0.5s;
+  animation: waterRippleLarge 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation-delay: 1.2s;
 }
 
 .ripple-small {
   position: absolute;
   border-radius: 50%;
-  border: 3px solid #B8936A;
+  border: 1px solid rgba(184, 147, 106, 0.5);
   pointer-events: none;
-  animation: rippleSmall 3s ease-out infinite;
-  animation-delay: 1s;
+  animation: waterRippleSmall 3.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation-delay: 2.5s;
 }
 
-/* Additional ripple for more complex effect */
+/* Subtle pulse ripple for depth */
 .ripple-pulse {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(201, 167, 125, 0.3) 0%, rgba(201, 167, 125, 0) 70%);
+  background: radial-gradient(circle, rgba(201, 167, 125, 0.1) 0%, rgba(201, 167, 125, 0.05) 40%, transparent 70%);
   pointer-events: none;
-  animation: ripple 3s ease-out infinite;
-  animation-delay: 1.5s;
+  animation: waterRipplePulse 6s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  animation-delay: 0.8s;
 } 
