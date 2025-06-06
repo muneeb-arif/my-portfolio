@@ -1,28 +1,63 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
-const Modal = ({ project, onClose }) => {
+const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight }) => {
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
+
   useEffect(() => {
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
     
-    // Handle Escape key
-    const handleEscape = (event) => {
+    // Handle keyboard navigation
+    const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         onClose();
+      } else if (event.key === 'ArrowLeft' && canNavigateLeft) {
+        onNavigate('prev');
+      } else if (event.key === 'ArrowRight' && canNavigateRight) {
+        onNavigate('next');
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.body.style.overflow = 'unset';
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose]);
+  }, [onClose, onNavigate, canNavigateLeft, canNavigateRight]);
 
   const handleBackdropClick = (event) => {
     if (event.target === event.currentTarget) {
       onClose();
+    }
+  };
+
+  // Touch handlers for swipe navigation
+  const onTouchStart = (e) => {
+    setTouchEnd(null); // Reset touchEnd
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isRightSwipe && canNavigateLeft) {
+      onNavigate('prev');
+    } else if (isLeftSwipe && canNavigateRight) {
+      onNavigate('next');
     }
   };
 
@@ -31,19 +66,61 @@ const Modal = ({ project, onClose }) => {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
       onClick={handleBackdropClick}
     >
-      <div className="w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in flex flex-col">
+      {/* Navigation Arrows - Outside the modal */}
+      {canNavigateLeft && (
+        <button
+          onClick={() => onNavigate('prev')}
+          className="absolute left-8 top-1/2 -translate-y-1/2 z-10 w-14 h-14 bg-white/95 hover:bg-white rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
+          aria-label="Previous project"
+        >
+          <ChevronLeft className="w-7 h-7 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
+        </button>
+      )}
+
+      {canNavigateRight && (
+        <button
+          onClick={() => onNavigate('next')}
+          className="absolute right-8 top-1/2 -translate-y-1/2 z-10 w-14 h-14 bg-white/95 hover:bg-white rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
+          aria-label="Next project"
+        >
+          <ChevronRight className="w-7 h-7 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
+        </button>
+      )}
+
+      <div 
+        className="w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in flex flex-col relative"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         {/* Header - Sticky Top */}
         <div className="flex items-center justify-between p-6 bg-white border-b border-gray-200 flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-800">{project.title}</h2>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
-            aria-label="Close modal"
-          >
-            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Navigation indicators */}
+            <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
+              {canNavigateLeft && (
+                <span className="flex items-center gap-1">
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Prev</span>
+                </span>
+              )}
+              {canNavigateLeft && canNavigateRight && <span>•</span>}
+              {canNavigateRight && (
+                <span className="flex items-center gap-1">
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </span>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+              aria-label="Close modal"
+            >
+              <X className="w-6 h-6 text-gray-600" />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Content */}
@@ -62,6 +139,13 @@ const Modal = ({ project, onClose }) => {
               <span className="px-4 py-2 bg-white/90 text-sand-dark font-semibold rounded-full text-sm backdrop-blur-sm">
                 {project.category}
               </span>
+            </div>
+
+            {/* Mobile Navigation Hint */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:hidden">
+              <div className="bg-black/60 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm">
+                Swipe left/right to navigate
+              </div>
             </div>
           </div>
 

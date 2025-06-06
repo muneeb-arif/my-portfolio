@@ -138,6 +138,36 @@ const DomainsNiche = () => {
     setSelectedDomain(null);
   };
 
+  // Navigation between domains in modal
+  const handleDomainNavigation = (direction) => {
+    if (!selectedDomain) return;
+
+    const currentIndex = domainsData.findIndex(d => d.id === selectedDomain.id);
+    let newIndex;
+
+    if (direction === 'next') {
+      newIndex = currentIndex + 1;
+    } else if (direction === 'prev') {
+      newIndex = currentIndex - 1;
+    }
+
+    // Check bounds
+    if (newIndex >= 0 && newIndex < domainsData.length) {
+      setSelectedDomain(domainsData[newIndex]);
+    }
+  };
+
+  // Check if navigation is possible
+  const getNavigationState = () => {
+    if (!selectedDomain) return { canNavigateLeft: false, canNavigateRight: false };
+
+    const currentIndex = domainsData.findIndex(d => d.id === selectedDomain.id);
+    return {
+      canNavigateLeft: currentIndex > 0,
+      canNavigateRight: currentIndex < domainsData.length - 1
+    };
+  };
+
   return (
     <section id="domains" className="bg-[#F5F1EB] py-20 relative overflow-hidden">
       {/* Background Pattern */}
@@ -176,7 +206,12 @@ const DomainsNiche = () => {
       </div>
 
       {/* Modal */}
-      <DomainModal domain={selectedDomain} onClose={handleCloseModal} />
+      <DomainModal 
+        domain={selectedDomain} 
+        onClose={handleCloseModal}
+        onNavigate={handleDomainNavigation}
+        {...getNavigationState()}
+      />
 
       {/* Bottom border gradient */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-sand-dark to-transparent"></div>

@@ -206,6 +206,36 @@ function App() {
     setSelectedProject(null);
   };
 
+  // Navigation between projects in modal
+  const handleProjectNavigation = (direction) => {
+    if (!selectedProject) return;
+
+    const currentIndex = projects.findIndex(p => p.id === selectedProject.id);
+    let newIndex;
+
+    if (direction === 'next') {
+      newIndex = currentIndex + 1;
+    } else if (direction === 'prev') {
+      newIndex = currentIndex - 1;
+    }
+
+    // Check bounds
+    if (newIndex >= 0 && newIndex < projects.length) {
+      setSelectedProject(projects[newIndex]);
+    }
+  };
+
+  // Check if navigation is possible
+  const getNavigationState = () => {
+    if (!selectedProject) return { canNavigateLeft: false, canNavigateRight: false };
+
+    const currentIndex = projects.findIndex(p => p.id === selectedProject.id);
+    return {
+      canNavigateLeft: currentIndex > 0,
+      canNavigateRight: currentIndex < projects.length - 1
+    };
+  };
+
   return (
     <div className="min-h-screen bg-sand-light relative overflow-hidden">
       {/* Header */}
@@ -369,6 +399,8 @@ function App() {
         <Modal 
           project={selectedProject}
           onClose={closeModal}
+          onNavigate={handleProjectNavigation}
+          {...getNavigationState()}
         />
       )}
     </div>
