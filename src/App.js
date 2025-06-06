@@ -4,6 +4,7 @@ import FilterMenu from './components/FilterMenu';
 import PortfolioGrid from './components/PortfolioGrid';
 import Modal from './components/Modal';
 import Technologies from './components/Technologies';
+import DomainsNiche from './components/DomainsNiche';
 
 function App() {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -348,6 +349,9 @@ function App() {
 
       {/* Technologies Section */}
       <Technologies />
+
+      {/* Domains / Niche Section */}
+      <DomainsNiche />
 
       {selectedProject && (
         <Modal 
