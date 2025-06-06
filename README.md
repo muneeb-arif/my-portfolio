@@ -1,4 +1,4 @@
-# Adeel - Full Stack Developer Portfolio
+# Muneeb Arif - Principal Software Engineer Portfolio
 
 A modern, responsive portfolio website built with React.js and Tailwind CSS, featuring a desert-themed design inspired by the beautiful landscapes of Pakistan.
 
@@ -33,7 +33,7 @@ A modern, responsive portfolio website built with React.js and Tailwind CSS, fea
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd adeel-portfolio
+   cd muneeb-portfolio
    ```
 
 2. **Install dependencies**
@@ -153,8 +153,8 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 📞 Contact
 
-**Adeel** - Full Stack Developer
-- Email: adeel@example.com
+**Muneeb Arif** - Principal Software Engineer
+- Email: muneeb@example.com
 - Portfolio: [Live Demo](#)
 - GitHub: [GitHub Profile](#)
 

@@ -118,17 +118,88 @@ function App() {
   return (
     <div className="min-h-screen bg-sand-light">
       <Hero />
-      <div className="container mx-auto px-4 py-16">
-        <FilterMenu 
-          filters={filters}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-        />
-        <PortfolioGrid 
-          projects={filteredProjects}
-          onProjectClick={handleProjectClick}
-        />
+      
+      {/* Portfolio Section with Textural Background */}
+      <div className="relative overflow-hidden">
+        {/* Textural Background Elements */}
+        <div className="absolute inset-0">
+          {/* Subtle Sand Dune Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <svg width="100%" height="100%" viewBox="0 0 1000 800" className="absolute inset-0">
+              <defs>
+                <pattern id="sandTexture" patternUnits="userSpaceOnUse" width="100" height="100">
+                  <rect width="100" height="100" fill="#E9CBA7"/>
+                  <circle cx="20" cy="20" r="1" fill="#C9A77D" opacity="0.3"/>
+                  <circle cx="80" cy="40" r="0.5" fill="#B8936A" opacity="0.4"/>
+                  <circle cx="40" cy="70" r="1.5" fill="#C9A77D" opacity="0.2"/>
+                  <circle cx="70" cy="10" r="0.8" fill="#B8936A" opacity="0.3"/>
+                  <circle cx="10" cy="60" r="1.2" fill="#E9CBA7" opacity="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#sandTexture)"/>
+            </svg>
+          </div>
+
+          {/* Geometric Sand Patterns */}
+          <div className="absolute inset-0 opacity-5">
+            <svg width="100%" height="100%" viewBox="0 0 400 400" className="absolute inset-0">
+              <defs>
+                <pattern id="hexPattern" patternUnits="userSpaceOnUse" width="60" height="52">
+                  <polygon points="30,5 50,20 50,35 30,50 10,35 10,20" 
+                           fill="none" stroke="#C9A77D" strokeWidth="0.5" opacity="0.3"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#hexPattern)"/>
+            </svg>
+          </div>
+
+          {/* Flowing Sand Waves */}
+          <div className="absolute inset-0 opacity-15">
+            <svg width="100%" height="100%" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+              <path d="M0,200 Q300,150 600,200 T1200,200 L1200,300 Q900,250 600,300 T0,300 Z" 
+                    fill="rgba(201, 167, 125, 0.1)"/>
+              <path d="M0,400 Q400,350 800,400 T1200,400 L1200,500 Q800,450 400,500 T0,500 Z" 
+                    fill="rgba(233, 203, 167, 0.1)"/>
+              <path d="M0,600 Q200,550 600,600 T1200,600 L1200,700 Q600,650 200,700 T0,700 Z" 
+                    fill="rgba(184, 147, 106, 0.1)"/>
+            </svg>
+          </div>
+
+          {/* Scattered Dots for Texture */}
+          <div className="absolute inset-0 opacity-20">
+            {[...Array(50)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full bg-wet-sand"
+                style={{
+                  width: Math.random() * 3 + 1 + 'px',
+                  height: Math.random() * 3 + 1 + 'px',
+                  left: Math.random() * 100 + '%',
+                  top: Math.random() * 100 + '%',
+                  opacity: Math.random() * 0.3 + 0.1
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Gradient Overlay for Depth */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sand-light/20 to-transparent"></div>
+        </div>
+
+        {/* Portfolio Content */}
+        <div className="relative z-10 container mx-auto px-4 py-16">
+          <FilterMenu 
+            filters={filters}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+          />
+          <PortfolioGrid 
+            projects={filteredProjects}
+            onProjectClick={handleProjectClick}
+          />
+        </div>
       </div>
+
       {selectedProject && (
         <Modal 
           project={selectedProject}

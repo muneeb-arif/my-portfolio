@@ -52,4 +52,84 @@ a:focus-visible {
 .backdrop-blur-custom {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+/* Ripple Effect Animation */
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes rippleLarge {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+@keyframes rippleSmall {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Ripple Classes */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid #C9A77D;
+  pointer-events: none;
+  animation: ripple 3s ease-out infinite;
+}
+
+.ripple-large {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid #E9CBA7;
+  pointer-events: none;
+  animation: rippleLarge 3s ease-out infinite;
+  animation-delay: 0.5s;
+}
+
+.ripple-small {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid #B8936A;
+  pointer-events: none;
+  animation: rippleSmall 3s ease-out infinite;
+  animation-delay: 1s;
+}
+
+/* Additional ripple for more complex effect */
+.ripple-pulse {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 167, 125, 0.3) 0%, rgba(201, 167, 125, 0) 70%);
+  pointer-events: none;
+  animation: ripple 3s ease-out infinite;
+  animation-delay: 1.5s;
 } 
