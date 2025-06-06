@@ -2,7 +2,7 @@
 
 A comprehensive, modern portfolio website built with React.js and Tailwind CSS, featuring a desert-themed design with professional animations and interactive components.
 
-![Portfolio Screenshot](@screenshot.png)
+![Portfolio Screenshot](screenshot.png)
 
 ## 🌟 Live Features Overview
 
