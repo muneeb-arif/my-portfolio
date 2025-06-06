@@ -7,14 +7,21 @@ import {
   CheckCircle, 
   Rocket, 
   GraduationCap, 
-  Wrench 
+  Wrench,
+  ChevronLeft,
+  ChevronRight,
+  Calendar
 } from 'lucide-react';
+import ContactForm from './ContactForm';
 
 const ProjectLifeCycle = () => {
   const [visibleCards, setVisibleCards] = useState(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const cardRefs = useRef([]);
   const containerRef = useRef(null);
 
@@ -300,6 +307,46 @@ const ProjectLifeCycle = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Scroll state tracking
+  useEffect(() => {
+    const handleScroll = () => {
+      if (containerRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
+        setCanScrollLeft(scrollLeft > 0);
+        setCanScrollRight(scrollLeft < scrollWidth - clientWidth);
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      // Initial check
+      handleScroll();
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
+
+  // Navigation functions
+  const scrollToDirection = (direction) => {
+    if (containerRef.current) {
+      const scrollAmount = 320; // Width of one card plus gap
+      const currentScroll = containerRef.current.scrollLeft;
+      const newScroll = direction === 'left' 
+        ? currentScroll - scrollAmount 
+        : currentScroll + scrollAmount;
+      
+      containerRef.current.scrollTo({
+        left: newScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   // Mouse drag functionality
   const handleMouseDown = (e) => {
     setIsDragging(true);
@@ -321,6 +368,15 @@ const ProjectLifeCycle = () => {
 
   const handleMouseLeave = () => {
     setIsDragging(false);
+  };
+
+  // Form handlers
+  const openForm = () => {
+    setIsContactFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setIsContactFormOpen(false);
   };
 
   return (
@@ -347,12 +403,33 @@ const ProjectLifeCycle = () => {
             communication, and successful project delivery from concept to completion.
           </p>
           <p className="text-sm text-gray-500 italic">
-            💡 Scroll horizontally or drag to explore all phases
+            💡 Use arrow buttons, scroll horizontally, or drag to explore all phases
           </p>
         </div>
 
         {/* Horizontal Timeline Container */}
         <div className="relative">
+          {/* Navigation Arrows */}
+          {canScrollLeft && (
+            <button
+              onClick={() => scrollToDirection('left')}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/95 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
+            </button>
+          )}
+
+          {canScrollRight && (
+            <button
+              onClick={() => scrollToDirection('right')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/95 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
+            </button>
+          )}
+
           {/* Horizontal Timeline Line */}
           <div className="absolute top-20 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-green-500 via-purple-500 via-orange-500 via-teal-500 via-red-500 via-indigo-500 to-gray-500 z-0"></div>
 
@@ -444,17 +521,24 @@ const ProjectLifeCycle = () => {
         <div className="text-center mt-16">
           <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl mx-auto">
             <h3 className="text-2xl font-bold text-gray-800 mb-4">
-              Ready to Start Your Project?
+              Ready to Discuss Your Project?
             </h3>
             <p className="text-gray-600 mb-6">
-              Let's discuss your requirements and kick off the first phase of your project delivery journey.
+              Let's have a discovery call to explore your requirements and see how I can help bring your vision to life.
             </p>
-            <button className="bg-gradient-to-r from-sand-dark to-sand text-white font-semibold px-8 py-3 rounded-full hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+            <button 
+              onClick={openForm}
+              className="bg-sand-dark hover:bg-gray-700 text-white font-semibold px-8 py-3 rounded-full hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center gap-2 mx-auto"
+            >
+              <Calendar className="w-5 h-5" />
               Schedule a Discovery Call
             </button>
           </div>
         </div>
       </div>
+
+      {/* Contact Form Modal */}
+      <ContactForm isOpen={isContactFormOpen} onClose={closeForm} />
 
       {/* Custom CSS for hiding scrollbar */}
       <style jsx>{`

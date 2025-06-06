@@ -2,7 +2,7 @@
 
 A comprehensive, modern portfolio website built with React.js and Tailwind CSS, featuring a desert-themed design with professional animations and interactive components.
 
-![Portfolio Screenshot](screenshot.png)
+![Portfolio Homepage](screenshot.png)
 
 ## 🌟 Live Features Overview
 
@@ -37,6 +37,10 @@ A comprehensive, modern portfolio website built with React.js and Tailwind CSS, 
 - **Project Showcase**: 6 sample projects with comprehensive details
 - **Technology Tags**: Visual representation of tech stacks used
 - **Live Demo Links**: Direct links to project demos and source code
+- **Navigation Arrows**: Seamless browsing between projects with keyboard and click support
+
+![Portfolio Modal](portfolio-popup.png)
+*Interactive portfolio project modal with navigation arrows and detailed project information*
 
 ### 🛠️ **Technologies Section**
 - **8 Technology Cards**: Programming, Frameworks, Databases, ORM, ARM, Version Control, Cloud, Other
@@ -49,6 +53,10 @@ A comprehensive, modern portfolio website built with React.js and Tailwind CSS, 
 - **Interactive Modals**: Detailed capability descriptions for each domain
 - **AI Badges**: Special indicators for AI-powered services
 - **Technology Tags**: Relevant tools and technologies per domain
+- **Navigation Support**: Arrow keys and swipe gestures for easy browsing
+
+![Domain Modal](niche-popup.png)
+*Domain expertise modal showcasing detailed capabilities and technologies*
 
 ### ⏱️ **Project Delivery Life Cycle**
 - **8-Phase Timeline**: From Requirements Gathering to Post-Launch Support
@@ -56,6 +64,7 @@ A comprehensive, modern portfolio website built with React.js and Tailwind CSS, 
 - **Detailed Breakdown**: Tasks and subtasks for each delivery phase
 - **Visual Progress**: Color-coded timeline with gradient progression
 - **Intersection Observer**: Smooth reveal animations as cards come into view
+- **Navigation Arrows**: Clear visual indicators for scrollable content
 
 ### 📧 **Contact & Forms**
 - **Contact Form**: Quick inquiry form with project details
@@ -63,6 +72,14 @@ A comprehensive, modern portfolio website built with React.js and Tailwind CSS, 
 - **Email Integration**: Auto-generates professional emails with form data
 - **Form Validation**: Required field validation and user feedback
 - **Responsive Design**: Mobile-optimized form layouts
+
+#### Contact Form - Quick Inquiries
+![Contact Form](contact-form.png)
+*Professional contact form for initial project discussions and discovery calls*
+
+#### Client Onboarding - Comprehensive Project Intake
+![Client Onboarding Form](get-started.png)
+*Detailed client onboarding form for complete project requirements gathering*
 
 ## 🛠️ Tech Stack
 
