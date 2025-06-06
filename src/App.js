@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
 import PortfolioGrid from './components/PortfolioGrid';
@@ -7,8 +7,56 @@ import Modal from './components/Modal';
 function App() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [particles, setParticles] = useState([]);
 
   const filters = ['All', 'Web Development', 'UI/UX Design', 'Backend'];
+
+  // Sand particle trail effect
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const newMousePos = { x: e.clientX, y: e.clientY };
+      setMousePosition(newMousePos);
+
+      // Create more particles for denser effect
+      const newParticles = [];
+      for (let i = 0; i < 8; i++) {
+        newParticles.push({
+          id: Date.now() + Math.random(),
+          x: newMousePos.x + (Math.random() - 0.5) * 40,
+          y: newMousePos.y + (Math.random() - 0.5) * 40,
+          size: Math.random() * 8 + 3,
+          opacity: Math.random() * 0.9 + 0.6,
+          vx: (Math.random() - 0.5) * 3,
+          vy: Math.random() * 3 + 1,
+          color: Math.random() > 0.3 ? '#C9A77D' : Math.random() > 0.5 ? '#B8936A' : '#E9CBA7',
+          life: 90 // longer life for more density
+        });
+      }
+
+      setParticles(prev => [...prev, ...newParticles].slice(-200)); // Keep max 200 particles
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Animate particles
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setParticles(prev => 
+        prev.map(particle => ({
+          ...particle,
+          x: particle.x + particle.vx,
+          y: particle.y + particle.vy,
+          opacity: particle.opacity * 0.98, // Slower fade for more prominence
+          life: particle.life - 1
+        })).filter(particle => particle.life > 0 && particle.opacity > 0.05)
+      );
+    }, 16); // ~60fps
+
+    return () => clearInterval(interval);
+  }, []);
 
   const projects = [
     {
@@ -116,7 +164,29 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-sand-light">
+    <div className="min-h-screen bg-sand-light relative">
+      {/* Sand Particle Trail Effect */}
+      <div className="fixed inset-0 pointer-events-none z-50">
+        {particles.map(particle => (
+          <div
+            key={particle.id}
+            className="absolute rounded-full shadow-lg"
+            style={{
+              left: particle.x - particle.size / 2,
+              top: particle.y - particle.size / 2,
+              width: particle.size,
+              height: particle.size,
+              backgroundColor: particle.color,
+              opacity: particle.opacity,
+              transform: `scale(${Math.max(particle.opacity, 0.3)})`,
+              transition: 'none',
+              boxShadow: `0 0 ${particle.size * 3}px ${particle.color}80, 0 0 ${particle.size * 6}px ${particle.color}40`,
+              border: `1px solid ${particle.color}60`
+            }}
+          />
+        ))}
+      </div>
+
       <Hero />
       
       {/* Portfolio Section with Textural Background */}
