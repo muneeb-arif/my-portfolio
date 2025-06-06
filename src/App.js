@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
 import PortfolioGrid from './components/PortfolioGrid';
@@ -7,8 +7,44 @@ import Modal from './components/Modal';
 function App() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [cursorVariant, setCursorVariant] = useState('default');
+  const [isHovering, setIsHovering] = useState(false);
 
   const filters = ['All', 'Web Development', 'UI/UX Design', 'Backend'];
+
+  // Custom cursor tracking
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseEnter = () => setIsHovering(true);
+    const handleMouseLeave = () => setIsHovering(false);
+
+    // Add magnetic effect listeners to interactive elements
+    const magneticElements = document.querySelectorAll('.magnetic');
+    
+    magneticElements.forEach(element => {
+      element.addEventListener('mouseenter', () => setCursorVariant('magnetic'));
+      element.addEventListener('mouseleave', () => setCursorVariant('default'));
+    });
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseenter', handleMouseEnter);
+    document.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseenter', handleMouseEnter);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      
+      magneticElements.forEach(element => {
+        element.removeEventListener('mouseenter', () => setCursorVariant('magnetic'));
+        element.removeEventListener('mouseleave', () => setCursorVariant('default'));
+      });
+    };
+  }, []);
 
   const projects = [
     {
@@ -116,7 +152,45 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-sand-light">
+    <div className="min-h-screen bg-sand-light" style={{ cursor: 'none' }}>
+      {/* Custom Cursor */}
+      <div
+        className="fixed pointer-events-none z-[9999] mix-blend-difference"
+        style={{
+          left: mousePosition.x,
+          top: mousePosition.y,
+          transform: 'translate(-50%, -50%)',
+          transition: 'all 0.1s ease-out'
+        }}
+      >
+        {/* Main cursor dot */}
+        <div
+          className={`rounded-full bg-sand-dark transition-all duration-300 ${
+            cursorVariant === 'magnetic' 
+              ? 'w-12 h-12 border-2 border-sand-dark bg-transparent' 
+              : 'w-2 h-2'
+          }`}
+        />
+        
+        {/* Outer ring for magnetic effect */}
+        {cursorVariant === 'magnetic' && (
+          <div
+            className="absolute top-1/2 left-1/2 w-8 h-8 border border-sand-dark rounded-full bg-sand-dark transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200"
+            style={{
+              animation: 'pulse 2s infinite'
+            }}
+          />
+        )}
+      </div>
+
+      {/* Pulse animation for magnetic cursor */}
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
+        }
+      `}</style>
+
       <Hero />
       
       {/* Portfolio Section with Textural Background */}

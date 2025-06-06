@@ -9,7 +9,7 @@ const FilterMenu = ({ filters, activeFilter, onFilterChange }) => {
             key={filter}
             onClick={() => onFilterChange(filter)}
             className={`
-              relative px-6 py-3 font-semibold text-lg transition-all duration-300
+              magnetic relative px-6 py-3 font-semibold text-lg transition-all duration-300
               ${activeFilter === filter
                 ? 'text-sand-dark'
                 : 'text-gray-600 hover:text-sand-dark'
