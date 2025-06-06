@@ -5,6 +5,7 @@ import PortfolioGrid from './components/PortfolioGrid';
 import Modal from './components/Modal';
 import Technologies from './components/Technologies';
 import DomainsNiche from './components/DomainsNiche';
+import ProjectLifeCycle from './components/ProjectLifeCycle';
 
 function App() {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -352,6 +353,9 @@ function App() {
 
       {/* Domains / Niche Section */}
       <DomainsNiche />
+
+      {/* Project Delivery Life Cycle Section */}
+      <ProjectLifeCycle />
 
       {selectedProject && (
         <Modal 
