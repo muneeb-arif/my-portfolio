@@ -3,6 +3,7 @@ import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
 import PortfolioGrid from './components/PortfolioGrid';
 import Modal from './components/Modal';
+import Technologies from './components/Technologies';
 
 function App() {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -344,6 +345,9 @@ function App() {
           />
         </div>
       </div>
+
+      {/* Technologies Section */}
+      <Technologies />
 
       {selectedProject && (
         <Modal 
