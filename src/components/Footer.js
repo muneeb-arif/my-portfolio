@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ClientOnboardingForm from './ClientOnboardingForm';
 import ContactForm from './ContactForm';
-import { FileText, Mail, Github, Linkedin, Twitter } from 'lucide-react';
+import { FileText, Mail, Github, Linkedin, Instagram } from 'lucide-react';
 
 const Footer = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -21,6 +21,12 @@ const Footer = () => {
 
   const closeContactForm = () => {
     setIsContactFormOpen(false);
+  };
+
+  // Email click handler
+  const handleEmailClick = () => {
+    const mailtoLink = `mailto:muneebarif11@gmail.com?subject=${encodeURIComponent('Get Started - TheExpertWays.com')}`;
+    window.location.href = mailtoLink;
   };
 
   // Smooth scroll to section function
@@ -65,14 +71,14 @@ const Footer = () => {
               </p>
               <div className="flex space-x-4">
                 <button 
-                  onClick={openContactForm}
+                  onClick={handleEmailClick}
                   className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
                   title="Contact Me"
                 >
                   <Mail className="w-5 h-5" />
                 </button>
                 <a 
-                  href="https://github.com/muneebarif" 
+                  href="https://github.com/muneeb-arif" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
@@ -82,7 +88,7 @@ const Footer = () => {
                   <Github className="w-5 h-5" />
                 </a>
                 <a 
-                  href="https://linkedin.com/in/muneebarif" 
+                  href="https://www.linkedin.com/in/muneebarif11/" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
@@ -92,14 +98,14 @@ const Footer = () => {
                   <Linkedin className="w-5 h-5" />
                 </a>
                 <a 
-                  href="https://twitter.com/muneebarif" 
+                  href="https://instagram.com/thexpertways" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
-                  title="Twitter Profile"
-                  onClick={() => console.log('Twitter clicked')}
+                  title="Instagram Profile"
+                  onClick={() => console.log('Instagram clicked')}
                 >
-                  <Twitter className="w-5 h-5" />
+                  <Instagram className="w-5 h-5" />
                 </a>
               </div>
             </div>

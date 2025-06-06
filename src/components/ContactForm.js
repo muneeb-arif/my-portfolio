@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mail, User, Building, Phone, MessageSquare, Tag } from 'lucide-react';
+import { X, Mail, User, Building, Phone, MessageSquare, Tag, AlertCircle } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const ContactForm = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,9 @@ const ContactForm = ({ isOpen, onClose }) => {
     budget: '',
     timeline: ''
   });
+
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   useEffect(() => {
     if (isOpen) {
@@ -42,10 +46,130 @@ const ContactForm = ({ isOpen, onClose }) => {
       ...prev,
       [field]: value
     }));
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched(prev => ({
+      ...prev,
+      [field]: true
+    }));
+    validateField(field, formData[field]);
+  };
+
+  const validateField = (field, value) => {
+    let error = '';
+
+    switch (field) {
+      case 'name':
+        if (!value.trim()) {
+          error = 'Full name is required';
+        } else if (value.trim().length < 2) {
+          error = 'Name must be at least 2 characters';
+        }
+        break;
+
+      case 'email':
+        if (!value.trim()) {
+          error = 'Email address is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = 'Please enter a valid email address';
+        }
+        break;
+
+      case 'phone':
+        if (value && !/^[\+]?[1-9][\d]{0,15}$/.test(value.replace(/[\s\-\(\)]/g, ''))) {
+          error = 'Please enter a valid phone number';
+        }
+        break;
+
+      case 'subject':
+        if (!value.trim()) {
+          error = 'Subject is required';
+        } else if (value.trim().length < 5) {
+          error = 'Subject must be at least 5 characters';
+        }
+        break;
+
+      case 'message':
+        if (!value.trim()) {
+          error = 'Message is required';
+        } else if (value.trim().length < 20) {
+          error = 'Message must be at least 20 characters';
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+
+    return error;
+  };
+
+  const validateForm = () => {
+    const requiredFields = ['name', 'email', 'subject', 'message'];
+    const newErrors = {};
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+      const error = validateField(field, formData[field]);
+      if (error) {
+        newErrors[field] = error;
+        isValid = false;
+      }
+    });
+
+    // Validate optional phone field if provided
+    if (formData.phone) {
+      const phoneError = validateField('phone', formData.phone);
+      if (phoneError) {
+        newErrors.phone = phoneError;
+        isValid = false;
+      }
+    }
+
+    setErrors(newErrors);
+    setTouched({
+      name: true,
+      email: true,
+      subject: true,
+      message: true,
+      phone: !!formData.phone
+    });
+
+    return isValid;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      Swal.fire({
+        title: 'Validation Error',
+        text: 'Please fix the errors in the form before submitting.',
+        icon: 'error',
+        confirmButtonColor: '#B8936A',
+        confirmButtonText: 'Fix Errors',
+        customClass: {
+          popup: 'rounded-3xl',
+          confirmButton: 'rounded-full px-6 py-3 font-semibold'
+        }
+      });
+      return;
+    }
     
     // Create email content
     const emailSubject = formData.subject || `${formData.inquiryType} - ${formData.name}`;
@@ -76,12 +200,37 @@ ${formData.name}
     `.trim();
 
     // Open email client with pre-filled content
-    const mailtoLink = `mailto:muneeb.arif@example.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    const mailtoLink = `mailto:muneebarif11@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
     window.location.href = mailtoLink;
 
-    // Show success message and close form
-    alert('Email client opened with your message. Thank you for reaching out!');
-    onClose();
+    // Show SweetAlert2 success notification
+    Swal.fire({
+      title: 'Message Sent Successfully! 🎉',
+      text: "Your email client has been opened with your message. I'll get back to you within 24 hours to discuss your project.",
+      icon: 'success',
+      showCancelButton: true,
+      confirmButtonColor: '#B8936A',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: 'Great, Thanks!',
+      cancelButtonText: 'Send Another Message',
+      customClass: {
+        popup: 'rounded-3xl',
+        confirmButton: 'rounded-full px-6 py-3 font-semibold',
+        cancelButton: 'rounded-full px-6 py-3 font-semibold'
+      },
+      showCloseButton: true,
+      backdrop: `
+        rgba(0,0,0,0.6)
+        url("/images/nyan-cat.gif")
+        left top
+        no-repeat
+      `
+    }).then((result) => {
+      if (result.isConfirmed) {
+        onClose(); // Close the main form
+      }
+      // If cancelled, keep the form open for another message
+    });
     
     // Reset form
     setFormData({
@@ -95,12 +244,25 @@ ${formData.name}
       budget: '',
       timeline: ''
     });
+    setErrors({});
+    setTouched({});
   };
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  const getInputClassName = (field) => {
+    const baseClass = "w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-all duration-200";
+    const hasError = errors[field] && touched[field];
+    
+    if (hasError) {
+      return `${baseClass} border-red-500 focus:ring-red-500 bg-red-50`;
+    }
+    
+    return `${baseClass} border-gray-200 focus:ring-sand-dark`;
   };
 
   if (!isOpen) return null;
@@ -154,9 +316,16 @@ ${formData.name}
                     required
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200"
+                    onBlur={() => handleBlur('name')}
+                    className={getInputClassName('name')}
                     placeholder="Your full name"
                   />
+                  {errors.name && touched.name && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.name}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -168,9 +337,16 @@ ${formData.name}
                     required
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200"
+                    onBlur={() => handleBlur('email')}
+                    className={getInputClassName('email')}
                     placeholder="your.email@example.com"
                   />
+                  {errors.email && touched.email && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.email}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -181,9 +357,16 @@ ${formData.name}
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200"
+                    onBlur={() => handleBlur('phone')}
+                    className={getInputClassName('phone')}
                     placeholder="+1 (555) 123-4567"
                   />
+                  {errors.phone && touched.phone && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.phone}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -194,7 +377,7 @@ ${formData.name}
                     type="text"
                     value={formData.company}
                     onChange={(e) => handleInputChange('company', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200"
+                    className={getInputClassName('company')}
                     placeholder="Your company name"
                   />
                 </div>
@@ -217,7 +400,7 @@ ${formData.name}
                     required
                     value={formData.inquiryType}
                     onChange={(e) => handleInputChange('inquiryType', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200"
+                    className={getInputClassName('inquiryType')}
                   >
                     <option value="General Inquiry">General Inquiry</option>
                     <option value="Web Development">Web Development</option>
@@ -236,7 +419,7 @@ ${formData.name}
                   <select
                     value={formData.budget}
                     onChange={(e) => handleInputChange('budget', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200"
+                    className={getInputClassName('budget')}
                   >
                     <option value="">Select budget range</option>
                     <option value="Under $5k">Under $5,000</option>
@@ -255,7 +438,7 @@ ${formData.name}
                   <select
                     value={formData.timeline}
                     onChange={(e) => handleInputChange('timeline', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200"
+                    className={getInputClassName('timeline')}
                   >
                     <option value="">Select timeline</option>
                     <option value="ASAP">ASAP</option>
@@ -276,9 +459,16 @@ ${formData.name}
                     required
                     value={formData.subject}
                     onChange={(e) => handleInputChange('subject', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200"
+                    onBlur={() => handleBlur('subject')}
+                    className={getInputClassName('subject')}
                     placeholder="Brief subject of your inquiry"
                   />
+                  {errors.subject && touched.subject && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.subject}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -299,9 +489,16 @@ ${formData.name}
                   rows={6}
                   value={formData.message}
                   onChange={(e) => handleInputChange('message', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-sand-dark focus:border-transparent transition-all duration-200 resize-none"
+                  onBlur={() => handleBlur('message')}
+                  className={`${getInputClassName('message')} resize-none`}
                   placeholder="Please describe your project, goals, requirements, or any specific questions you have. The more details you provide, the better I can assist you."
                 />
+                {errors.message && touched.message && (
+                  <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.message}
+                  </div>
+                )}
               </div>
             </div>
           </form>

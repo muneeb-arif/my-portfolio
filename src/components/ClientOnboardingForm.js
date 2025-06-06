@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building, Users, FileText, Palette, Settings, Shield, Calendar, Target } from 'lucide-react';
+import { X, Building, Users, FileText, Palette, Settings, Shield, Calendar, Target, AlertCircle } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 const ClientOnboardingForm = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -27,6 +28,9 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
     postMvpFeatures: '',
     longTermGoals: ''
   });
+
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   useEffect(() => {
     if (isOpen) {
@@ -56,20 +60,231 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
       ...prev,
       [field]: value
     }));
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched(prev => ({
+      ...prev,
+      [field]: true
+    }));
+    validateField(field, formData[field]);
+  };
+
+  const validateField = (field, value) => {
+    let error = '';
+
+    switch (field) {
+      case 'companyName':
+        if (!value.trim()) {
+          error = 'Company name is required';
+        } else if (value.trim().length < 2) {
+          error = 'Company name must be at least 2 characters';
+        }
+        break;
+
+      case 'contactPerson':
+        if (!value.trim()) {
+          error = 'Contact person is required';
+        } else if (value.trim().length < 2) {
+          error = 'Contact person must be at least 2 characters';
+        }
+        break;
+
+      case 'businessDescription':
+        if (!value.trim()) {
+          error = 'Business description is required';
+        } else if (value.trim().length < 20) {
+          error = 'Business description must be at least 20 characters';
+        }
+        break;
+
+      case 'targetCustomer':
+        if (!value.trim()) {
+          error = 'Target customer information is required';
+        } else if (value.trim().length < 15) {
+          error = 'Target customer description must be at least 15 characters';
+        }
+        break;
+
+      case 'problemSolving':
+        if (!value.trim()) {
+          error = 'Problem description is required';
+        } else if (value.trim().length < 20) {
+          error = 'Problem description must be at least 20 characters';
+        }
+        break;
+
+      case 'coreFeatures':
+        if (!value.trim()) {
+          error = 'Core features are required';
+        } else if (value.trim().length < 15) {
+          error = 'Core features description must be at least 15 characters';
+        }
+        break;
+
+      case 'budgetRange':
+        if (!value.trim()) {
+          error = 'Budget range is required for project planning';
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+
+    return error;
+  };
+
+  const validateForm = () => {
+    const requiredFields = [
+      'companyName', 
+      'contactPerson', 
+      'businessDescription', 
+      'targetCustomer', 
+      'problemSolving', 
+      'coreFeatures',
+      'budgetRange'
+    ];
+    const newErrors = {};
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+      const error = validateField(field, formData[field]);
+      if (error) {
+        newErrors[field] = error;
+        isValid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    
+    // Mark all required fields as touched
+    const newTouched = {};
+    requiredFields.forEach(field => {
+      newTouched[field] = true;
+    });
+    setTouched(newTouched);
+
+    return isValid;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
-    // Here you would typically send the data to your backend
-    alert('Client onboarding form submitted successfully!');
-    onClose();
+
+    // Validate form before submission
+    if (!validateForm()) {
+      Swal.fire({
+        title: 'Validation Error',
+        text: 'Please fill in all required fields with sufficient detail before submitting.',
+        icon: 'error',
+        confirmButtonColor: '#B8936A',
+        confirmButtonText: 'Fix Errors',
+        customClass: {
+          popup: 'rounded-3xl',
+          confirmButton: 'rounded-full px-6 py-3 font-semibold'
+        }
+      });
+      return;
+    }
+    
+    // Show SweetAlert2 success notification
+    Swal.fire({
+      title: 'Questionnaire Submitted! 🎉',
+      text: "Thank you for providing detailed project information. I'll review your requirements and get back to you with a detailed proposal within 48 hours.",
+      icon: 'success',
+      showCancelButton: true,
+      confirmButtonColor: '#B8936A',
+      cancelButtonColor: '#6B7280',
+      confirmButtonText: 'Perfect, Thanks!',
+      cancelButtonText: 'Submit Another Form',
+      customClass: {
+        popup: 'rounded-3xl',
+        confirmButton: 'rounded-full px-6 py-3 font-semibold',
+        cancelButton: 'rounded-full px-6 py-3 font-semibold'
+      },
+      showCloseButton: true,
+      backdrop: `
+        rgba(0,0,0,0.6)
+        left top
+        no-repeat
+      `
+    }).then((result) => {
+      if (result.isConfirmed) {
+        onClose(); // Close the main form
+      }
+      // If cancelled, keep the form open for another submission
+    });
+    
+    // Reset form
+    setFormData({
+      companyName: '',
+      contactPerson: '',
+      communicationChannel: 'Email',
+      businessDescription: '',
+      targetCustomer: '',
+      uniqueValue: '',
+      problemSolving: '',
+      coreFeatures: '',
+      existingSystem: '',
+      technicalConstraints: '',
+      competitors: '',
+      brandGuide: '',
+      colorPreferences: '',
+      toneOfVoice: 'Corporate',
+      paymentGateways: '',
+      integrations: '',
+      adminControl: '',
+      gdprCompliance: false,
+      termsPrivacy: false,
+      launchDate: '',
+      budgetRange: '',
+      postMvpFeatures: '',
+      longTermGoals: ''
+    });
+    setErrors({});
+    setTouched({});
   };
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  const getInputClassName = (field) => {
+    const baseClass = "w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-all duration-200";
+    const hasError = errors[field] && touched[field];
+    
+    if (hasError) {
+      return `${baseClass} border-red-500 focus:ring-red-500 bg-red-50`;
+    }
+    
+    return `${baseClass} border-gray-200`;
+  };
+
+  const getTextareaClassName = (field) => {
+    const baseClass = "w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent resize-none transition-all duration-200";
+    const hasError = errors[field] && touched[field];
+    
+    if (hasError) {
+      return `${baseClass} border-red-500 focus:ring-red-500 bg-red-50`;
+    }
+    
+    return `${baseClass} border-gray-200`;
   };
 
   if (!isOpen) return null;
@@ -108,25 +323,43 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Company Name *
+                  </label>
                   <input
                     type="text"
                     value={formData.companyName}
                     onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onBlur={() => handleBlur('companyName')}
+                    className={`${getInputClassName('companyName')} focus:ring-blue-500`}
                     placeholder="Enter company name"
                   />
+                  {errors.companyName && touched.companyName && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.companyName}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Main Point of Contact</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Main Point of Contact *
+                  </label>
                   <input
                     type="text"
                     value={formData.contactPerson}
                     onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onBlur={() => handleBlur('contactPerson')}
+                    className={`${getInputClassName('contactPerson')} focus:ring-blue-500`}
                     placeholder="Contact person name"
                   />
+                  {errors.contactPerson && touched.contactPerson && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.contactPerson}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -159,25 +392,43 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">What does your company do?</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    What does your company do? *
+                  </label>
                   <textarea
                     value={formData.businessDescription}
                     onChange={(e) => handleInputChange('businessDescription', e.target.value)}
+                    onBlur={() => handleBlur('businessDescription')}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('businessDescription')} focus:ring-green-500`}
                     placeholder="Describe your business..."
                   />
+                  {errors.businessDescription && touched.businessDescription && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.businessDescription}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Who is your target customer?</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Who is your target customer? *
+                  </label>
                   <textarea
                     value={formData.targetCustomer}
                     onChange={(e) => handleInputChange('targetCustomer', e.target.value)}
+                    onBlur={() => handleBlur('targetCustomer')}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('targetCustomer')} focus:ring-green-500`}
                     placeholder="Describe your target audience..."
                   />
+                  {errors.targetCustomer && touched.targetCustomer && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.targetCustomer}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -186,7 +437,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     value={formData.uniqueValue}
                     onChange={(e) => handleInputChange('uniqueValue', e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('uniqueValue')} focus:ring-green-500`}
                     placeholder="Your unique value proposition..."
                   />
                 </div>
@@ -202,25 +453,43 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">What problem are we solving?</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    What problem are we solving? *
+                  </label>
                   <textarea
                     value={formData.problemSolving}
                     onChange={(e) => handleInputChange('problemSolving', e.target.value)}
+                    onBlur={() => handleBlur('problemSolving')}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('problemSolving')} focus:ring-purple-500`}
                     placeholder="Describe the main problem..."
                   />
+                  {errors.problemSolving && touched.problemSolving && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.problemSolving}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Desired core features?</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Desired core features? *
+                  </label>
                   <textarea
                     value={formData.coreFeatures}
                     onChange={(e) => handleInputChange('coreFeatures', e.target.value)}
+                    onBlur={() => handleBlur('coreFeatures')}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('coreFeatures')} focus:ring-purple-500`}
                     placeholder="List key features needed..."
                   />
+                  {errors.coreFeatures && touched.coreFeatures && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.coreFeatures}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -229,7 +498,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     value={formData.existingSystem}
                     onChange={(e) => handleInputChange('existingSystem', e.target.value)}
                     rows={2}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('existingSystem')} focus:ring-purple-500`}
                     placeholder="Current systems in use..."
                   />
                 </div>
@@ -240,19 +509,19 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     value={formData.technicalConstraints}
                     onChange={(e) => handleInputChange('technicalConstraints', e.target.value)}
                     rows={2}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('technicalConstraints')} focus:ring-purple-500`}
                     placeholder="Any technical limitations..."
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Competitors you admire?</label>
-                  <textarea
+                  <input
+                    type="text"
                     value={formData.competitors}
                     onChange={(e) => handleInputChange('competitors', e.target.value)}
-                    rows={2}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                    placeholder="Reference competitors or inspiration..."
+                    className={`${getInputClassName('competitors')} focus:ring-purple-500`}
+                    placeholder="Company names or websites"
                   />
                 </div>
               </div>
@@ -272,7 +541,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     type="text"
                     value={formData.brandGuide}
                     onChange={(e) => handleInputChange('brandGuide', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className={`${getInputClassName('brandGuide')} focus:ring-pink-500`}
                     placeholder="Yes/No or provide details"
                   />
                 </div>
@@ -283,7 +552,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     type="text"
                     value={formData.colorPreferences}
                     onChange={(e) => handleInputChange('colorPreferences', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className={`${getInputClassName('colorPreferences')} focus:ring-pink-500`}
                     placeholder="Preferred colors or hex codes"
                   />
                 </div>
@@ -323,7 +592,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     type="text"
                     value={formData.paymentGateways}
                     onChange={(e) => handleInputChange('paymentGateways', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className={`${getInputClassName('paymentGateways')} focus:ring-orange-500`}
                     placeholder="Stripe, PayPal, Razorpay, etc."
                   />
                 </div>
@@ -334,7 +603,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     type="text"
                     value={formData.integrations}
                     onChange={(e) => handleInputChange('integrations', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className={`${getInputClassName('integrations')} focus:ring-orange-500`}
                     placeholder="CRM, Email tools, Analytics, etc."
                   />
                 </div>
@@ -345,7 +614,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     type="text"
                     value={formData.adminControl}
                     onChange={(e) => handleInputChange('adminControl', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className={`${getInputClassName('adminControl')} focus:ring-orange-500`}
                     placeholder="What should admins be able to control?"
                   />
                 </div>
@@ -398,19 +667,28 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     type="date"
                     value={formData.launchDate}
                     onChange={(e) => handleInputChange('launchDate', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className={`${getInputClassName('launchDate')} focus:ring-indigo-500`}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Budget range?</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Budget range? *
+                  </label>
                   <input
                     type="text"
                     value={formData.budgetRange}
                     onChange={(e) => handleInputChange('budgetRange', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    onBlur={() => handleBlur('budgetRange')}
+                    className={`${getInputClassName('budgetRange')} focus:ring-indigo-500`}
                     placeholder="$5k-10k, $10k-25k, etc."
                   />
+                  {errors.budgetRange && touched.budgetRange && (
+                    <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.budgetRange}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -429,7 +707,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     value={formData.postMvpFeatures}
                     onChange={(e) => handleInputChange('postMvpFeatures', e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('postMvpFeatures')} focus:ring-teal-500`}
                     placeholder="Features for future releases..."
                   />
                 </div>
@@ -440,7 +718,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
                     value={formData.longTermGoals}
                     onChange={(e) => handleInputChange('longTermGoals', e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                    className={`${getTextareaClassName('longTermGoals')} focus:ring-teal-500`}
                     placeholder="Vision for the product in 2-3 years..."
                   />
                 </div>
