@@ -17,37 +17,37 @@ function App() {
   const filters = ['All', 'Web Development', 'UI/UX Design', 'Backend'];
 
   // Initialize floating sand particles
-  useEffect(() => {
-    const generateParticles = () => {
-      const newParticles = [];
-      const particleCount = 40; // Reduced for better performance
+  // useEffect(() => {
+  //   const generateParticles = () => {
+  //     const newParticles = [];
+  //     const particleCount = 40; // Reduced for better performance
 
-      for (let i = 0; i < particleCount; i++) {
-        newParticles.push({
-          id: i,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: Math.random() * 8 + 3, // Slightly smaller
-          opacity: Math.random() * 0.6 + 0.3,
-          speedX: (Math.random() - 0.5) * 0.6, // Reduced speed
-          speedY: (Math.random() - 0.5) * 0.4,
-          color: ['#E9CBA7', '#C9A77D', '#B8936A', '#F5E6D3'][Math.floor(Math.random() * 4)],
-          layer: Math.random() > 0.4 ? 'front' : 'back',
-          rotationSpeed: (Math.random() - 0.5) * 1.5,
-          rotation: 0,
-          baseOpacity: Math.random() * 0.6 + 0.3,
-          // Pre-calculate wandering properties
-          wanderAngle: Math.random() * Math.PI * 2,
-          wanderRadius: Math.random() * 0.3 + 0.2,
-          wanderSpeed: Math.random() * 0.015 + 0.008,
-          lastDirectionChange: 0
-        });
-      }
-      setParticles(newParticles);
-    };
+  //     for (let i = 0; i < particleCount; i++) {
+  //       newParticles.push({
+  //         id: i,
+  //         x: Math.random() * 100,
+  //         y: Math.random() * 100,
+  //         size: Math.random() * 8 + 3, // Slightly smaller
+  //         opacity: Math.random() * 0.6 + 0.3,
+  //         speedX: (Math.random() - 0.5) * 0.6, // Reduced speed
+  //         speedY: (Math.random() - 0.5) * 0.4,
+  //         color: ['#E9CBA7', '#C9A77D', '#B8936A', '#F5E6D3'][Math.floor(Math.random() * 4)],
+  //         layer: Math.random() > 0.4 ? 'front' : 'back',
+  //         rotationSpeed: (Math.random() - 0.5) * 1.5,
+  //         rotation: 0,
+  //         baseOpacity: Math.random() * 0.6 + 0.3,
+  //         // Pre-calculate wandering properties
+  //         wanderAngle: Math.random() * Math.PI * 2,
+  //         wanderRadius: Math.random() * 0.3 + 0.2,
+  //         wanderSpeed: Math.random() * 0.015 + 0.008,
+  //         lastDirectionChange: 0
+  //       });
+  //     }
+  //     setParticles(newParticles);
+  //   };
 
-    generateParticles();
-  }, []);
+  //   // generateParticles();
+  // }, []);
 
   // Optimized animation with requestAnimationFrame
   useEffect(() => {

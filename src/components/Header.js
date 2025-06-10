@@ -72,9 +72,27 @@ const Header = () => {
             <div className="flex items-center">
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="text-2xl lg:text-3xl font-bold transition-colors duration-300 cursor-pointer text-white hover:text-white/90"
+                className="relative text-4xl lg:text-5xl font-bold transition-all duration-500 cursor-pointer magnetic group"
+                style={{ 
+                  fontFamily: 'Playfair Display, serif',
+                  letterSpacing: '0.15em',
+                  color: '#F5E6D3',
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4)) drop-shadow(0 0 12px rgba(245, 230, 211, 0.5))',
+                  transform: 'perspective(1000px) rotateY(-5deg)',
+                  textShadow: '2px 2px 0px rgba(240, 217, 184, 0.4)'
+                }}
               >
-                Muneeb Arif
+                <span className="relative inline-block group-hover:scale-110 transition-transform duration-300">
+                  M
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full opacity-70 animate-pulse"></span>
+                </span>
+                <span className="relative inline-block group-hover:scale-110 transition-transform duration-300 delay-75">
+                  A
+                  <span className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-gradient-to-br from-amber-300 to-amber-500 rounded-full opacity-60 animate-pulse delay-500"></span>
+                </span>
+                
+                {/* Decorative underline */}
+                <div className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-desert-sand to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
             </div>
 

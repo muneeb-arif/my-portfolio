@@ -286,25 +286,10 @@ const ProjectLifeCycle = () => {
     }
   ];
 
-  // Intersection Observer for scroll animations
+  // Make all cards visible by default for better performance
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = Number(entry.target.dataset.index);
-            setVisibleCards(prev => new Set([...prev, index]));
-          }
-        });
-      },
-      { threshold: 0.3 }
-    );
-
-    cardRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
-
-    return () => observer.disconnect();
+    // Set all cards as visible immediately
+    setVisibleCards(new Set(phases.map((_, index) => index)));
   }, []);
 
   // Scroll state tracking
@@ -457,8 +442,6 @@ const ProjectLifeCycle = () => {
               return (
                 <div
                   key={phase.id}
-                  ref={el => cardRefs.current[index] = el}
-                  data-index={index}
                   className="relative flex-shrink-0"
                 >
                   {/* Timeline Node */}
@@ -470,12 +453,7 @@ const ProjectLifeCycle = () => {
 
                   {/* Phase Card */}
                   <div
-                    className={`
-                      w-80 bg-white rounded-2xl shadow-lg hover:shadow-xl
-                      transition-all duration-700 overflow-hidden
-                      ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                    `}
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    className="w-80 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden opacity-100"
                   >
                     {/* Card Header */}
                     <div className={`bg-gradient-to-r ${phase.color} p-6 text-white`}>

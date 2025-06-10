@@ -134,14 +134,17 @@ const Hero = () => {
           <div className="flex-shrink-0">
             <div className="relative">
               {/* Profile Image Container */}
-              <div className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-8 border-white shadow-2xl relative z-10">
-                <img
-                  src="./images/profile/avatar.jpeg"
-                  alt="Muneeb Arif - Principal Software Engineer"
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
+              <div 
+                className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-8 border-white shadow-2xl relative z-10"
+                style={{
+                  backgroundImage: `url('./images/profile/avatar.jpeg')`,
+                  backgroundSize: '170%',
+                  backgroundPosition: 'center top',
+                  backgroundRepeat: 'no-repeat'
+                }}
+                role="img"
+                aria-label="Muneeb Arif - Principal Software Engineer"
+              ></div>
 
               {/* Ripple Effects */}
               <div className="absolute inset-0 flex items-center justify-center">

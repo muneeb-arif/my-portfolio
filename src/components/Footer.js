@@ -64,7 +64,7 @@ const Footer = () => {
             
             {/* Brand Section */}
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold text-white mb-4">Muneeb Arif</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">Portfolio</h3>
               <p className="text-white/80 text-sm leading-relaxed mb-6 max-w-md">
                 Principal Software Engineer specializing in scalable web applications, 
                 e-commerce solutions, and modern development practices. Let's bring your ideas to life.
@@ -201,7 +201,7 @@ const Footer = () => {
           {/* Bottom Section */}
           <div className="border-t border-white/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
             <div className="text-white/60 text-sm mb-4 md:mb-0">
-              © 2024 Muneeb Arif. All rights reserved.
+              © 2024 M.A. All rights reserved.
             </div>
             <div className="flex flex-wrap gap-4 justify-center md:justify-end">
               <button 

@@ -1,27 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const Card = ({ project, onClick, animationDelay }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const cardRef = useRef();
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
 
   const handleImageLoad = () => {
     setIsLoaded(true);
@@ -29,12 +9,7 @@ const Card = ({ project, onClick, animationDelay }) => {
 
   return (
     <div
-      ref={cardRef}
-      className={`
-        group cursor-pointer transform transition-all duration-500 hover:scale-105
-        ${isVisible ? 'slide-in-up' : 'opacity-0'}
-      `}
-      style={{ animationDelay: `${animationDelay}s` }}
+      className="group cursor-pointer transform transition-all duration-300 hover:scale-105 opacity-100"
       onClick={onClick}
     >
       <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
