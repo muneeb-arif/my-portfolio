@@ -6,7 +6,6 @@ import { Menu, X, FileText, Mail } from 'lucide-react';
 const Header = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll effect for header background
@@ -21,7 +20,6 @@ const Header = () => {
 
   const openForm = () => {
     setIsFormOpen(true);
-    setIsMobileMenuOpen(false);
   };
 
   const closeForm = () => {
@@ -30,7 +28,6 @@ const Header = () => {
 
   const openContactForm = () => {
     setIsContactFormOpen(true);
-    setIsMobileMenuOpen(false);
   };
 
   const closeContactForm = () => {
@@ -46,11 +43,6 @@ const Header = () => {
         block: 'start'
       });
     }
-    setIsMobileMenuOpen(false); // Close mobile menu after navigation
-  };
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   return (
@@ -142,71 +134,18 @@ const Header = () => {
               </button>
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Start Project Button */}
             <button
-              onClick={toggleMobileMenu}
-              className="lg:hidden p-2 rounded-lg transition-colors duration-300 text-white/90 hover:text-white hover:bg-white/10"
+              onClick={openForm}
+              className="lg:hidden px-4 py-2 rounded-full font-medium text-xs transition-all duration-300 hover:scale-105 transform flex items-center gap-2 bg-sand-dark text-white hover:bg-gray-600 shadow-lg"
             >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <FileText className="w-3 h-3" />
+              Start Project
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        <div 
-          className={`
-            lg:hidden overflow-hidden transition-all duration-300 border-t border-white/20
-            ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}
-          `}
-          style={{ backgroundColor: 'rgb(55 65 81 / var(--tw-bg-opacity, 1))' }}
-        >
-          <div className="container mx-auto px-4 py-6">
-            <nav className="space-y-4">
-              <button
-                onClick={() => scrollToSection('portfolio')}
-                className="block w-full text-left text-white/90 hover:text-white font-medium py-2 transition-colors duration-300"
-              >
-                Portfolio
-              </button>
-              <button
-                onClick={() => scrollToSection('technologies')}
-                className="block w-full text-left text-white/90 hover:text-white font-medium py-2 transition-colors duration-300"
-              >
-                Technologies
-              </button>
-              <button
-                onClick={() => scrollToSection('domains')}
-                className="block w-full text-left text-white/90 hover:text-white font-medium py-2 transition-colors duration-300"
-              >
-                Domains
-              </button>
-              <button
-                onClick={() => scrollToSection('process')}
-                className="block w-full text-left text-white/90 hover:text-white font-medium py-2 transition-colors duration-300"
-              >
-                Process
-              </button>
-              
-              {/* Mobile CTA Buttons */}
-              <div className="pt-4 border-t border-white/20 space-y-3">
-                <button
-                  onClick={openContactForm}
-                  className="flex items-center gap-3 w-full text-left text-white/90 hover:text-white font-medium py-2 transition-colors duration-300"
-                >
-                  <Mail className="w-5 h-5" />
-                  Contact Me
-                </button>
-                <button
-                  onClick={openForm}
-                  className="flex items-center gap-3 w-full bg-sand-dark text-white px-4 py-3 rounded-lg font-medium transition-all duration-300 hover:bg-gray-600"
-                >
-                  <FileText className="w-5 h-5" />
-                  Start Project
-                </button>
-              </div>
-            </nav>
-          </div>
-        </div>
+
       </header>
 
       {/* Contact Form Modal */}

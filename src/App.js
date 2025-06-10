@@ -8,6 +8,7 @@ import Technologies from './components/Technologies';
 import DomainsNiche from './components/DomainsNiche';
 import ProjectLifeCycle from './components/ProjectLifeCycle';
 import Footer from './components/Footer';
+import MobileBottomNav from './components/MobileBottomNav';
 
 function App() {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -50,7 +51,7 @@ function App() {
   // }, []);
 
   // Optimized animation with requestAnimationFrame
-  useEffect(() => {
+  useEffect(() => { 
     let animationId;
     let lastTime = 0;
     const targetFPS = 12; // Reduced FPS for better performance
@@ -237,7 +238,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-sand-light relative overflow-hidden">
+    <div className="min-h-screen bg-sand-light relative overflow-hidden pb-20 lg:pb-0">
       {/* Header */}
       <Header />
 
@@ -394,6 +395,9 @@ function App() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
 
       {selectedProject && (
         <Modal 

@@ -208,4 +208,11 @@ a:focus-visible {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Safe area support for mobile devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 } 

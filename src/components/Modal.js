@@ -66,26 +66,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
       className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
       onClick={handleBackdropClick}
     >
-      {/* Navigation Arrows - Outside the modal */}
-      {canNavigateLeft && (
-        <button
-          onClick={() => onNavigate('prev')}
-          className="absolute left-8 top-1/2 -translate-y-1/2 z-10 w-14 h-14 bg-white/95 hover:bg-white rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
-          aria-label="Previous project"
-        >
-          <ChevronLeft className="w-7 h-7 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
-        </button>
-      )}
 
-      {canNavigateRight && (
-        <button
-          onClick={() => onNavigate('next')}
-          className="absolute right-8 top-1/2 -translate-y-1/2 z-10 w-14 h-14 bg-white/95 hover:bg-white rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
-          aria-label="Next project"
-        >
-          <ChevronRight className="w-7 h-7 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
-        </button>
-      )}
 
       <div 
         className="w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in flex flex-col relative"
@@ -134,8 +115,29 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
             
+            {/* Navigation Arrows - Above Image */}
+            {canNavigateLeft && (
+              <button
+                onClick={() => onNavigate('prev')}
+                className="absolute left-4 top-4 z-10 w-12 h-12 bg-white/95 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
+                aria-label="Previous project"
+              >
+                <ChevronLeft className="w-6 h-6 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
+              </button>
+            )}
+
+            {canNavigateRight && (
+              <button
+                onClick={() => onNavigate('next')}
+                className="absolute right-4 top-4 z-10 w-12 h-12 bg-white/95 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
+                aria-label="Next project"
+              >
+                <ChevronRight className="w-6 h-6 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
+              </button>
+            )}
+            
             {/* Category Badge */}
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2">
               <span className="px-4 py-2 bg-white/90 text-sand-dark font-semibold rounded-full text-sm backdrop-blur-sm">
                 {project.category}
               </span>
