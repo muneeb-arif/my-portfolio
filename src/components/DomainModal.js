@@ -72,7 +72,26 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
       className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
       onClick={handleBackdropClick}
     >
+      {/* Desktop Domain Navigation Arrows - Outside Modal */}
+      {canNavigateLeft && (
+        <button
+          onClick={() => onNavigate('prev')}
+          className="hidden lg:flex absolute left-4 xl:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 xl:w-14 xl:h-14 bg-white hover:bg-gray-50 rounded-full shadow-2xl items-center justify-center transition-all duration-300 hover:scale-110 border border-gray-100"
+          aria-label="Previous domain"
+        >
+          <ChevronLeft className="w-6 h-6 xl:w-7 xl:h-7 text-gray-600 hover:text-sand-dark transition-colors duration-300" />
+        </button>
+      )}
 
+      {canNavigateRight && (
+        <button
+          onClick={() => onNavigate('next')}
+          className="hidden lg:flex absolute right-4 xl:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 xl:w-14 xl:h-14 bg-white hover:bg-gray-50 rounded-full shadow-2xl items-center justify-center transition-all duration-300 hover:scale-110 border border-gray-100"
+          aria-label="Next domain"
+        >
+          <ChevronRight className="w-6 h-6 xl:w-7 xl:h-7 text-gray-600 hover:text-sand-dark transition-colors duration-300" />
+        </button>
+      )}
 
       <div 
         className="w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in flex flex-col"
@@ -137,11 +156,11 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               
-              {/* Navigation Arrows - Above Image */}
+              {/* Mobile Domain Navigation Arrows - Top Corners (Mobile Only) */}
               {canNavigateLeft && (
                 <button
                   onClick={() => onNavigate('prev')}
-                  className="absolute left-4 top-4 z-10 w-12 h-12 bg-white/95 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
+                  className="lg:hidden absolute left-4 top-4 z-20 w-12 h-12 bg-white/95 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
                   aria-label="Previous domain"
                 >
                   <ChevronLeft className="w-6 h-6 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
@@ -151,7 +170,7 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
               {canNavigateRight && (
                 <button
                   onClick={() => onNavigate('next')}
-                  className="absolute right-4 top-4 z-10 w-12 h-12 bg-white/95 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
+                  className="lg:hidden absolute right-4 top-4 z-20 w-12 h-12 bg-white/95 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group border border-gray-200"
                   aria-label="Next domain"
                 >
                   <ChevronRight className="w-6 h-6 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />

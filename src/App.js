@@ -129,6 +129,32 @@ function App() {
         overview: 'A full-featured e-commerce platform with advanced shopping cart functionality, payment processing, and inventory management.',
         technologies: ['React', 'Express.js', 'PostgreSQL', 'Stripe API'],
         features: ['Shopping cart', 'Payment integration', 'Admin dashboard', 'Order tracking'],
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=675&fit=crop&crop=center',
+            caption: 'Homepage & Product Catalog - Wide 16:9 Layout'
+          },
+          {
+            url: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=1200&fit=crop&crop=center',
+            caption: 'Mobile Shopping Cart - Portrait 2:3 Layout'
+          },
+          {
+            url: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1000&h=667&fit=crop&crop=center',
+            caption: 'User Dashboard - Standard 3:2 Landscape'
+          },
+          {
+            url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=800&fit=crop&crop=center',
+            caption: 'Admin Analytics - Square 1:1 Format'
+          },
+          {
+            url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1920&h=1080&fit=crop&crop=center',
+            caption: 'Desktop Dashboard - Ultra-wide 16:9 Screen'
+          },
+          {
+            url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=900&fit=crop&crop=center',
+            caption: 'Mobile Interface - Tall Portrait Layout'
+          }
+        ],
         liveUrl: '#',
         githubUrl: '#'
       }
@@ -144,6 +170,12 @@ function App() {
         overview: 'A modern travel website design focused on user experience and visual storytelling to inspire wanderlust.',
         technologies: ['Figma', 'Adobe XD', 'React', 'Framer Motion'],
         features: ['Interactive prototypes', 'Mobile-first design', 'Accessibility compliant', 'Performance optimized'],
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=800&fit=crop&crop=center',
+            caption: 'Travel Website Design - Homepage'
+          }
+        ],
         liveUrl: '#',
         githubUrl: '#'
       }
@@ -159,6 +191,12 @@ function App() {
         overview: 'A sophisticated financial management application with real-time data processing and secure transaction handling.',
         technologies: ['Python', 'Django', 'PostgreSQL', 'Redis', 'Celery'],
         features: ['Real-time analytics', 'Secure transactions', 'API integration', 'Automated reports'],
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop&crop=center',
+            caption: 'Finance App Dashboard - Analytics Overview'
+          }
+        ],
         liveUrl: '#',
         githubUrl: '#'
       }
@@ -174,6 +212,12 @@ function App() {
         overview: 'A personal portfolio website showcasing my skills, projects, and experience as a full-stack developer.',
         technologies: ['React', 'Tailwind CSS', 'Vercel', 'Netlify'],
         features: ['Responsive design', 'Dark mode', 'Contact form', 'SEO optimized'],
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=1200&h=800&fit=crop&crop=center',
+            caption: 'Portfolio Website - Hero Section'
+          }
+        ],
         liveUrl: '#',
         githubUrl: '#'
       }
@@ -189,6 +233,12 @@ function App() {
         overview: 'A comprehensive task management system designed for teams to collaborate effectively and track project progress.',
         technologies: ['Vue.js', 'Laravel', 'MySQL', 'Socket.io'],
         features: ['Real-time collaboration', 'Task tracking', 'Team management', 'Progress analytics'],
+        images: [
+          {
+            url: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=1200&h=800&fit=crop&crop=center',
+            caption: 'Task Management System - Project Dashboard'
+          }
+        ],
         liveUrl: '#',
         githubUrl: '#'
       }
