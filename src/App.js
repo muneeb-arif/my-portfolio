@@ -9,13 +9,75 @@ import DomainsNiche from './components/DomainsNiche';
 import ProjectLifeCycle from './components/ProjectLifeCycle';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
+import Dashboard from './components/dashboard/Dashboard';
+import portfolioService from './services/portfolioService';
 
 function App() {
+  // Check if we're on the dashboard route
+  const isDashboard = window.location.pathname === '/dashboard';
+  
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
   const [particles, setParticles] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [filters, setFilters] = useState(['All']);
+  const [loading, setLoading] = useState(true);
 
-  const filters = ['All', 'Web Development', 'UI/UX Design', 'Backend'];
+  // Load projects and categories on component mount
+  useEffect(() => {
+    if (!isDashboard) {
+      loadPortfolioData();
+    }
+  }, [isDashboard]);
+
+  const loadPortfolioData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load projects and categories in parallel
+      const [projectsData, categoriesData] = await Promise.all([
+        portfolioService.getPublishedProjects(),
+        portfolioService.getAvailableCategories()
+      ]);
+
+      // Always use the actual data from the database (even if empty)
+      setProjects(projectsData || []);
+      setFilters(categoriesData || ['All']);
+
+      console.log(`📊 Loaded ${projectsData?.length || 0} published projects`);
+      console.log(`📁 Loaded ${(categoriesData?.length || 1) - 1} categories`); // -1 for 'All'
+      
+    } catch (error) {
+      console.error('Error loading portfolio data:', error);
+      // Only use fallback on connection errors, not empty data
+      setProjects([]);
+      setFilters(['All']);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Note: Removed fallback projects - now shows true empty state when no data exists
+
+  // Handle filter changes
+  const handleFilterChange = async (newFilter) => {
+    setActiveFilter(newFilter);
+    
+    if (!isDashboard) {
+      try {
+        const filteredProjects = await portfolioService.getPublishedProjectsByCategory(newFilter);
+        setProjects(filteredProjects);
+      } catch (error) {
+        console.error('Error filtering projects:', error);
+        // Fallback to client-side filtering
+        const allProjects = await portfolioService.getPublishedProjects();
+        const filtered = newFilter === 'All' 
+          ? allProjects 
+          : allProjects.filter(project => project.category === newFilter);
+        setProjects(filtered);
+      }
+    }
+  };
 
   // Initialize floating sand particles
   // useEffect(() => {
@@ -102,152 +164,7 @@ function App() {
     return () => cancelAnimationFrame(animationId);
   }, []);
 
-  const projects = [
-    {
-      id: 1,
-      title: 'Explore Heaven Pakistan',
-      description: 'A responsive website for travel enthusiasts',
-      category: 'Web Development',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop&crop=center',
-      buttonText: 'View Demo',
-      details: {
-        overview: 'A comprehensive travel platform showcasing the beautiful landscapes and destinations of Pakistan. Built with modern web technologies to provide an immersive user experience.',
-        technologies: ['React', 'Node.js', 'MongoDB', 'Tailwind CSS'],
-        features: ['Interactive maps', 'Booking system', 'User reviews', 'Mobile responsive design'],
-        liveUrl: '#',
-        githubUrl: '#'
-      }
-    },
-    {
-      id: 2,
-      title: 'E-commerce Platform',
-      description: 'A scalable e-commerce web application',
-      category: 'Web Development',
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop&crop=center',
-      buttonText: 'View Details',
-      details: {
-        overview: 'A full-featured e-commerce platform with advanced shopping cart functionality, payment processing, and inventory management.',
-        technologies: ['React', 'Express.js', 'PostgreSQL', 'Stripe API'],
-        features: ['Shopping cart', 'Payment integration', 'Admin dashboard', 'Order tracking'],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=675&fit=crop&crop=center',
-            caption: 'Homepage & Product Catalog - Wide 16:9 Layout'
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=1200&fit=crop&crop=center',
-            caption: 'Mobile Shopping Cart - Portrait 2:3 Layout'
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1000&h=667&fit=crop&crop=center',
-            caption: 'User Dashboard - Standard 3:2 Landscape'
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=800&fit=crop&crop=center',
-            caption: 'Admin Analytics - Square 1:1 Format'
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1920&h=1080&fit=crop&crop=center',
-            caption: 'Desktop Dashboard - Ultra-wide 16:9 Screen'
-          },
-          {
-            url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=900&fit=crop&crop=center',
-            caption: 'Mobile Interface - Tall Portrait Layout'
-          }
-        ],
-        liveUrl: '#',
-        githubUrl: '#'
-      }
-    },
-    {
-      id: 3,
-      title: 'Travel Website',
-      description: 'A responsive website for travel enthusiasts',
-      category: 'UI/UX Design',
-      image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop&crop=center',
-      buttonText: 'View Demo',
-      details: {
-        overview: 'A modern travel website design focused on user experience and visual storytelling to inspire wanderlust.',
-        technologies: ['Figma', 'Adobe XD', 'React', 'Framer Motion'],
-        features: ['Interactive prototypes', 'Mobile-first design', 'Accessibility compliant', 'Performance optimized'],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=800&fit=crop&crop=center',
-            caption: 'Travel Website Design - Homepage'
-          }
-        ],
-        liveUrl: '#',
-        githubUrl: '#'
-      }
-    },
-    {
-      id: 4,
-      title: 'Finance App',
-      description: 'A finance app with clean currency ui',
-      category: 'Backend',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&crop=center',
-      buttonText: 'View Details',
-      details: {
-        overview: 'A sophisticated financial management application with real-time data processing and secure transaction handling.',
-        technologies: ['Python', 'Django', 'PostgreSQL', 'Redis', 'Celery'],
-        features: ['Real-time analytics', 'Secure transactions', 'API integration', 'Automated reports'],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop&crop=center',
-            caption: 'Finance App Dashboard - Analytics Overview'
-          }
-        ],
-        liveUrl: '#',
-        githubUrl: '#'
-      }
-    },
-    {
-      id: 5,
-      title: 'Portfolio Website',
-      description: 'My personal portfolio website',
-      category: 'Web Development',
-      image: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=600&h=400&fit=crop&crop=center',
-      buttonText: 'View Demo',
-      details: {
-        overview: 'A personal portfolio website showcasing my skills, projects, and experience as a full-stack developer.',
-        technologies: ['React', 'Tailwind CSS', 'Vercel', 'Netlify'],
-        features: ['Responsive design', 'Dark mode', 'Contact form', 'SEO optimized'],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=1200&h=800&fit=crop&crop=center',
-            caption: 'Portfolio Website - Hero Section'
-          }
-        ],
-        liveUrl: '#',
-        githubUrl: '#'
-      }
-    },
-    {
-      id: 6,
-      title: 'Task Management System',
-      description: 'A collaborative project management tool',
-      category: 'Web Development',
-      image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=600&h=400&fit=crop&crop=center',
-      buttonText: 'View Details',
-      details: {
-        overview: 'A comprehensive task management system designed for teams to collaborate effectively and track project progress.',
-        technologies: ['Vue.js', 'Laravel', 'MySQL', 'Socket.io'],
-        features: ['Real-time collaboration', 'Task tracking', 'Team management', 'Progress analytics'],
-        images: [
-          {
-            url: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=1200&h=800&fit=crop&crop=center',
-            caption: 'Task Management System - Project Dashboard'
-          }
-        ],
-        liveUrl: '#',
-        githubUrl: '#'
-      }
-    }
-  ];
-
-  const filteredProjects = activeFilter === 'All' 
-    ? projects 
-    : projects.filter(project => project.category === activeFilter);
+  const filteredProjects = projects; // Projects are already filtered by the service
 
   const handleProjectClick = (project) => {
     setSelectedProject(project);
@@ -286,6 +203,11 @@ function App() {
       canNavigateRight: currentIndex < projects.length - 1
     };
   };
+
+  // If dashboard route, show dashboard
+  if (isDashboard) {
+    return <Dashboard />;
+  }
 
   return (
     <div className="min-h-screen bg-sand-light relative overflow-hidden pb-20 lg:pb-0">
@@ -425,12 +347,39 @@ function App() {
           <FilterMenu 
             filters={filters}
             activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
+            onFilterChange={handleFilterChange}
           />
-          <PortfolioGrid 
-            projects={filteredProjects}
-            onProjectClick={handleProjectClick}
-          />
+          
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-warm-brown mb-4"></div>
+                <p className="text-warm-brown">Loading projects...</p>
+              </div>
+            </div>
+          ) : filteredProjects.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">📝</div>
+              <h3 className="text-xl font-semibold text-warm-brown mb-2">No Projects Found</h3>
+              <p className="text-gray-600 mb-4">
+                {activeFilter === 'All' 
+                  ? "No published projects available yet."
+                  : `No projects found in "${activeFilter}" category.`
+                }
+              </p>
+              <button 
+                onClick={() => handleFilterChange('All')}
+                className="text-warm-brown hover:underline"
+              >
+                View All Projects
+              </button>
+            </div>
+          ) : (
+            <PortfolioGrid 
+              projects={filteredProjects}
+              onProjectClick={handleProjectClick}
+            />
+          )}
         </div>
       </div>
 

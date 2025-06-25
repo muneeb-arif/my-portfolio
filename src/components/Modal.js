@@ -2,6 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, X, Expand } from 'lucide-react';
 import ImageLightbox from './ImageLightbox';
 
+// Utility function to render text with line breaks
+const renderTextWithLineBreaks = (text) => {
+  if (!text) return null;
+  
+  return text.split('\n').map((line, index) => (
+    <React.Fragment key={index}>
+      {line}
+      {index < text.split('\n').length - 1 && <br />}
+    </React.Fragment>
+  ));
+};
+
 const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight }) => {
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -305,7 +317,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-gray-800">Project Overview</h3>
               <p className="text-gray-600 leading-relaxed">
-                {project.details.overview}
+                {renderTextWithLineBreaks(project.details.overview)}
               </p>
             </div>
 
