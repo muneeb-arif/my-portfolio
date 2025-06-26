@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import DomainCard from './DomainCard';
 import DomainModal from './DomainModal';
-import { domainsTechnologiesService } from '../services/supabaseService';
+import { nicheService } from '../services/supabaseService';
 
 const DomainsNiche = () => {
-  const [selectedDomain, setSelectedDomain] = useState(null);
-  const [domainsData, setDomainsData] = useState([]);
+  const [selectedNiche, setSelectedNiche] = useState(null);
+  const [nichesData, setNichesData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDomains();
+    loadNiches();
   }, []);
 
-  const loadDomains = async () => {
+  const loadNiches = async () => {
     try {
       setLoading(true);
-      const data = await domainsTechnologiesService.getDomains();
-      setDomainsData(data);
+      const data = await nicheService.getNiches();
+      setNichesData(data);
     } catch (error) {
-      console.error('Error loading domains:', error);
+      console.error('Error loading niches:', error);
       // Fallback to empty array if there's an error
-      setDomainsData([]);
+      setNichesData([]);
     } finally {
       setLoading(false);
     }
@@ -51,22 +51,22 @@ const DomainsNiche = () => {
       'Phone': () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
     };
     
-    return iconMap[iconName] || iconMap['Globe']; // Default to Globe icon if not found
+    return iconMap[iconName] || iconMap['Target']; // Default to Target icon for niches
   };
 
-  const handleCardClick = (domain) => {
-    setSelectedDomain(domain);
+  const handleCardClick = (niche) => {
+    setSelectedNiche(niche);
   };
 
   const handleCloseModal = () => {
-    setSelectedDomain(null);
+    setSelectedNiche(null);
   };
 
-  // Navigation between domains in modal
-  const handleDomainNavigation = (direction) => {
-    if (!selectedDomain) return;
+  // Navigation between niches in modal
+  const handleNicheNavigation = (direction) => {
+    if (!selectedNiche) return;
 
-    const currentIndex = domainsData.findIndex(d => d.id === selectedDomain.id);
+    const currentIndex = nichesData.findIndex(n => n.id === selectedNiche.id);
     let newIndex;
 
     if (direction === 'next') {
@@ -76,19 +76,19 @@ const DomainsNiche = () => {
     }
 
     // Check bounds
-    if (newIndex >= 0 && newIndex < domainsData.length) {
-      setSelectedDomain(domainsData[newIndex]);
+    if (newIndex >= 0 && newIndex < nichesData.length) {
+      setSelectedNiche(nichesData[newIndex]);
     }
   };
 
   // Check if navigation is possible
   const getNavigationState = () => {
-    if (!selectedDomain) return { canNavigateLeft: false, canNavigateRight: false };
+    if (!selectedNiche) return { canNavigateLeft: false, canNavigateRight: false };
 
-    const currentIndex = domainsData.findIndex(d => d.id === selectedDomain.id);
+    const currentIndex = nichesData.findIndex(n => n.id === selectedNiche.id);
     return {
       canNavigateLeft: currentIndex > 0,
-      canNavigateRight: currentIndex < domainsData.length - 1
+      canNavigateRight: currentIndex < nichesData.length - 1
     };
   };
 
@@ -101,7 +101,7 @@ const DomainsNiche = () => {
               Domains / Niche
             </h2>
             <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-              Loading domains...
+              Loading niches...
             </p>
           </div>
           <div className="flex justify-center">
@@ -136,42 +136,45 @@ const DomainsNiche = () => {
           </p>
         </div>
 
-        {/* Domains Grid */}
-        {domainsData.length > 0 ? (
+        {/* Niches Grid */}
+        {nichesData.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-12">
-            {domainsData.map((domain) => (
-              <DomainCard
-                key={domain.id}
-                domain={{
-                  ...domain,
-                  icon: getIconComponent(domain.icon),
-                  subtitle: domain.subtitle || 'Specialized domain expertise',
-                  tags: domain.tech_skills 
-                    ? domain.tech_skills
-                        .sort((a, b) => (b.level || 0) - (a.level || 0)) // Sort by skill level descending
-                        .map(skill => skill.title)
-                    : [],
-                  image: `https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000000)}?w=400&h=200&fit=crop`,
-                  modalContent: domain.tech_skills 
-                    ? domain.tech_skills
-                        .sort((a, b) => (b.level || 0) - (a.level || 0)) // Sort by skill level descending
-                        .map(skill => skill.title)
-                    : []
-                }}
-                onClick={handleCardClick}
-                isSelected={selectedDomain?.id === domain.id}
-              />
-            ))}
+            {nichesData.map((niche) => {
+              // Convert tools string to array
+              const toolsArray = niche.tools ? niche.tools.split(',').map(tool => tool.trim()).filter(tool => tool) : [];
+              
+              // Convert key_features string to array, splitting by newlines
+              const keyFeaturesArray = niche.key_features 
+                ? niche.key_features.split('\n').map(feature => feature.trim()).filter(feature => feature)
+                : [];
+              
+              return (
+                <DomainCard
+                  key={niche.id}
+                  domain={{
+                    ...niche,
+                    icon: getIconComponent('Target'), // Use Target icon for niches
+                    subtitle: niche.overview || 'Specialized domain expertise',
+                    tags: toolsArray,
+                    image: niche.image.startsWith('http') ? niche.image : `/images/domains/${niche.image}`,
+                    modalContent: keyFeaturesArray,
+                    ai_driven: niche.ai_driven
+                  }}
+                  onClick={handleCardClick}
+                  isSelected={selectedNiche?.id === niche.id}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🎯</div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Domains Found</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Niches Found</h3>
             <p className="text-gray-600 mb-4">
-              No domains have been configured yet.
+              No niches have been configured yet.
             </p>
             <p className="text-sm text-gray-500">
-              Add domains and their associated skills through the dashboard to display them here.
+              Add niches and their details through the dashboard to display them here.
             </p>
           </div>
         )}
@@ -179,9 +182,9 @@ const DomainsNiche = () => {
 
       {/* Modal */}
       <DomainModal 
-        domain={selectedDomain} 
+        domain={selectedNiche} 
         onClose={handleCloseModal}
-        onNavigate={handleDomainNavigation}
+        onNavigate={handleNicheNavigation}
         {...getNavigationState()}
       />
 

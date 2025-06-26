@@ -793,4 +793,107 @@ export const bulkService = {
       throw error;
     }
   }
+};
+
+// ================ NICHE OPERATIONS ================
+
+export const nicheService = {
+  // Get all niches
+  async getNiches() {
+    try {
+      const { data, error } = await supabase
+        .from('niche')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching niches:', error);
+      throw error;
+    }
+  },
+
+  // Get single niche
+  async getNiche(id) {
+    try {
+      const { data, error } = await supabase
+        .from('niche')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching niche:', error);
+      throw error;
+    }
+  },
+
+  // Create new niche
+  async createNiche(nicheData) {
+    try {
+      const { data, error } = await supabase
+        .from('niche')
+        .insert(nicheData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating niche:', error);
+      throw error;
+    }
+  },
+
+  // Update niche
+  async updateNiche(id, updates) {
+    try {
+      const { data, error } = await supabase
+        .from('niche')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating niche:', error);
+      throw error;
+    }
+  },
+
+  // Delete niche
+  async deleteNiche(id) {
+    try {
+      const { error } = await supabase
+        .from('niche')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error deleting niche:', error);
+      throw error;
+    }
+  },
+
+  // Subscribe to niche changes (real-time)
+  subscribeToNiches(callback) {
+    return supabase
+      .channel('niches')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'niche' 
+        }, 
+        callback
+      )
+      .subscribe();
+  }
 }; 

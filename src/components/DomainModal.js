@@ -35,7 +35,7 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
 
   if (!domain) return null;
 
-  const { title, subtitle, badge, modalContent, icon: Icon, image, tags } = domain;
+  const { title, subtitle, badge, modalContent, icon: Icon, image, tags, ai_driven } = domain;
 
   const handleBackdropClick = (event) => {
     if (event.target === event.currentTarget) {
@@ -111,6 +111,11 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
                 {badge && (
                   <span className="bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                     {badge}
+                  </span>
+                )}
+                {ai_driven && (
+                  <span className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                    🤖 AI-Driven
                   </span>
                 )}
               </div>

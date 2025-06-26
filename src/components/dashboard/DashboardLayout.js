@@ -3,10 +3,12 @@ import { projectService } from '../../services/supabaseService';
 import ProjectsManager from './ProjectsManager';
 import CategoriesManager from './CategoriesManager';
 import DomainsTechnologiesManager from './DomainsTechnologiesManager';
+import NicheManager from './NicheManager';
 import './DashboardLayout.css';
 import './ProjectsManager.css';
 import './CategoriesManager.css';
 import './DomainsTechnologiesManager.css';
+import './NicheManager.css';
 
 const DashboardLayout = ({ user, onSignOut }) => {
   const [activeSection, setActiveSection] = useState('overview');
@@ -23,7 +25,8 @@ const DashboardLayout = ({ user, onSignOut }) => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: '📊' },
     { id: 'projects', label: 'Projects', icon: '💼' },
-    { id: 'domains-technologies', label: 'Domains & Tech', icon: '🎯' },
+    { id: 'domains-technologies', label: 'Technologies', icon: '🎯' },
+    { id: 'niche', label: 'Domains / Niche', icon: '🏆' },
     { id: 'media', label: 'Media Library', icon: '🖼️' },
     { id: 'categories', label: 'Categories', icon: '📁' },
     { id: 'appearance', label: 'Appearance', icon: '🎨' },
@@ -69,6 +72,8 @@ const DashboardLayout = ({ user, onSignOut }) => {
         return <ProjectsManager projects={projects} onProjectsChange={loadDashboardData} />;
       case 'domains-technologies':
         return <DomainsTechnologiesManager />;
+      case 'niche':
+        return <NicheManager />;
       case 'media':
         return <MediaSection />;
       case 'categories':

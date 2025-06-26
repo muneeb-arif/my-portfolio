@@ -29,7 +29,8 @@ export const TABLES = {
 export const BUCKETS = {
   IMAGES: 'images',
   AVATARS: 'avatars',
-  DOCUMENTS: 'documents'
+  DOCUMENTS: 'documents',
+  DOMAINS: 'domains'
 };
 
 export default supabase; 

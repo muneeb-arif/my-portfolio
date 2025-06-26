@@ -1,7 +1,7 @@
 import React from 'react';
 
 const DomainCard = ({ domain, onClick, isSelected }) => {
-  const { title, subtitle, tags, badge, image, icon: Icon } = domain;
+  const { title, subtitle, tags, badge, image, icon: Icon, ai_driven } = domain;
 
   return (
     <div
@@ -18,6 +18,15 @@ const DomainCard = ({ domain, onClick, isSelected }) => {
         <div className="absolute top-4 right-4 z-10">
           <span className="bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
             {badge}
+          </span>
+        </div>
+      )}
+
+      {/* AI-Driven Badge */}
+      {ai_driven && (
+        <div className="absolute top-4 left-4 z-10">
+          <span className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+            🤖 AI-Driven
           </span>
         </div>
       )}
