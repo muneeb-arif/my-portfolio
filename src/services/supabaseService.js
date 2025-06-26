@@ -502,6 +502,196 @@ export const metaService = {
   }
 };
 
+// ================ DOMAINS & TECHNOLOGIES OPERATIONS ================
+
+export const domainsTechnologiesService = {
+  // Get all domains and technologies for current user
+  async getDomainsTechnologies() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('domains_technologies')
+        .select(`
+          *,
+          tech_skills (*)
+        `)
+        .eq('user_id', user.id)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching domains and technologies:', error);
+      throw error;
+    }
+  },
+
+  // Get domains only
+  async getDomains() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('domains_technologies')
+        .select(`
+          *,
+          tech_skills (*)
+        `)
+        .eq('user_id', user.id)
+        .eq('type', 'domain')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching domains:', error);
+      throw error;
+    }
+  },
+
+  // Get technologies only
+  async getTechnologies() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('domains_technologies')
+        .select(`
+          *,
+          tech_skills (*)
+        `)
+        .eq('user_id', user.id)
+        .eq('type', 'technology')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching technologies:', error);
+      throw error;
+    }
+  },
+
+  // Create new domain or technology
+  async createDomainTechnology(itemData) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('domains_technologies')
+        .insert({
+          ...itemData,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating domain/technology:', error);
+      throw error;
+    }
+  },
+
+  // Update domain or technology
+  async updateDomainTechnology(id, updates) {
+    try {
+      const { data, error } = await supabase
+        .from('domains_technologies')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating domain/technology:', error);
+      throw error;
+    }
+  },
+
+  // Delete domain or technology
+  async deleteDomainTechnology(id) {
+    try {
+      const { error } = await supabase
+        .from('domains_technologies')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error deleting domain/technology:', error);
+      throw error;
+    }
+  },
+
+  // Add skill to technology
+  async addSkill(techId, skillData) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('tech_skills')
+        .insert({
+          ...skillData,
+          tech_id: techId,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error adding skill:', error);
+      throw error;
+    }
+  },
+
+  // Update skill
+  async updateSkill(id, updates) {
+    try {
+      const { data, error } = await supabase
+        .from('tech_skills')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating skill:', error);
+      throw error;
+    }
+  },
+
+  // Delete skill
+  async deleteSkill(id) {
+    try {
+      const { error } = await supabase
+        .from('tech_skills')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error deleting skill:', error);
+      throw error;
+    }
+  }
+};
+
 // ================ BULK OPERATIONS ================
 
 export const bulkService = {
