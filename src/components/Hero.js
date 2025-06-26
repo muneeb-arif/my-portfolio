@@ -138,7 +138,7 @@ const Hero = () => {
                 className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-8 border-white shadow-2xl relative z-10"
                 style={{
                   backgroundImage: `url('./images/profile/avatar.jpeg')`,
-                  backgroundSize: '170%',
+                  backgroundSize: '100%',
                   backgroundPosition: 'center top',
                   backgroundRepeat: 'no-repeat'
                 }}
