@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Mail, User, Building, Phone, MessageSquare, Tag, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-const ContactForm = ({ isOpen, onClose }) => {
+const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,6 +40,16 @@ const ContactForm = ({ isOpen, onClose }) => {
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen, onClose]);
+
+  // Pre-fill form data when component opens with prefillData
+  useEffect(() => {
+    if (isOpen && prefillData) {
+      setFormData(prev => ({
+        ...prev,
+        ...prefillData
+      }));
+    }
+  }, [isOpen, prefillData]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -248,12 +258,6 @@ ${formData.name}
     setTouched({});
   };
 
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   const getInputClassName = (field) => {
     const baseClass = "w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-all duration-200";
     const hasError = errors[field] && touched[field];
@@ -263,6 +267,30 @@ ${formData.name}
     }
     
     return `${baseClass} border-gray-200 focus:ring-sand-dark`;
+  };
+
+  // Reset form when closed
+  const handleClose = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      inquiryType: 'General Inquiry',
+      subject: '',
+      message: '',
+      budget: '',
+      timeline: ''
+    });
+    setErrors({});
+    setTouched({});
+    onClose();
+  };
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
   };
 
   if (!isOpen) return null;
@@ -286,7 +314,7 @@ ${formData.name}
               </div>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               aria-label="Close contact form"
             >
@@ -509,7 +537,7 @@ ${formData.name}
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-full text-center hover:bg-gray-50 transform hover:scale-105 transition-all duration-300"
             >
               Cancel

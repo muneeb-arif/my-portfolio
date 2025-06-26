@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import ContactForm from './ContactForm';
 
 const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigateRight }) => {
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [isContactFormOpen, setIsContactFormOpen] = useState(false);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
@@ -32,6 +34,39 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
       };
     }
   }, [domain, onClose, onNavigate, canNavigateLeft, canNavigateRight]);
+
+  const openContactForm = () => {
+    setIsContactFormOpen(true);
+  };
+
+  const closeContactForm = () => {
+    setIsContactFormOpen(false);
+  };
+
+  // Prepare pre-filled data for contact form
+  const getPrefillData = () => {
+    if (!domain) return {};
+    
+    return {
+      inquiryType: 'General Inquiry',
+      subject: `Quote Request - ${domain.title}`,
+      message: `Hi Muneeb,
+
+I'm interested in getting a quote for ${domain.title} development services.
+
+Domain/Niche: ${domain.title}
+${domain.subtitle ? `Overview: ${domain.subtitle}` : ''}
+${domain.tags && domain.tags.length > 0 ? `Technologies: ${domain.tags.join(', ')}` : ''}
+
+Please provide a detailed quote including:
+• Project scope and deliverables
+• Timeline estimates
+• Pricing breakdown
+• Next steps
+
+Looking forward to hearing from you!`
+    };
+  };
 
   if (!domain) return null;
 
@@ -254,16 +289,16 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
             </button>
             <button
               className="flex-1 px-6 py-3 border-2 border-sand-dark text-sand-dark font-semibold rounded-full text-center hover:bg-sand-dark hover:text-white transform hover:scale-105 transition-all duration-300"
-              onClick={() => {
-                // Could add functionality to contact about this domain
-                console.log(`Interested in ${title} development`);
-              }}
+              onClick={openContactForm}
             >
               Get Quote
             </button>
           </div>
         </div>
       </div>
+
+      {/* Contact Form Modal */}
+      <ContactForm isOpen={isContactFormOpen} onClose={closeContactForm} prefillData={getPrefillData()} />
     </div>
   );
 };

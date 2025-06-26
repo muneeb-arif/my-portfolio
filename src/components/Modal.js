@@ -354,22 +354,35 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
         {/* Action Buttons - Sticky Bottom */}
         <div className="flex-shrink-0 p-6 bg-white border-t border-gray-200">
           <div className="flex flex-col sm:flex-row gap-4">
-            <a
-              href={project.details.liveUrl}
-              className="flex-1 px-6 py-3 bg-sand-dark text-white font-semibold rounded-full text-center hover:bg-gray-700 transform hover:scale-105 transition-all duration-300"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View Live Demo
-            </a>
-            <a
-              href={project.details.githubUrl}
-              className="flex-1 px-6 py-3 border-2 border-sand-dark text-sand-dark font-semibold rounded-full text-center hover:bg-sand-dark hover:text-white transform hover:scale-105 transition-all duration-300"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View Source Code
-            </a>
+            {/* Only show Live Demo button if URL is valid */}
+            {(project.details.liveUrl && project.details.liveUrl !== '#' && project.details.liveUrl !== '') && (
+              <a
+                href={project.details.liveUrl}
+                className="flex-1 px-6 py-3 bg-sand-dark text-white font-semibold rounded-full text-center hover:bg-gray-700 transform hover:scale-105 transition-all duration-300"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View Live Demo
+              </a>
+            )}
+            {/* Only show Source Code button if URL is valid */}
+            {(project.details.githubUrl && project.details.githubUrl !== '#' && project.details.githubUrl !== '') && (
+              <a
+                href={project.details.githubUrl}
+                className="flex-1 px-6 py-3 border-2 border-sand-dark text-sand-dark font-semibold rounded-full text-center hover:bg-sand-dark hover:text-white transform hover:scale-105 transition-all duration-300"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View Source Code
+              </a>
+            )}
+            {/* Show message if no buttons are available */}
+            {(!project.details.liveUrl || project.details.liveUrl === '#' || project.details.liveUrl === '') && 
+             (!project.details.githubUrl || project.details.githubUrl === '#' || project.details.githubUrl === '') && (
+              <div className="flex-1 px-6 py-3 text-center text-gray-500 italic">
+                Demo and source code links coming soon
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,6 @@
 import { supabase } from '../config/supabase';
+import { fallbackDataService } from './fallbackDataService';
+import { fallbackUtils } from '../utils/fallbackUtils';
 
 // ================ PUBLIC PORTFOLIO OPERATIONS ================
 // These functions fetch data for the public portfolio (no authentication required)
@@ -17,9 +19,11 @@ export const portfolioService = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching published projects:', error);
-        // Return empty array on error so frontend doesn't break
-        return [];
+        console.error('Error fetching published projects from Supabase, using fallback data:', error);
+        // Show fallback notification
+        fallbackUtils.showFallbackNotification();
+        // Return fallback data when Supabase fails
+        return this.transformFallbackProjects(fallbackDataService.getProjects());
       }
 
       // Transform data to match existing frontend format
@@ -43,9 +47,35 @@ export const portfolioService = {
         }
       })) || [];
     } catch (error) {
-      console.error('Error fetching published projects:', error);
-      return []; // Return empty array on error
+      console.error('Error fetching published projects from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return this.transformFallbackProjects(fallbackDataService.getProjects());
     }
+  },
+
+  // Transform fallback projects to match frontend format
+  transformFallbackProjects(fallbackProjects) {
+    return fallbackProjects.map(project => ({
+      id: project.id,
+      title: project.title,
+      description: project.description,
+      category: project.category || 'Web Development',
+      image: project.image || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop&crop=center',
+      buttonText: 'View Details',
+      details: {
+        overview: project.overview || project.description,
+        technologies: Array.isArray(project.technologies) ? project.technologies : [],
+        features: Array.isArray(project.features) ? project.features : [],
+        liveUrl: project.live_url || '#',
+        githubUrl: project.github_url || '#',
+        images: [{
+          url: project.image || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop&crop=center',
+          caption: 'Project Image'
+        }]
+      }
+    }));
   },
 
   // Get published projects by category

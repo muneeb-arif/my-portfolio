@@ -1,4 +1,6 @@
 import { supabase, TABLES, BUCKETS } from '../config/supabase';
+import { fallbackDataService } from './fallbackDataService';
+import { fallbackUtils } from '../utils/fallbackUtils';
 
 // ================ AUTH OPERATIONS ================
 
@@ -96,8 +98,11 @@ export const projectService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching projects:', error);
-      throw error;
+      console.error('Error fetching projects from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getProjects();
     }
   },
 
@@ -381,8 +386,11 @@ export const metaService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      throw error;
+      console.error('Error fetching categories from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getCategories();
     }
   },
 
@@ -505,74 +513,71 @@ export const metaService = {
 // ================ DOMAINS & TECHNOLOGIES OPERATIONS ================
 
 export const domainsTechnologiesService = {
-  // Get all domains and technologies for current user
+  // Get all domains and technologies
   async getDomainsTechnologies() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { data, error } = await supabase
         .from('domains_technologies')
         .select(`
           *,
           tech_skills (*)
         `)
-        .eq('user_id', user.id)
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching domains and technologies:', error);
-      throw error;
+      console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getTechnologies();
     }
   },
 
   // Get domains only
   async getDomains() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { data, error } = await supabase
         .from('domains_technologies')
         .select(`
           *,
           tech_skills (*)
         `)
-        .eq('user_id', user.id)
         .eq('type', 'domain')
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching domains:', error);
-      throw error;
+      console.error('Error fetching domains from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getTechnologies().filter(item => item.type === 'domain');
     }
   },
 
   // Get technologies only
   async getTechnologies() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { data, error } = await supabase
         .from('domains_technologies')
         .select(`
           *,
           tech_skills (*)
         `)
-        .eq('user_id', user.id)
         .eq('type', 'technology')
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching technologies:', error);
-      throw error;
+      console.error('Error fetching technologies from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getTechnologies().filter(item => item.type === 'technology');
     }
   },
 
@@ -809,8 +814,11 @@ export const nicheService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching niches:', error);
-      throw error;
+      console.error('Error fetching niches from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getNiches();
     }
   },
 
