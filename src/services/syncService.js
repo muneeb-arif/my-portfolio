@@ -439,7 +439,7 @@ export const syncService = {
 
       const userId = user.id;
 
-      // Fetch all data from database
+      // Fetch all data from database with relationships
       const [
         projectsData,
         technologiesData,
@@ -450,10 +450,16 @@ export const syncService = {
       ] = await Promise.all([
         supabase.from('projects').select('*').eq('user_id', userId),
         supabase.from('domains_technologies').select('*').eq('user_id', userId),
-        supabase.from('tech_skills').select('*').eq('user_id', userId),
+        supabase.from('tech_skills').select(`
+          *,
+          domains_technologies!tech_skills_tech_id_fkey(title)
+        `).eq('user_id', userId),
         supabase.from('niche').select('*'),
         supabase.from('categories').select('*'),
-        supabase.from('project_images').select('*').eq('user_id', userId)
+        supabase.from('project_images').select(`
+          *,
+          projects!project_images_project_id_fkey(title)
+        `).eq('user_id', userId)
       ]);
 
       // Check for errors
@@ -470,6 +476,18 @@ export const syncService = {
         throw new Error(`Database errors: ${errors.map(e => e.message).join(', ')}`);
       }
 
+      // Process skills to include tech_title
+      const processedSkills = skillsData.data?.map(skill => ({
+        ...skill,
+        tech_title: skill.domains_technologies?.title || 'Unknown'
+      })) || [];
+
+      // Process project images to include project_title
+      const processedProjectImages = projectImagesData.data?.map(image => ({
+        ...image,
+        project_title: image.projects?.title || 'Unknown'
+      })) || [];
+
       // Organize data for backup
       const backupData = {
         metadata: {
@@ -479,19 +497,19 @@ export const syncService = {
           total_records: {
             projects: projectsData.data?.length || 0,
             technologies: technologiesData.data?.length || 0,
-            skills: skillsData.data?.length || 0,
+            skills: processedSkills.length || 0,
             niches: nichesData.data?.length || 0,
             categories: categoriesData.data?.length || 0,
-            project_images: projectImagesData.data?.length || 0
+            project_images: processedProjectImages.length || 0
           }
         },
         data: {
           projects: projectsData.data || [],
           technologies: technologiesData.data || [],
-          skills: skillsData.data || [],
+          skills: processedSkills,
           niches: nichesData.data || [],
           categories: categoriesData.data || [],
-          project_images: projectImagesData.data || []
+          project_images: processedProjectImages
         }
       };
 
@@ -556,16 +574,30 @@ export const syncService = {
       const userId = user.id;
       let importedCount = 0;
 
+      // Clear all existing data first
+      console.log('🗑️ Clearing existing data before import...');
+      await this.clearAllData(userId);
+
+      // Clear global tables (categories and niches)
+      try {
+        await supabase.from('categories').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        await supabase.from('niche').delete().neq('id', 0);
+        console.log('✅ Global tables cleared');
+      } catch (error) {
+        console.log('⚠️ Could not clear global tables:', error.message);
+      }
+
       // Import categories first (no dependencies)
       if (backupData.data.categories?.length > 0) {
+        console.log('📁 Importing categories...');
         for (const category of backupData.data.categories) {
           const { error } = await supabase
             .from('categories')
-            .upsert({
+            .insert({
               name: category.name,
               description: category.description,
               color: category.color
-            }, { onConflict: 'name' });
+            });
           
           if (!error) importedCount++;
         }
@@ -573,15 +605,16 @@ export const syncService = {
 
       // Import technologies
       if (backupData.data.technologies?.length > 0) {
+        console.log('🎯 Importing technologies...');
         for (const tech of backupData.data.technologies) {
           const { error } = await supabase
             .from('domains_technologies')
-            .upsert({
+            .insert({
               user_id: userId,
               type: tech.type,
               title: tech.title,
               sort_order: tech.sort_order
-            }, { onConflict: 'title' });
+            });
           
           if (!error) importedCount++;
         }
@@ -589,10 +622,11 @@ export const syncService = {
 
       // Import niches
       if (backupData.data.niches?.length > 0) {
+        console.log('🏆 Importing niches...');
         for (const niche of backupData.data.niches) {
           const { error } = await supabase
             .from('niche')
-            .upsert({
+            .insert({
               title: niche.title,
               overview: niche.overview,
               tools: niche.tools,
@@ -600,7 +634,7 @@ export const syncService = {
               image: niche.image,
               sort_order: niche.sort_order,
               ai_driven: niche.ai_driven
-            }, { onConflict: 'title' });
+            });
           
           if (!error) importedCount++;
         }
@@ -608,10 +642,11 @@ export const syncService = {
 
       // Import projects
       if (backupData.data.projects?.length > 0) {
+        console.log('💼 Importing projects...');
         for (const project of backupData.data.projects) {
           const { error } = await supabase
             .from('projects')
-            .upsert({
+            .insert({
               user_id: userId,
               title: project.title,
               description: project.description,
@@ -623,9 +658,140 @@ export const syncService = {
               github_url: project.github_url,
               status: project.status,
               views: project.views
-            }, { onConflict: 'title' });
+            });
           
           if (!error) importedCount++;
+        }
+      }
+
+      // Import skills (after technologies are imported)
+      if (backupData.data.skills?.length > 0) {
+        console.log('⚡ Importing skills...');
+        
+        // Create a mapping of tech_id to tech_title for fallback
+        const techIdToTitleMap = {};
+        if (backupData.data.technologies?.length > 0) {
+          for (const tech of backupData.data.technologies) {
+            techIdToTitleMap[tech.id] = tech.title;
+          }
+        }
+        
+        for (const skill of backupData.data.skills) {
+          try {
+            let techTitle = skill.tech_title;
+            
+            // Fallback: if tech_title is missing, try to find it via tech_id
+            if (!techTitle && skill.tech_id && techIdToTitleMap[skill.tech_id]) {
+              techTitle = techIdToTitleMap[skill.tech_id];
+              console.log(`🔍 Found tech_title via mapping for skill ${skill.title}: ${techTitle}`);
+            }
+            
+            if (!techTitle) {
+              console.log(`⚠️ No technology found for skill ${skill.title} (tech_title: ${skill.tech_title}, tech_id: ${skill.tech_id})`);
+              continue;
+            }
+
+            // Find the technology by title to get the correct tech_id
+            const { data: techData, error: techError } = await supabase
+              .from('domains_technologies')
+              .select('id')
+              .eq('title', techTitle)
+              .eq('user_id', userId);
+
+            if (techError) {
+              console.log(`⚠️ Could not find technology for skill ${skill.title}:`, techError.message);
+              continue;
+            }
+
+            if (techData && techData.length > 0) {
+              const { error } = await supabase
+                .from('tech_skills')
+                .insert({
+                  tech_id: techData[0].id,
+                  user_id: userId,
+                  title: skill.title,
+                  level: skill.level
+                });
+              
+              if (!error) {
+                importedCount++;
+                console.log(`✅ Skill imported: ${skill.title} -> ${techTitle}`);
+              } else {
+                console.log(`⚠️ Skill import failed for ${skill.title}:`, error.message);
+              }
+            } else {
+              console.log(`⚠️ No technology found for skill ${skill.title} (tech_title: ${techTitle})`);
+            }
+          } catch (error) {
+            console.log(`⚠️ Skill import error for ${skill.title}:`, error.message);
+          }
+        }
+      }
+
+      // Import project images (after projects are imported)
+      if (backupData.data.project_images?.length > 0) {
+        console.log('🖼️ Importing project images...');
+        
+        // Create a mapping of project_id to project_title for fallback
+        const projectIdToTitleMap = {};
+        if (backupData.data.projects?.length > 0) {
+          for (const project of backupData.data.projects) {
+            projectIdToTitleMap[project.id] = project.title;
+          }
+        }
+        
+        for (const image of backupData.data.project_images) {
+          try {
+            let projectTitle = image.project_title;
+            
+            // Fallback: if project_title is missing, try to find it via project_id
+            if (!projectTitle && image.project_id && projectIdToTitleMap[image.project_id]) {
+              projectTitle = projectIdToTitleMap[image.project_id];
+              console.log(`🔍 Found project_title via mapping for image ${image.name}: ${projectTitle}`);
+            }
+            
+            if (!projectTitle) {
+              console.log(`⚠️ No project found for image ${image.name} (project_title: ${image.project_title}, project_id: ${image.project_id})`);
+              continue;
+            }
+
+            // Find the project by title to get the correct project_id
+            const { data: projectData, error: projectError } = await supabase
+              .from('projects')
+              .select('id')
+              .eq('title', projectTitle)
+              .eq('user_id', userId);
+
+            if (projectError) {
+              console.log(`⚠️ Could not find project for image ${image.name}:`, projectError.message);
+              continue;
+            }
+
+            if (projectData && projectData.length > 0) {
+              const { error } = await supabase
+                .from('project_images')
+                .insert({
+                  project_id: projectData[0].id,
+                  user_id: userId,
+                  url: image.url,
+                  path: image.path,
+                  name: image.name,
+                  original_name: image.original_name,
+                  bucket: image.bucket
+                });
+              
+              if (!error) {
+                importedCount++;
+                console.log(`✅ Project image imported: ${image.name} -> ${projectTitle}`);
+              } else {
+                console.log(`⚠️ Project image import failed for ${image.name}:`, error.message);
+              }
+            } else {
+              console.log(`⚠️ No project found for image ${image.name} (project_title: ${projectTitle})`);
+            }
+          } catch (error) {
+            console.log(`⚠️ Project image import error for ${image.name}:`, error.message);
+          }
         }
       }
 
