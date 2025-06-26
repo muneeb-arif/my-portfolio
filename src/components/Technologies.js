@@ -13,7 +13,7 @@ const Technologies = () => {
   const loadTechnologies = async () => {
     try {
       setLoading(true);
-      const data = await domainsTechnologiesService.getTechnologies();
+      const data = await domainsTechnologiesService.getDomainsTechnologies();
       setTechnologiesData(data);
     } catch (error) {
       console.error('Error loading technologies:', error);

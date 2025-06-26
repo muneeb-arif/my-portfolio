@@ -40,6 +40,8 @@ const DomainsTechnologiesManager = () => {
     try {
       setLoading(true);
       const data = await domainsTechnologiesService.getDomainsTechnologies();
+      console.log('Loaded items:', data);
+      console.log('Items with skills:', data.filter(item => item.tech_skills && item.tech_skills.length > 0));
       setItems(data);
     } catch (err) {
       setError('Failed to load items');
@@ -416,85 +418,83 @@ const DomainsTechnologiesManager = () => {
               </div>
             </div>
 
-            {/* Skills Section (for technology boxes) */}
-            {item.type === 'technology' && (
-              <div className="skills-section">
-                <h4>Skills</h4>
-                {item.tech_skills && item.tech_skills.length > 0 ? (
-                  <div className="skills-list">
-                    {item.tech_skills
-                      .sort((a, b) => (b.level || 0) - (a.level || 0)) // Sort by skill level descending
-                      .map((skill) => (
-                        <div key={skill.id} className="skill-item">
-                          <div className="skill-info">
-                            <span className="skill-name">{skill.title}</span>
-                            {renderSkillLevel(skill.level)}
-                          </div>
-                          <div className="skill-actions">
-                            <button
-                              className="edit-skill-btn"
-                              onClick={() => {
-                                const newLevel = prompt('Enter skill level (1-5):', skill.level);
-                                if (newLevel && !isNaN(newLevel) && newLevel >= 1 && newLevel <= 5) {
-                                  handleUpdateSkill(skill.id, { level: parseFloat(newLevel) });
-                                }
-                              }}
-                            >
-                              <Edit className="w-3 h-3" />
-                            </button>
-                            <button
-                              className="delete-skill-btn"
-                              onClick={() => handleDeleteSkill(skill.id)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
+            {/* Skills Section (for all items) */}
+            <div className="skills-section">
+              <h4>Skills</h4>
+              {item.tech_skills && item.tech_skills.length > 0 ? (
+                <div className="skills-list">
+                  {item.tech_skills
+                    .sort((a, b) => (b.level || 0) - (a.level || 0)) // Sort by skill level descending
+                    .map((skill) => (
+                      <div key={skill.id} className="skill-item">
+                        <div className="skill-info">
+                          <span className="skill-name">{skill.title}</span>
+                          {renderSkillLevel(skill.level)}
                         </div>
-                      ))}
-                  </div>
-                ) : (
-                  <p className="no-skills">No skills added yet.</p>
-                )}
-                
-                {/* Add Skill Form */}
-                <div className="add-skill-form">
-                  <input
-                    type="text"
-                    placeholder="Skill name"
-                    id={`skill-name-${item.id}`}
-                    className="skill-name-input"
-                  />
-                  <select
-                    id={`skill-level-${item.id}`}
-                    className="skill-level-select"
-                    defaultValue="3"
-                  >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                  </select>
-                  <button
-                    className="add-skill-btn"
-                    onClick={() => {
-                      const nameInput = document.getElementById(`skill-name-${item.id}`);
-                      const levelInput = document.getElementById(`skill-level-${item.id}`);
-                      const name = nameInput.value.trim();
-                      const level = parseFloat(levelInput.value);
-                      
-                      if (name) {
-                        handleAddSkill(item.id, { title: name, level });
-                        nameInput.value = '';
-                        levelInput.value = '3';
-                      }
-                    }}
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
+                        <div className="skill-actions">
+                          <button
+                            className="edit-skill-btn"
+                            onClick={() => {
+                              const newLevel = prompt('Enter skill level (1-5):', skill.level);
+                              if (newLevel && !isNaN(newLevel) && newLevel >= 1 && newLevel <= 5) {
+                                handleUpdateSkill(skill.id, { level: parseFloat(newLevel) });
+                              }
+                            }}
+                          >
+                            <Edit className="w-3 h-3" />
+                          </button>
+                          <button
+                            className="delete-skill-btn"
+                            onClick={() => handleDeleteSkill(skill.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                 </div>
+              ) : (
+                <p className="no-skills">No skills added yet.</p>
+              )}
+              
+              {/* Add Skill Form */}
+              <div className="add-skill-form">
+                <input
+                  type="text"
+                  placeholder="Skill name"
+                  id={`skill-name-${item.id}`}
+                  className="skill-name-input"
+                />
+                <select
+                  id={`skill-level-${item.id}`}
+                  className="skill-level-select"
+                  defaultValue="3"
+                >
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                </select>
+                <button
+                  className="add-skill-btn"
+                  onClick={() => {
+                    const nameInput = document.getElementById(`skill-name-${item.id}`);
+                    const levelInput = document.getElementById(`skill-level-${item.id}`);
+                    const name = nameInput.value.trim();
+                    const level = parseFloat(levelInput.value);
+                    
+                    if (name) {
+                      handleAddSkill(item.id, { title: name, level });
+                      nameInput.value = '';
+                      levelInput.value = '3';
+                    }
+                  }}
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
               </div>
-            )}
+            </div>
           </div>
         ))}
       </div>

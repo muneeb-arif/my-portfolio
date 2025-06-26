@@ -125,111 +125,175 @@ export const fallbackDataService = {
         id: 1,
         title: "Web Development",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop&crop=center",
         sort_order: 1
       },
       {
         id: 2,
         title: "Mobile Development",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=300&fit=crop&crop=center",
         sort_order: 2
       },
       {
         id: 3,
         title: "AI/ML",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=300&fit=crop&crop=center",
         sort_order: 3
       },
       {
         id: 4,
         title: "Cloud Computing",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=300&fit=crop&crop=center",
         sort_order: 4
       },
       {
         id: 5,
         title: "Blockchain",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=300&fit=crop&crop=center",
         sort_order: 5
       },
       {
         id: 6,
         title: "Cybersecurity",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=300&fit=crop&crop=center",
         sort_order: 6
       },
       {
         id: 7,
         title: "Data Science",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop&crop=center",
         sort_order: 7
       },
       {
         id: 8,
         title: "DevOps",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=300&fit=crop&crop=center",
         sort_order: 8
       },
       {
         id: 9,
         title: "UI/UX Design",
         type: "domain",
-        image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop&crop=center",
         sort_order: 9
       }
     ];
   },
 
-  // Fallback skills data
+  // Fallback skills data - Updated to match website data
   getSkills() {
     return [
+      // Web Development Skills
       { id: 1, name: "React", level: 5, domain_id: 1 },
       { id: 2, name: "Node.js", level: 5, domain_id: 1 },
-      { id: 3, name: "Python", level: 4, domain_id: 3 },
-      { id: 4, name: "AWS", level: 4, domain_id: 4 },
-      { id: 5, name: "Solidity", level: 3, domain_id: 5 },
-      { id: 6, name: "React Native", level: 4, domain_id: 2 },
-      { id: 7, name: "TensorFlow", level: 3, domain_id: 3 },
-      { id: 8, name: "Docker", level: 4, domain_id: 8 },
-      { id: 9, name: "Figma", level: 4, domain_id: 9 },
-      { id: 10, name: "MongoDB", level: 4, domain_id: 1 },
-      { id: 11, name: "PostgreSQL", level: 4, domain_id: 1 },
-      { id: 12, name: "TypeScript", level: 4, domain_id: 1 },
-      { id: 13, name: "GraphQL", level: 3, domain_id: 1 },
-      { id: 14, name: "Kubernetes", level: 3, domain_id: 8 },
-      { id: 15, name: "Firebase", level: 4, domain_id: 4 },
-      { id: 16, name: "Redux", level: 4, domain_id: 1 },
-      { id: 17, name: "Next.js", level: 4, domain_id: 1 },
-      { id: 18, name: "Vue.js", level: 3, domain_id: 1 },
-      { id: 19, name: "Angular", level: 3, domain_id: 1 },
-      { id: 20, name: "Laravel", level: 3, domain_id: 1 },
-      { id: 21, name: "Django", level: 3, domain_id: 1 },
+      { id: 3, name: "JavaScript", level: 5, domain_id: 1 },
+      { id: 4, name: "TypeScript", level: 4, domain_id: 1 },
+      { id: 5, name: "Next.js", level: 4, domain_id: 1 },
+      { id: 6, name: "Vue.js", level: 4, domain_id: 1 },
+      { id: 7, name: "Angular", level: 3, domain_id: 1 },
+      { id: 8, name: "PHP", level: 4, domain_id: 1 },
+      { id: 9, name: "Laravel", level: 4, domain_id: 1 },
+      { id: 10, name: "Python", level: 4, domain_id: 1 },
+      { id: 11, name: "Django", level: 3, domain_id: 1 },
+      { id: 12, name: "MongoDB", level: 4, domain_id: 1 },
+      { id: 13, name: "PostgreSQL", level: 4, domain_id: 1 },
+      { id: 14, name: "MySQL", level: 4, domain_id: 1 },
+      { id: 15, name: "GraphQL", level: 3, domain_id: 1 },
+      { id: 16, name: "REST APIs", level: 5, domain_id: 1 },
+      { id: 17, name: "Redux", level: 4, domain_id: 1 },
+      { id: 18, name: "Tailwind CSS", level: 4, domain_id: 1 },
+      { id: 19, name: "Bootstrap", level: 4, domain_id: 1 },
+      { id: 20, name: "SASS/SCSS", level: 4, domain_id: 1 },
+
+      // Mobile Development Skills
+      { id: 21, name: "React Native", level: 4, domain_id: 2 },
       { id: 22, name: "Flutter", level: 3, domain_id: 2 },
       { id: 23, name: "Swift", level: 3, domain_id: 2 },
       { id: 24, name: "Kotlin", level: 3, domain_id: 2 },
-      { id: 25, name: "Machine Learning", level: 4, domain_id: 3 },
-      { id: 26, name: "Deep Learning", level: 3, domain_id: 3 },
-      { id: 27, name: "NLP", level: 3, domain_id: 3 },
-      { id: 28, name: "Computer Vision", level: 3, domain_id: 3 },
-      { id: 29, name: "Google Cloud", level: 3, domain_id: 4 },
-      { id: 30, name: "Azure", level: 3, domain_id: 4 },
-      { id: 31, name: "Ethereum", level: 3, domain_id: 5 },
-      { id: 32, name: "Hyperledger", level: 2, domain_id: 5 },
-      { id: 33, name: "Penetration Testing", level: 3, domain_id: 6 },
-      { id: 34, name: "Security Auditing", level: 3, domain_id: 6 },
-      { id: 35, name: "Data Analysis", level: 4, domain_id: 7 },
-      { id: 36, name: "Data Visualization", level: 4, domain_id: 7 },
-      { id: 37, name: "Jenkins", level: 3, domain_id: 8 },
-      { id: 38, name: "GitLab CI/CD", level: 3, domain_id: 8 },
-      { id: 39, name: "Adobe XD", level: 3, domain_id: 9 },
-      { id: 40, name: "Sketch", level: 3, domain_id: 9 }
+      { id: 25, name: "Java", level: 3, domain_id: 2 },
+      { id: 26, name: "Xamarin", level: 2, domain_id: 2 },
+      { id: 27, name: "Ionic", level: 3, domain_id: 2 },
+
+      // AI/ML Skills
+      { id: 28, name: "TensorFlow", level: 3, domain_id: 3 },
+      { id: 29, name: "PyTorch", level: 3, domain_id: 3 },
+      { id: 30, name: "Scikit-learn", level: 4, domain_id: 3 },
+      { id: 31, name: "OpenCV", level: 3, domain_id: 3 },
+      { id: 32, name: "NLTK", level: 3, domain_id: 3 },
+      { id: 33, name: "SpaCy", level: 3, domain_id: 3 },
+      { id: 34, name: "Pandas", level: 4, domain_id: 3 },
+      { id: 35, name: "NumPy", level: 4, domain_id: 3 },
+      { id: 36, name: "Matplotlib", level: 4, domain_id: 3 },
+      { id: 37, name: "Seaborn", level: 3, domain_id: 3 },
+      { id: 38, name: "Machine Learning", level: 4, domain_id: 3 },
+      { id: 39, name: "Deep Learning", level: 3, domain_id: 3 },
+      { id: 40, name: "Computer Vision", level: 3, domain_id: 3 },
+      { id: 41, name: "Natural Language Processing", level: 3, domain_id: 3 },
+
+      // Cloud Computing Skills
+      { id: 42, name: "AWS", level: 4, domain_id: 4 },
+      { id: 43, name: "Google Cloud", level: 3, domain_id: 4 },
+      { id: 44, name: "Azure", level: 3, domain_id: 4 },
+      { id: 45, name: "Firebase", level: 4, domain_id: 4 },
+      { id: 46, name: "Docker", level: 4, domain_id: 4 },
+      { id: 47, name: "Kubernetes", level: 3, domain_id: 4 },
+      { id: 48, name: "Terraform", level: 3, domain_id: 4 },
+      { id: 49, name: "Ansible", level: 3, domain_id: 4 },
+      { id: 50, name: "Jenkins", level: 3, domain_id: 4 },
+      { id: 51, name: "GitLab CI/CD", level: 3, domain_id: 4 },
+      { id: 52, name: "GitHub Actions", level: 3, domain_id: 4 },
+
+      // Blockchain Skills
+      { id: 53, name: "Ethereum", level: 3, domain_id: 5 },
+      { id: 54, name: "Solidity", level: 3, domain_id: 5 },
+      { id: 55, name: "Web3.js", level: 3, domain_id: 5 },
+      { id: 56, name: "Hyperledger", level: 2, domain_id: 5 },
+      { id: 57, name: "IPFS", level: 2, domain_id: 5 },
+      { id: 58, name: "Smart Contracts", level: 3, domain_id: 5 },
+      { id: 59, name: "DeFi", level: 3, domain_id: 5 },
+      { id: 60, name: "NFTs", level: 3, domain_id: 5 },
+
+      // Cybersecurity Skills
+      { id: 61, name: "Penetration Testing", level: 3, domain_id: 6 },
+      { id: 62, name: "Security Auditing", level: 3, domain_id: 6 },
+      { id: 63, name: "OWASP", level: 3, domain_id: 6 },
+      { id: 64, name: "Cryptography", level: 3, domain_id: 6 },
+      { id: 65, name: "Network Security", level: 3, domain_id: 6 },
+      { id: 66, name: "Application Security", level: 3, domain_id: 6 },
+      { id: 67, name: "Incident Response", level: 3, domain_id: 6 },
+      { id: 68, name: "Threat Modeling", level: 3, domain_id: 6 },
+
+      // Data Science Skills
+      { id: 69, name: "Data Analysis", level: 4, domain_id: 7 },
+      { id: 70, name: "Data Visualization", level: 4, domain_id: 7 },
+      { id: 71, name: "Statistical Analysis", level: 4, domain_id: 7 },
+      { id: 72, name: "Predictive Modeling", level: 3, domain_id: 7 },
+      { id: 73, name: "Big Data", level: 3, domain_id: 7 },
+      { id: 74, name: "Apache Spark", level: 3, domain_id: 7 },
+      { id: 75, name: "Hadoop", level: 2, domain_id: 7 },
+      { id: 76, name: "Tableau", level: 3, domain_id: 7 },
+      { id: 77, name: "Power BI", level: 3, domain_id: 7 },
+      { id: 78, name: "Jupyter Notebooks", level: 4, domain_id: 7 },
+
+      // DevOps Skills
+      { id: 79, name: "CI/CD", level: 4, domain_id: 8 },
+      { id: 80, name: "Infrastructure as Code", level: 3, domain_id: 8 },
+      { id: 81, name: "Monitoring", level: 3, domain_id: 8 },
+      { id: 82, name: "Logging", level: 3, domain_id: 8 },
+      { id: 83, name: "Performance Optimization", level: 4, domain_id: 8 },
+      { id: 84, name: "Load Balancing", level: 3, domain_id: 8 },
+      { id: 85, name: "Auto Scaling", level: 3, domain_id: 8 },
+      { id: 86, name: "Disaster Recovery", level: 3, domain_id: 8 },
+
+      // UI/UX Design Skills
+      { id: 87, name: "Figma", level: 4, domain_id: 9 },
+      { id: 88, name: "Adobe XD", level: 3, domain_id: 9 },
+      { id: 89, name: "Sketch", level: 3, domain_id: 9 },
+      { id: 90, name: "InVision", level: 3, domain_id: 9 },
+      { id: 91, name: "User Research", level: 3, domain_id: 9 },
+      { id: 92, name: "Wireframing", level: 4, domain_id: 9 },
+      { id: 93, name: "Prototyping", level: 4, domain_id: 9 },
+      { id: 94, name: "Design Systems", level: 3, domain_id: 9 },
+      { id: 95, name: "Accessibility", level: 3, domain_id: 9 },
+      { id: 96, name: "Responsive Design", level: 4, domain_id: 9 }
     ];
   },
 
@@ -332,12 +396,15 @@ export const fallbackDataService = {
   // Fallback categories data
   getCategories() {
     return [
-      { id: 1, name: "Web Development", description: "Full-stack web applications", color: "#3B82F6" },
-      { id: 2, name: "Mobile Development", description: "Cross-platform mobile apps", color: "#10B981" },
-      { id: 3, name: "AI/ML", description: "Artificial Intelligence and Machine Learning", color: "#8B5CF6" },
-      { id: 4, name: "Cloud Computing", description: "Cloud infrastructure and DevOps", color: "#F59E0B" },
-      { id: 5, name: "Blockchain", description: "Blockchain and cryptocurrency solutions", color: "#EF4444" },
-      { id: 6, name: "Cybersecurity", description: "Security and compliance solutions", color: "#6B7280" }
+      { id: 1, name: "Web Development", description: "Full-stack web applications and websites", color: "#3b82f6" },
+      { id: 2, name: "Mobile Development", description: "Cross-platform mobile applications", color: "#10b981" },
+      { id: 3, name: "AI/ML", description: "Artificial Intelligence and Machine Learning", color: "#8b5cf6" },
+      { id: 4, name: "Cloud Computing", description: "Cloud infrastructure and DevOps", color: "#f59e0b" },
+      { id: 5, name: "Blockchain", description: "Blockchain and cryptocurrency solutions", color: "#ef4444" },
+      { id: 6, name: "Cybersecurity", description: "Security and compliance solutions", color: "#6b7280" },
+      { id: 7, name: "Data Science", description: "Data analysis and visualization", color: "#06b6d4" },
+      { id: 8, name: "DevOps", description: "Development operations and automation", color: "#84cc16" },
+      { id: 9, name: "UI/UX Design", description: "User interface and experience design", color: "#ec4899" }
     ];
   }
 };

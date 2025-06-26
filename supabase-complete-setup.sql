@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS tech_skills (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   tech_id UUID REFERENCES domains_technologies(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users NOT NULL,
-  name TEXT NOT NULL,
+  title TEXT NOT NULL,
   level INTEGER DEFAULT 1,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
