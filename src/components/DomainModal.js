@@ -237,18 +237,6 @@ Looking forward to hearing from you!`
                   <ChevronRight className="w-6 h-6 text-gray-700 group-hover:text-sand-dark transition-colors duration-300" />
                 </button>
               )}
-              
-              {/* Tags moved to center top */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-2">
-                {tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-white/90 text-sand-dark font-semibold rounded-full text-sm backdrop-blur-sm"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
 
               {/* Mobile Navigation Hint */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:hidden">

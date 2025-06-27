@@ -3,10 +3,18 @@ import { fallbackDataService } from './fallbackDataService';
 
 export const syncService = {
   // Reset/Clear ALL user data
-  async resetAllUserData() {
+  async resetAllUserData(progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
-      console.log('🗑️ Starting complete data reset...');
+      logProgress('🗑️ Starting complete data reset...', 'info');
       
+      logProgress('🔍 Authenticating user...', 'info');
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
@@ -26,56 +34,70 @@ export const syncService = {
 
       // Delete user-specific data in correct order (dependencies first)
       
+      logProgress('🖼️ Deleting project images...', 'info');
       // 1. Delete project images first (depends on projects)
       const { count: imageCount } = await supabase
         .from('project_images')
         .delete()
         .eq('user_id', userId);
       deletedCounts.project_images = imageCount || 0;
+      logProgress(`   ✅ Deleted ${imageCount || 0} project images`, 'success');
 
+      logProgress('⚡ Deleting tech skills...', 'info');
       // 2. Delete tech skills (depends on domains_technologies)
       const { count: skillsCount } = await supabase
         .from('tech_skills')
         .delete()
         .eq('user_id', userId);
       deletedCounts.tech_skills = skillsCount || 0;
+      logProgress(`   ✅ Deleted ${skillsCount || 0} tech skills`, 'success');
 
+      logProgress('💼 Deleting projects...', 'info');
       // 3. Delete projects
       const { count: projectsCount } = await supabase
         .from('projects')
         .delete()
         .eq('user_id', userId);
       deletedCounts.projects = projectsCount || 0;
+      logProgress(`   ✅ Deleted ${projectsCount || 0} projects`, 'success');
 
+      logProgress('🎯 Deleting domains/technologies...', 'info');
       // 4. Delete domains/technologies
       const { count: techCount } = await supabase
         .from('domains_technologies')
         .delete()
         .eq('user_id', userId);
       deletedCounts.domains_technologies = techCount || 0;
+      logProgress(`   ✅ Deleted ${techCount || 0} domains/technologies`, 'success');
 
+      logProgress('📁 Deleting categories...', 'info');
       // 5. Delete user categories
       const { count: categoriesCount } = await supabase
         .from('categories')
         .delete()
         .eq('user_id', userId);
       deletedCounts.categories = categoriesCount || 0;
+      logProgress(`   ✅ Deleted ${categoriesCount || 0} categories`, 'success');
 
+      logProgress('🏆 Deleting niches...', 'info');
       // 6. Delete user niches
       const { count: nicheCount } = await supabase
         .from('niche')
         .delete()
         .eq('user_id', userId);
       deletedCounts.niche = nicheCount || 0;
+      logProgress(`   ✅ Deleted ${nicheCount || 0} niches`, 'success');
 
+      logProgress('⚙️ Deleting settings...', 'info');
       // 7. Delete user settings
       const { count: settingsCount } = await supabase
         .from('settings')
         .delete()
         .eq('user_id', userId);
       deletedCounts.settings = settingsCount || 0;
+      logProgress(`   ✅ Deleted ${settingsCount || 0} settings`, 'success');
 
-      console.log('✅ Data reset completed:', deletedCounts);
+      logProgress('✅ Data reset completed successfully!', 'success');
       
       return {
         success: true,
@@ -94,9 +116,16 @@ export const syncService = {
   },
 
   // Sync all fallback data to database
-  async syncAllData() {
+  async syncAllData(progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
-      console.log('🔄 Starting data sync...');
+      logProgress('🔄 Starting data sync...', 'info');
       
       const results = {
         projects: 0,
@@ -106,6 +135,7 @@ export const syncService = {
         categories: 0
       };
 
+      logProgress('🔍 Authenticating user...', 'info');
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
@@ -115,31 +145,31 @@ export const syncService = {
       const userId = user.id;
 
       // 1. Clear existing data first
-      console.log('🗑️ Clearing existing data...');
-      await this.clearAllData(userId);
+      logProgress('🗑️ Clearing existing data...', 'info');
+      await this.clearAllData(userId, progressCallback);
 
       // 2. Sync Categories (now user-specific)
-      console.log('📁 Syncing categories...');
-      const categoriesResult = await this.syncCategories(userId);
+      logProgress('📁 Syncing categories...', 'info');
+      const categoriesResult = await this.syncCategories(userId, progressCallback);
       results.categories = categoriesResult;
 
       // 3. Sync Technologies and Skills
-      console.log('🎯 Syncing technologies and skills...');
-      const techResult = await this.syncTechnologiesAndSkills(userId);
+      logProgress('🎯 Syncing technologies and skills...', 'info');
+      const techResult = await this.syncTechnologiesAndSkills(userId, progressCallback);
       results.technologies = techResult.technologies;
       results.skills = techResult.skills;
 
       // 4. Sync Niches (now user-specific)
-      console.log('🏆 Syncing niches...');
-      const nichesResult = await this.syncNiches(userId);
+      logProgress('🏆 Syncing niches...', 'info');
+      const nichesResult = await this.syncNiches(userId, progressCallback);
       results.niches = nichesResult;
 
       // 5. Sync Projects
-      console.log('💼 Syncing projects...');
-      const projectsResult = await this.syncProjects(userId);
+      logProgress('💼 Syncing projects...', 'info');
+      const projectsResult = await this.syncProjects(userId, progressCallback);
       results.projects = projectsResult;
 
-      console.log('✅ Data sync completed successfully!', results);
+      logProgress('✅ Data sync completed successfully!', 'success');
       return {
         success: true,
         message: 'Data synchronized successfully!',
@@ -157,9 +187,16 @@ export const syncService = {
   },
 
   // Clear all existing data - SIMPLIFIED APPROACH
-  async clearAllData(userId) {
+  async clearAllData(userId, progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
-      console.log('🗑️ Clearing existing data...');
+      logProgress('🗑️ Clearing existing data...', 'info');
       
       // Clear user-specific data in correct order (dependencies first)
       const userDataOperations = [
@@ -172,9 +209,10 @@ export const syncService = {
       ];
 
       const userResults = await Promise.allSettled(userDataOperations);
-      console.log('✅ User data cleared:', userResults.map(r => r.status === 'fulfilled' ? (r.value.count || 0) : 0));
+      const counts = userResults.map(r => r.status === 'fulfilled' ? (r.value.count || 0) : 0);
+      logProgress('✅ User data cleared: ' + counts.join(', '), 'success');
       
-      console.log('✅ All existing data cleared successfully');
+      logProgress('✅ All existing data cleared successfully', 'success');
     } catch (error) {
       console.error('Error clearing data:', error);
       // Don't throw error, continue with sync
@@ -182,12 +220,19 @@ export const syncService = {
   },
 
   // Sync categories - NOW USER-SPECIFIC
-  async syncCategories(userId) {
+  async syncCategories(userId, progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
       const fallbackCategories = fallbackDataService.getCategories();
       let syncedCount = 0;
 
-      console.log('📁 Starting categories sync...');
+      logProgress('📁 Starting categories sync...', 'info');
 
       // Insert categories with user_id
       for (const category of fallbackCategories) {
@@ -203,9 +248,9 @@ export const syncService = {
 
           if (!error) {
             syncedCount++;
-            console.log(`✅ Category synced: ${category.name}`);
+            logProgress(`   ✅ Category synced: ${category.name}`, 'success');
           } else {
-            console.log(`⚠️ Category sync failed for ${category.name}:`, error.message);
+            logProgress(`   ⚠️ Category sync failed for ${category.name}: ${error.message}`, 'warning');
             // Try upsert as fallback
             try {
               const { error: upsertError } = await supabase
@@ -219,20 +264,20 @@ export const syncService = {
               
               if (!upsertError) {
                 syncedCount++;
-                console.log(`✅ Category upserted: ${category.name}`);
+                logProgress(`   ✅ Category upserted: ${category.name}`, 'success');
               } else {
-                console.log(`❌ Category upsert failed for ${category.name}:`, upsertError.message);
+                logProgress(`   ❌ Category upsert failed for ${category.name}: ${upsertError.message}`, 'error');
               }
             } catch (upsertError) {
-              console.log(`❌ Category upsert failed for ${category.name}:`, upsertError.message);
+              logProgress(`   ❌ Category upsert failed for ${category.name}: ${upsertError.message}`, 'error');
             }
           }
         } catch (error) {
-          console.log(`⚠️ Category sync error for ${category.name}:`, error.message);
+          logProgress(`   ⚠️ Category sync error for ${category.name}: ${error.message}`, 'warning');
         }
       }
 
-      console.log(`📁 Categories sync completed: ${syncedCount}/${fallbackCategories.length}`);
+      logProgress(`✅ Categories sync completed: ${syncedCount}/${fallbackCategories.length}`, 'success');
       return syncedCount;
     } catch (error) {
       console.error('Error syncing categories:', error);
@@ -241,7 +286,14 @@ export const syncService = {
   },
 
   // Sync technologies and skills - FORCE REPLACE APPROACH
-  async syncTechnologiesAndSkills(userId) {
+  async syncTechnologiesAndSkills(userId, progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
       const fallbackTechnologies = fallbackDataService.getTechnologies();
       const fallbackSkills = fallbackDataService.getSkills();
@@ -249,6 +301,7 @@ export const syncService = {
       let techCount = 0;
       let skillCount = 0;
 
+      logProgress('🎯 Starting technologies sync...', 'info');
       // Create a mapping of fallback domain_id to actual database tech_id
       const domainToTechMapping = {};
 
@@ -277,15 +330,16 @@ export const syncService = {
             techCount++;
             // Store the mapping for skills
             domainToTechMapping[tech.id] = techData.id;
-            console.log(`✅ Technology synced: ${tech.title}`);
+            logProgress(`   ✅ Technology synced: ${tech.title}`, 'success');
           } else {
-            console.log(`⚠️ Technology sync failed for ${tech.title}:`, techError?.message);
+            logProgress(`   ⚠️ Technology sync failed for ${tech.title}: ${techError?.message}`, 'warning');
           }
         } catch (error) {
-          console.log(`⚠️ Technology sync error for ${tech.title}:`, error.message);
+          logProgress(`   ⚠️ Technology sync error for ${tech.title}: ${error.message}`, 'warning');
         }
       }
 
+      logProgress('⚡ Starting skills sync...', 'info');
       // Now sync skills using the correct tech_id mapping
       for (const skill of fallbackSkills) {
         const techId = domainToTechMapping[skill.domain_id];
@@ -309,19 +363,19 @@ export const syncService = {
 
             if (!skillError) {
               skillCount++;
-              console.log(`✅ Skill synced: ${skill.name} (Level ${skill.level})`);
+              logProgress(`   ✅ Skill synced: ${skill.name} (Level ${skill.level})`, 'success');
             } else {
-              console.log(`⚠️ Skill sync failed for ${skill.name}:`, skillError.message);
+              logProgress(`   ⚠️ Skill sync failed for ${skill.name}: ${skillError.message}`, 'warning');
             }
           } catch (error) {
-            console.log(`⚠️ Skill sync error for ${skill.name}:`, error.message);
+            logProgress(`   ⚠️ Skill sync error for ${skill.name}: ${error.message}`, 'warning');
           }
         } else {
-          console.log(`⚠️ No tech_id found for skill ${skill.name} (domain_id: ${skill.domain_id})`);
+          logProgress(`   ⚠️ No tech_id found for skill ${skill.name} (domain_id: ${skill.domain_id})`, 'warning');
         }
       }
 
-      console.log(`🎯 Technologies sync completed: ${techCount}/${fallbackTechnologies.length} technologies, ${skillCount}/${fallbackSkills.length} skills`);
+      logProgress(`✅ Technologies sync completed: ${techCount}/${fallbackTechnologies.length} technologies, ${skillCount}/${fallbackSkills.length} skills`, 'success');
       return { technologies: techCount, skills: skillCount };
     } catch (error) {
       console.error('Error syncing technologies and skills:', error);
@@ -330,8 +384,16 @@ export const syncService = {
   },
 
   // Sync niches - FORCE REPLACE APPROACH
-  async syncNiches(userId) {
+  async syncNiches(userId, progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
+      logProgress('🏆 Starting niches sync...', 'info');
       const fallbackNiches = fallbackDataService.getNiches();
       let syncedCount = 0;
 
@@ -359,16 +421,16 @@ export const syncService = {
 
           if (!error) {
             syncedCount++;
-            console.log(`✅ Niche synced: ${niche.title}`);
+            logProgress(`   ✅ Niche synced: ${niche.title}`, 'success');
           } else {
-            console.log(`⚠️ Niche sync failed for ${niche.title}:`, error.message);
+            logProgress(`   ⚠️ Niche sync failed for ${niche.title}: ${error.message}`, 'warning');
           }
         } catch (error) {
-          console.log(`⚠️ Niche sync error for ${niche.title}:`, error.message);
+          logProgress(`   ⚠️ Niche sync error for ${niche.title}: ${error.message}`, 'warning');
         }
       }
 
-      console.log(`🏆 Niches sync completed: ${syncedCount}/${fallbackNiches.length}`);
+      logProgress(`✅ Niches sync completed: ${syncedCount}/${fallbackNiches.length}`, 'success');
       return syncedCount;
     } catch (error) {
       console.error('Error syncing niches:', error);
@@ -377,8 +439,16 @@ export const syncService = {
   },
 
   // Sync projects
-  async syncProjects(userId) {
+  async syncProjects(userId, progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
+      logProgress('💼 Starting projects sync...', 'info');
       const fallbackProjects = fallbackDataService.getProjects();
       let syncedCount = 0;
 
@@ -428,19 +498,19 @@ export const syncService = {
                     bucket: 'images'
                   });
               } catch (imageError) {
-                console.log(`⚠️ Project image sync failed for ${project.title}:`, imageError.message);
+                logProgress(`   ⚠️ Project image sync failed for ${project.title}: ${imageError.message}`, 'warning');
               }
             }
-            console.log(`✅ Project synced: ${project.title}`);
+            logProgress(`   ✅ Project synced: ${project.title}`, 'success');
           } else {
-            console.log(`⚠️ Project sync failed for ${project.title}:`, projectError?.message);
+            logProgress(`   ⚠️ Project sync failed for ${project.title}: ${projectError?.message}`, 'warning');
           }
         } catch (error) {
-          console.log(`⚠️ Project sync error for ${project.title}:`, error.message);
+          logProgress(`   ⚠️ Project sync error for ${project.title}: ${error.message}`, 'warning');
         }
       }
 
-      console.log(`💼 Projects sync completed: ${syncedCount}/${fallbackProjects.length}`);
+      logProgress(`✅ Projects sync completed: ${syncedCount}/${fallbackProjects.length}`, 'success');
       return syncedCount;
     } catch (error) {
       console.error('Error syncing projects:', error);
@@ -507,10 +577,18 @@ export const syncService = {
   },
 
   // Backup all data from database
-  async backupAllData() {
+  async backupAllData(progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
-      console.log('📦 Starting data backup...');
+      logProgress('📦 Starting data backup...', 'info');
       
+      logProgress('🔍 Authenticating user...', 'info');
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
@@ -519,6 +597,7 @@ export const syncService = {
 
       const userId = user.id;
 
+      logProgress('📊 Fetching data from database...', 'info');
       // Fetch all data from database with relationships
       const [
         projectsData,
@@ -541,6 +620,8 @@ export const syncService = {
           projects!project_images_project_id_fkey(title)
         `).eq('user_id', userId)
       ]);
+
+      logProgress('✅ Data fetched successfully', 'success');
 
       // Check for errors
       const errors = [
@@ -593,11 +674,13 @@ export const syncService = {
         }
       };
 
+      logProgress('📄 Creating backup file...', 'info');
       // Create and download backup file
       const fileName = `portfolio-backup-${new Date().toISOString().split('T')[0]}.json`;
       const dataStr = JSON.stringify(backupData, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
       
+      logProgress('⬇️ Starting download...', 'info');
       // Create download link
       const link = document.createElement('a');
       link.href = URL.createObjectURL(dataBlob);
@@ -607,7 +690,7 @@ export const syncService = {
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
 
-      console.log('✅ Data backup completed successfully!');
+      logProgress('✅ Data backup completed successfully!', 'success');
       return {
         success: true,
         message: `Backup completed! Downloaded ${fileName}`,
@@ -626,10 +709,18 @@ export const syncService = {
   },
 
   // Import data from backup file
-  async importFromBackup(file) {
+  async importFromBackup(file, progressCallback = null) {
+    const logProgress = (message, type = 'info') => {
+      console.log(message);
+      if (progressCallback) {
+        progressCallback(message, type);
+      }
+    };
+
     try {
-      console.log('📥 Starting data import...');
+      logProgress('📥 Starting data import...', 'info');
       
+      logProgress('📖 Reading backup file...', 'info');
       // Read file content
       const fileContent = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -638,6 +729,7 @@ export const syncService = {
         reader.readAsText(file);
       });
 
+      logProgress('🔍 Parsing backup data...', 'info');
       const backupData = JSON.parse(fileContent);
       
       // Validate backup structure
@@ -645,6 +737,7 @@ export const syncService = {
         throw new Error('Invalid backup file format');
       }
 
+      logProgress('🔍 Authenticating user...', 'info');
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
@@ -655,8 +748,8 @@ export const syncService = {
       let importedCount = 0;
 
       // Clear all existing data first
-      console.log('🗑️ Clearing existing data before import...');
-      await this.clearAllData(userId);
+      logProgress('🗑️ Clearing existing data before import...', 'info');
+      await this.clearAllData(userId, progressCallback);
 
       // Clear global tables (categories and niches)
       try {
@@ -877,7 +970,7 @@ export const syncService = {
         }
       }
 
-      console.log('✅ Data import completed successfully!');
+      logProgress('✅ Data import completed successfully!', 'success');
       return {
         success: true,
         message: `Import completed! ${importedCount} records imported.`,

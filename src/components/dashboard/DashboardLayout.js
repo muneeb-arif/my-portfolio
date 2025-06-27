@@ -8,6 +8,7 @@ import CategoriesManager from './CategoriesManager';
 import DomainsTechnologiesManager from './DomainsTechnologiesManager';
 import NicheManager from './NicheManager';
 import DebugSync from './DebugSync';
+import ProgressDisplay from './ProgressDisplay';
 import './DashboardLayout.css';
 import './ProjectsManager.css';
 import './CategoriesManager.css';
@@ -40,6 +41,14 @@ const DashboardLayout = ({ user, onSignOut }) => {
     publishedProjects: 0,
     draftProjects: 0,
     totalViews: 0
+  });
+
+  // Progress display state
+  const [progressDisplay, setProgressDisplay] = useState({
+    isVisible: false,
+    title: '',
+    messages: [],
+    isComplete: false
   });
 
   // Navigation items
@@ -96,13 +105,38 @@ const DashboardLayout = ({ user, onSignOut }) => {
     try {
       setIsSyncing(true);
       setSyncMessage('🔄 Syncing data...');
+
+      // Initialize progress display
+      setProgressDisplay({
+        isVisible: true,
+        title: '🔄 Syncing Data',
+        messages: [],
+        isComplete: false
+      });
+
+      const progressCallback = (message, type = 'info') => {
+        setProgressDisplay(prev => ({
+          ...prev,
+          messages: [...prev.messages, {
+            text: message,
+            type: type,
+            timestamp: new Date().toISOString()
+          }]
+        }));
+      };
       
-      const result = await syncService.syncAllData();
+      const result = await syncService.syncAllData(progressCallback);
       
       if (result.success) {
         setSyncMessage(`✅ ${result.message}`);
         setIsDatabaseEmpty(false);
         
+        // Mark progress as complete
+        setProgressDisplay(prev => ({
+          ...prev,
+          isComplete: true
+        }));
+
         // Reload dashboard data and status after sync
         setTimeout(() => {
           loadDashboardData();
@@ -111,10 +145,28 @@ const DashboardLayout = ({ user, onSignOut }) => {
         }, 2000);
       } else {
         setSyncMessage(`❌ ${result.message}`);
+        setProgressDisplay(prev => ({
+          ...prev,
+          isComplete: true,
+          messages: [...prev.messages, {
+            text: `❌ ${result.message}`,
+            type: 'error',
+            timestamp: new Date().toISOString()
+          }]
+        }));
       }
     } catch (error) {
       console.error('Sync error:', error);
       setSyncMessage(`❌ Sync failed: ${error.message}`);
+      setProgressDisplay(prev => ({
+        ...prev,
+        isComplete: true,
+        messages: [...prev.messages, {
+          text: `❌ Sync failed: ${error.message}`,
+          type: 'error',
+          timestamp: new Date().toISOString()
+        }]
+      }));
     } finally {
       setIsSyncing(false);
     }
@@ -124,20 +176,61 @@ const DashboardLayout = ({ user, onSignOut }) => {
     try {
       setIsBackingUp(true);
       setBackupMessage('📦 Creating backup...');
+
+      // Initialize progress display
+      setProgressDisplay({
+        isVisible: true,
+        title: '📦 Creating Backup',
+        messages: [],
+        isComplete: false
+      });
+
+      const progressCallback = (message, type = 'info') => {
+        setProgressDisplay(prev => ({
+          ...prev,
+          messages: [...prev.messages, {
+            text: message,
+            type: type,
+            timestamp: new Date().toISOString()
+          }]
+        }));
+      };
       
-      const result = await syncService.backupAllData();
+      const result = await syncService.backupAllData(progressCallback);
       
       if (result.success) {
         setBackupMessage(`✅ ${result.message}`);
+        setProgressDisplay(prev => ({
+          ...prev,
+          isComplete: true
+        }));
         setTimeout(() => {
           setBackupMessage('');
         }, 3000);
       } else {
         setBackupMessage(`❌ ${result.message}`);
+        setProgressDisplay(prev => ({
+          ...prev,
+          isComplete: true,
+          messages: [...prev.messages, {
+            text: `❌ ${result.message}`,
+            type: 'error',
+            timestamp: new Date().toISOString()
+          }]
+        }));
       }
     } catch (error) {
       console.error('Backup error:', error);
       setBackupMessage(`❌ Backup failed: ${error.message}`);
+      setProgressDisplay(prev => ({
+        ...prev,
+        isComplete: true,
+        messages: [...prev.messages, {
+          text: `❌ Backup failed: ${error.message}`,
+          type: 'error',
+          timestamp: new Date().toISOString()
+        }]
+      }));
     } finally {
       setIsBackingUp(false);
     }
@@ -163,12 +256,37 @@ const DashboardLayout = ({ user, onSignOut }) => {
     try {
       setIsImporting(true);
       setImportMessage('📥 Importing data...');
+
+      // Initialize progress display
+      setProgressDisplay({
+        isVisible: true,
+        title: '📥 Importing Data',
+        messages: [],
+        isComplete: false
+      });
+
+      const progressCallback = (message, type = 'info') => {
+        setProgressDisplay(prev => ({
+          ...prev,
+          messages: [...prev.messages, {
+            text: message,
+            type: type,
+            timestamp: new Date().toISOString()
+          }]
+        }));
+      };
       
-      const result = await syncService.importFromBackup(importFile);
+      const result = await syncService.importFromBackup(importFile, progressCallback);
       
       if (result.success) {
         setImportMessage(`✅ ${result.message}`);
         setImportFile(null);
+        
+        // Mark progress as complete
+        setProgressDisplay(prev => ({
+          ...prev,
+          isComplete: true
+        }));
         
         // Reload dashboard data and status after import
         setTimeout(() => {
@@ -178,10 +296,28 @@ const DashboardLayout = ({ user, onSignOut }) => {
         }, 2000);
       } else {
         setImportMessage(`❌ ${result.message}`);
+        setProgressDisplay(prev => ({
+          ...prev,
+          isComplete: true,
+          messages: [...prev.messages, {
+            text: `❌ ${result.message}`,
+            type: 'error',
+            timestamp: new Date().toISOString()
+          }]
+        }));
       }
     } catch (error) {
       console.error('Import error:', error);
       setImportMessage(`❌ Import failed: ${error.message}`);
+      setProgressDisplay(prev => ({
+        ...prev,
+        isComplete: true,
+        messages: [...prev.messages, {
+          text: `❌ Import failed: ${error.message}`,
+          type: 'error',
+          timestamp: new Date().toISOString()
+        }]
+      }));
     } finally {
       setIsImporting(false);
     }
@@ -198,12 +334,37 @@ const DashboardLayout = ({ user, onSignOut }) => {
     try {
       setIsResetting(true);
       setResetMessage('🗑️ Resetting all data...');
+
+      // Initialize progress display
+      setProgressDisplay({
+        isVisible: true,
+        title: '🗑️ Resetting Data',
+        messages: [],
+        isComplete: false
+      });
+
+      const progressCallback = (message, type = 'info') => {
+        setProgressDisplay(prev => ({
+          ...prev,
+          messages: [...prev.messages, {
+            text: message,
+            type: type,
+            timestamp: new Date().toISOString()
+          }]
+        }));
+      };
       
-      const result = await syncService.resetAllUserData();
+      const result = await syncService.resetAllUserData(progressCallback);
       
       if (result.success) {
         setResetMessage(`✅ ${result.message}`);
         setIsDatabaseEmpty(true);
+        
+        // Mark progress as complete
+        setProgressDisplay(prev => ({
+          ...prev,
+          isComplete: true
+        }));
         
         // Reload dashboard data and status after reset
         setTimeout(() => {
@@ -213,10 +374,28 @@ const DashboardLayout = ({ user, onSignOut }) => {
         }, 2000);
       } else {
         setResetMessage(`❌ ${result.message}`);
+        setProgressDisplay(prev => ({
+          ...prev,
+          isComplete: true,
+          messages: [...prev.messages, {
+            text: `❌ ${result.message}`,
+            type: 'error',
+            timestamp: new Date().toISOString()
+          }]
+        }));
       }
     } catch (error) {
       console.error('Reset error:', error);
       setResetMessage(`❌ Reset failed: ${error.message}`);
+      setProgressDisplay(prev => ({
+        ...prev,
+        isComplete: true,
+        messages: [...prev.messages, {
+          text: `❌ Reset failed: ${error.message}`,
+          type: 'error',
+          timestamp: new Date().toISOString()
+        }]
+      }));
     } finally {
       setIsResetting(false);
     }
@@ -225,6 +404,15 @@ const DashboardLayout = ({ user, onSignOut }) => {
   const handleNavClick = (sectionId) => {
     setActiveSection(sectionId);
     setSidebarOpen(false); // Close mobile sidebar
+  };
+
+  const closeProgressDisplay = () => {
+    setProgressDisplay({
+      isVisible: false,
+      title: '',
+      messages: [],
+      isComplete: false
+    });
   };
 
   const renderContent = () => {
@@ -359,6 +547,15 @@ const DashboardLayout = ({ user, onSignOut }) => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Progress Display Modal */}
+      <ProgressDisplay
+        isVisible={progressDisplay.isVisible}
+        title={progressDisplay.title}
+        messages={progressDisplay.messages}
+        isComplete={progressDisplay.isComplete}
+        onClose={closeProgressDisplay}
+      />
     </div>
   );
 };

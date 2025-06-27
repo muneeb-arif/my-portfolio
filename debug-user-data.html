@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug User Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Debug User Data</h1>
+    <div id="results"></div>
+
+    <script>
+        // Initialize Supabase
+        const supabaseUrl = 'https://bpniquvjzwxjimeczjuf.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbmlxdXZqend4amltZWN6anVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NjY5NzgsImV4cCI6MjA2NTI0Mjk3OH0.b9zch2Wndt0yHGmeXPczfvHJeQxYobEL3CkrZRmHxFE';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const targetEmail = 'fareedrao7890@gmail.com';
+
+        async function debugUserData() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Debugging User Data for: ' + targetEmail + '</h2>';
+
+            try {
+                // 1. Check portfolio_config table
+                console.log('1. Checking portfolio_config table...');
+                results.innerHTML += '<h3>1. Portfolio Config Check</h3>';
+                
+                const { data: portfolioConfigs, error: configError } = await supabase
+                    .from('portfolio_config')
+                    .select('*');
+
+                if (configError) {
+                    results.innerHTML += '<p style="color: red;">Error: ' + configError.message + '</p>';
+                    return;
+                }
+
+                results.innerHTML += '<p>All portfolio configs:</p><pre>' + JSON.stringify(portfolioConfigs, null, 2) + '</pre>';
+
+                // Find the target email config
+                const targetConfig = portfolioConfigs.find(config => config.owner_email === targetEmail);
+                const targetUserId = targetConfig?.owner_user_id;
+
+                if (targetConfig) {
+                    results.innerHTML += '<p style="color: green;">✅ Found config for ' + targetEmail + '</p>';
+                    results.innerHTML += '<p>User ID: ' + targetUserId + '</p>';
+                    results.innerHTML += '<p>Active: ' + targetConfig.is_active + '</p>';
+                } else {
+                    results.innerHTML += '<p style="color: red;">❌ No config found for ' + targetEmail + '</p>';
+                    return;
+                }
+
+                // 2. Check projects table
+                console.log('2. Checking projects table...');
+                results.innerHTML += '<h3>2. Projects Check</h3>';
+                
+                // Try to get published projects (should work with RLS)
+                const { data: publishedProjects, error: publishedError } = await supabase
+                    .from('projects')
+                    .select('user_id, title, status, created_at')
+                    .eq('status', 'published');
+
+                if (publishedError) {
+                    results.innerHTML += '<p style="color: red;">Error getting published projects: ' + publishedError.message + '</p>';
+                } else {
+                    results.innerHTML += '<p>Published projects (RLS filtered):</p>';
+                    results.innerHTML += '<pre>' + JSON.stringify(publishedProjects, null, 2) + '</pre>';
+                }
+
+                // Try to get all projects (might be blocked by RLS)
+                const { data: allProjects, error: projectsError } = await supabase
+                    .from('projects')
+                    .select('user_id, title, status, created_at');
+
+                if (projectsError) {
+                    results.innerHTML += '<p style="color: red;">Error getting all projects: ' + projectsError.message + '</p>';
+                } else {
+                    results.innerHTML += '<p>All projects (RLS may filter):</p>';
+                    results.innerHTML += '<pre>' + JSON.stringify(allProjects, null, 2) + '</pre>';
+
+                    if (allProjects && allProjects.length > 0) {
+                        const userProjects = allProjects.filter(p => p.user_id === targetUserId);
+                        results.innerHTML += '<p>Projects for target user ID (' + targetUserId + '): ' + userProjects.length + '</p>';
+                        if (userProjects.length > 0) {
+                            results.innerHTML += '<pre>' + JSON.stringify(userProjects, null, 2) + '</pre>';
+                        }
+                    } else {
+                        results.innerHTML += '<p style="color: orange;">⚠️ RLS policies may be blocking data access</p>';
+                    }
+                }
+
+                // 3. Check settings table
+                console.log('3. Checking settings table...');
+                results.innerHTML += '<h3>3. Settings Check</h3>';
+                
+                const { data: allSettings, error: settingsError } = await supabase
+                    .from('settings')
+                    .select('user_id, key, value');
+
+                if (settingsError) {
+                    results.innerHTML += '<p style="color: red;">Error: ' + settingsError.message + '</p>';
+                } else {
+                    results.innerHTML += '<p>All settings (showing user_id, key):</p>';
+                    const settingsPreview = allSettings.map(s => ({ user_id: s.user_id, key: s.key }));
+                    results.innerHTML += '<pre>' + JSON.stringify(settingsPreview, null, 2) + '</pre>';
+
+                    const userSettings = allSettings.filter(s => s.user_id === targetUserId);
+                    results.innerHTML += '<p>Settings for target user ID (' + targetUserId + '): ' + userSettings.length + '</p>';
+                    if (userSettings.length > 0) {
+                        results.innerHTML += '<pre>' + JSON.stringify(userSettings, null, 2) + '</pre>';
+                    }
+                }
+
+                // 4. Check domains_technologies table
+                console.log('4. Checking domains_technologies table...');
+                results.innerHTML += '<h3>4. Domains/Technologies Check</h3>';
+                
+                const { data: allDomains, error: domainsError } = await supabase
+                    .from('domains_technologies')
+                    .select('user_id, title, type');
+
+                if (domainsError) {
+                    results.innerHTML += '<p style="color: red;">Error: ' + domainsError.message + '</p>';
+                } else {
+                    results.innerHTML += '<p>All domains/technologies (showing user_id, title, type):</p>';
+                    results.innerHTML += '<pre>' + JSON.stringify(allDomains || [], null, 2) + '</pre>';
+
+                    if (allDomains && allDomains.length > 0) {
+                        const userDomains = allDomains.filter(d => d.user_id === targetUserId);
+                        results.innerHTML += '<p>Domains/Technologies for target user ID (' + targetUserId + '): ' + userDomains.length + '</p>';
+                        if (userDomains.length > 0) {
+                            results.innerHTML += '<pre>' + JSON.stringify(userDomains, null, 2) + '</pre>';
+                        }
+                    } else {
+                        results.innerHTML += '<p style="color: orange;">⚠️ No domains/technologies found (RLS may be blocking)</p>';
+                    }
+                }
+
+                // 5. Check all unique user IDs across tables
+                console.log('5. Checking unique user IDs...');
+                results.innerHTML += '<h3>5. User ID Analysis</h3>';
+                
+                const projectUserIds = allProjects ? [...new Set(allProjects.map(p => p.user_id))] : [];
+                const settingsUserIds = allSettings ? [...new Set(allSettings.map(s => s.user_id))] : [];
+                const domainsUserIds = allDomains ? [...new Set(allDomains.map(d => d.user_id))] : [];
+                
+                results.innerHTML += '<p>Unique user IDs in projects: ' + JSON.stringify(projectUserIds) + '</p>';
+                results.innerHTML += '<p>Unique user IDs in settings: ' + JSON.stringify(settingsUserIds) + '</p>';
+                results.innerHTML += '<p>Unique user IDs in domains: ' + JSON.stringify(domainsUserIds) + '</p>';
+                results.innerHTML += '<p>Target user ID from portfolio_config: ' + targetUserId + '</p>';
+
+                // Check if target user ID exists in other tables
+                const hasProjects = projectUserIds.includes(targetUserId);
+                const hasSettings = settingsUserIds.includes(targetUserId);
+                const hasDomains = domainsUserIds.includes(targetUserId);
+
+                results.innerHTML += '<h3>6. Data Availability Summary</h3>';
+                results.innerHTML += '<p>Target user (' + targetUserId + ') visibility through RLS:</p>';
+                results.innerHTML += '<p>- Projects: ' + (hasProjects ? '✅' : '❌') + '</p>';
+                results.innerHTML += '<p>- Settings: ' + (hasSettings ? '✅' : '❌') + '</p>';
+                results.innerHTML += '<p>- Domains/Technologies: ' + (hasDomains ? '✅' : '❌') + '</p>';
+
+                if (!hasProjects && !hasSettings && !hasDomains) {
+                    results.innerHTML += '<p style="color: red; font-weight: bold;">❌ RLS policies are blocking data access!</p>';
+                    results.innerHTML += '<p>Even though data exists, RLS policies prevent anonymous users from reading it.</p>';
+                    results.innerHTML += '<p style="color: blue;">💡 Need to check/fix RLS policies in Supabase.</p>';
+                }
+
+                // 7. Test RLS policy functions
+                results.innerHTML += '<h3>7. RLS Policy Function Test</h3>';
+                
+                try {
+                    const { data: portfolioOwnerId, error: ownerError } = await supabase
+                        .rpc('get_portfolio_owner_id');
+                    
+                    if (ownerError) {
+                        results.innerHTML += '<p style="color: red;">❌ get_portfolio_owner_id() error: ' + ownerError.message + '</p>';
+                    } else {
+                        results.innerHTML += '<p>get_portfolio_owner_id() returns: ' + portfolioOwnerId + '</p>';
+                        results.innerHTML += '<p>Matches target user? ' + (portfolioOwnerId === targetUserId ? '✅' : '❌') + '</p>';
+                    }
+
+                    const { data: isOwnerResult, error: isOwnerError } = await supabase
+                        .rpc('is_portfolio_owner', { check_user_id: targetUserId });
+                    
+                    if (isOwnerError) {
+                        results.innerHTML += '<p style="color: red;">❌ is_portfolio_owner() error: ' + isOwnerError.message + '</p>';
+                    } else {
+                        results.innerHTML += '<p>is_portfolio_owner(' + targetUserId + ') returns: ' + isOwnerResult + '</p>';
+                    }
+                } catch (rpcError) {
+                    results.innerHTML += '<p style="color: red;">❌ RPC function test error: ' + rpcError.message + '</p>';
+                }
+
+            } catch (error) {
+                results.innerHTML += '<p style="color: red;">Unexpected error: ' + error.message + '</p>';
+                console.error('Debug error:', error);
+            }
+        }
+
+        // Run the debug when page loads
+        window.addEventListener('load', debugUserData);
+    </script>
+</body>
+</html> 

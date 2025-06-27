@@ -1065,21 +1065,64 @@ export const portfolioConfigService = {
     }
   },
 
-  // Get current portfolio owner configuration
+  // Get portfolio configuration matching the email in .env
   async getPortfolioConfig() {
     try {
-      const { data, error } = await supabase
+      // Get the email from .env config
+      const { portfolioConfig } = await import('../config/portfolio');
+      const envEmail = portfolioConfig.ownerEmail;
+
+      console.log('🔍 DEBUG: Portfolio Config Check');
+      console.log('   .env email:', envEmail);
+
+      if (envEmail) {
+        // Look for the .env email in active portfolio configs
+        const { data, error } = await supabase
+          .from('portfolio_config')
+          .select('*')
+          .eq('owner_email', envEmail)
+          .eq('is_active', true)
+          .single();
+
+        console.log('   Query result:', { data, error: error?.message });
+
+        if (!error && data) {
+          console.log('✅ Found matching portfolio config for .env email:', envEmail);
+          console.log('   User ID:', data.owner_user_id);
+          return data;
+        }
+
+        console.log('⚠️ .env email not found in portfolio_config table:', envEmail);
+        
+        // Check all portfolio configs for debugging
+        const { data: allConfigs } = await supabase
+          .from('portfolio_config')
+          .select('*');
+        console.log('   All portfolio configs in DB:', allConfigs);
+      } else {
+        console.log('⚠️ No email configured in .env');
+      }
+
+      // Fallback: get any active configuration
+      const { data: fallbackData, error: fallbackError } = await supabase
         .from('portfolio_config')
         .select('*')
         .eq('is_active', true)
+        .limit(1)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('Error getting portfolio config:', error);
+      if (fallbackError && fallbackError.code !== 'PGRST116') {
+        console.error('Error getting fallback portfolio config:', fallbackError);
         return null;
       }
 
-      return data;
+      if (fallbackData) {
+        console.log('⚠️ Using fallback config for:', fallbackData.owner_email);
+      } else {
+        console.log('⚠️ No active portfolio configs found - will use demo data');
+      }
+
+      return fallbackData;
     } catch (error) {
       console.error('Error in getPortfolioConfig:', error);
       return null;
@@ -1121,23 +1164,29 @@ export const portfolioConfigService = {
     try {
       // Get the owner email from environment
       const { portfolioConfig } = await import('../config/portfolio');
-      const ownerEmail = portfolioConfig.ownerEmail;
+      const envEmail = portfolioConfig.ownerEmail;
 
-      if (!ownerEmail) {
-        console.log('📝 No portfolio owner email configured in environment');
+      if (!envEmail) {
+        console.log('📝 No portfolio owner email in .env');
         return { success: true, message: 'No configuration needed' };
       }
 
-      // Check if already configured
-      const currentConfig = await this.getPortfolioConfig();
-      if (currentConfig && currentConfig.owner_email === ownerEmail) {
-        console.log('✅ Portfolio already configured for:', ownerEmail);
-        return { success: true, message: 'Already configured', config: currentConfig };
+      // Check if .env email exists and is active in portfolio_config
+      const { data: existingConfig, error } = await supabase
+        .from('portfolio_config')
+        .select('*')
+        .eq('owner_email', envEmail)
+        .eq('is_active', true)
+        .single();
+
+      if (!error && existingConfig) {
+        console.log('✅ .env email already configured:', envEmail);
+        return { success: true, message: 'Already configured', config: existingConfig };
       }
 
-      // Configure the portfolio owner
-      console.log('🔧 Setting up portfolio configuration...');
-      return await this.configurePortfolioOwner(ownerEmail);
+      // If not found, create/activate it
+      console.log('🔧 Configuring portfolio for .env email:', envEmail);
+      return await this.configurePortfolioOwner(envEmail);
 
     } catch (error) {
       console.error('❌ Error ensuring portfolio configured:', error);

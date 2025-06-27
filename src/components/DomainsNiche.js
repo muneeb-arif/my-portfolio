@@ -54,6 +54,27 @@ const DomainsNiche = () => {
     return iconMap[iconName] || iconMap['Target']; // Default to Target icon for niches
   };
 
+  // Helper function to transform raw niche data to domain format
+  const transformNicheToDomain = (niche) => {
+    // Convert tools string to array
+    const toolsArray = niche.tools ? niche.tools.split(',').map(tool => tool.trim()).filter(tool => tool) : [];
+    
+    // Convert key_features string to array, splitting by newlines
+    const keyFeaturesArray = niche.key_features 
+      ? niche.key_features.split('\n').map(feature => feature.trim()).filter(feature => feature)
+      : [];
+    
+    return {
+      ...niche,
+      icon: getIconComponent('Target'), // Use Target icon for niches
+      subtitle: niche.overview || 'Specialized domain expertise',
+      tags: toolsArray,
+      image: niche.image.startsWith('http') ? niche.image : `/images/domains/${niche.image}`,
+      modalContent: keyFeaturesArray,
+      ai_driven: niche.ai_driven
+    };
+  };
+
   const handleCardClick = (niche) => {
     setSelectedNiche(niche);
   };
@@ -77,7 +98,9 @@ const DomainsNiche = () => {
 
     // Check bounds
     if (newIndex >= 0 && newIndex < nichesData.length) {
-      setSelectedNiche(nichesData[newIndex]);
+      // Transform the raw niche data to domain format before setting
+      const transformedNiche = transformNicheToDomain(nichesData[newIndex]);
+      setSelectedNiche(transformedNiche);
     }
   };
 
@@ -140,26 +163,12 @@ const DomainsNiche = () => {
         {nichesData.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-12">
             {nichesData.map((niche) => {
-              // Convert tools string to array
-              const toolsArray = niche.tools ? niche.tools.split(',').map(tool => tool.trim()).filter(tool => tool) : [];
-              
-              // Convert key_features string to array, splitting by newlines
-              const keyFeaturesArray = niche.key_features 
-                ? niche.key_features.split('\n').map(feature => feature.trim()).filter(feature => feature)
-                : [];
+              const transformedNiche = transformNicheToDomain(niche);
               
               return (
                 <DomainCard
                   key={niche.id}
-                  domain={{
-                    ...niche,
-                    icon: getIconComponent('Target'), // Use Target icon for niches
-                    subtitle: niche.overview || 'Specialized domain expertise',
-                    tags: toolsArray,
-                    image: niche.image.startsWith('http') ? niche.image : `/images/domains/${niche.image}`,
-                    modalContent: keyFeaturesArray,
-                    ai_driven: niche.ai_driven
-                  }}
+                  domain={transformedNiche}
                   onClick={handleCardClick}
                   isSelected={selectedNiche?.id === niche.id}
                 />
