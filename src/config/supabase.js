@@ -4,17 +4,23 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-// Validate environment variables
-if (!supabaseUrl) {
-  throw new Error('Missing REACT_APP_SUPABASE_URL environment variable');
-}
+// Check if environment variables are missing
+const isEnvMissing = !supabaseUrl || !supabaseAnonKey;
 
-if (!supabaseAnonKey) {
-  throw new Error('Missing REACT_APP_SUPABASE_ANON_KEY environment variable');
-}
+// Create Supabase client with fallback for missing env vars
+let supabase;
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (isEnvMissing) {
+  // Create a dummy client that will fail gracefully
+  supabase = createClient('https://dummy.supabase.co', 'dummy-key');
+  
+  // Add a flag to indicate missing environment variables
+  supabase.isEnvMissing = true;
+} else {
+  // Create normal Supabase client
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  supabase.isEnvMissing = false;
+}
 
 // Table names
 export const TABLES = {
@@ -33,4 +39,8 @@ export const BUCKETS = {
   DOMAINS: 'domains'
 };
 
+// Export a function to check if environment variables are missing
+export const checkEnvMissing = () => isEnvMissing;
+
+export { supabase };
 export default supabase; 

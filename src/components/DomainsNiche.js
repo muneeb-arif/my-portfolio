@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DomainCard from './DomainCard';
 import DomainModal from './DomainModal';
-import { nicheService } from '../services/supabaseService';
+import portfolioService from '../services/portfolioService';
 
 const DomainsNiche = () => {
   const [selectedNiche, setSelectedNiche] = useState(null);
@@ -15,7 +15,7 @@ const DomainsNiche = () => {
   const loadNiches = async () => {
     try {
       setLoading(true);
-      const data = await nicheService.getNiches();
+      const data = await portfolioService.getNiches();
       setNichesData(data);
     } catch (error) {
       console.error('Error loading niches:', error);

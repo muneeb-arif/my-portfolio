@@ -168,6 +168,10 @@ cd portfolio-1
 # Install dependencies (includes SweetAlert2)
 npm install
 
+# Configure your portfolio (see PORTFOLIO_CONFIGURATION.md)
+cp env.example .env
+# Edit .env with your Supabase credentials and portfolio owner email
+
 # Start development server
 npm start
 
@@ -182,6 +186,15 @@ npm run build
 4. **Upload images** to the Supabase storage bucket
 
 For complete backend setup instructions, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
+
+### **Portfolio Configuration**
+To configure which user's data displays on the public portfolio:
+
+1. **Set up your `.env` file** with the portfolio owner's email
+2. **Configure database policies** for public access to published data
+3. **Populate your data** through the dashboard
+
+For detailed configuration instructions, see [PORTFOLIO_CONFIGURATION.md](PORTFOLIO_CONFIGURATION.md).
 
 ### **Dependencies**
 ```json

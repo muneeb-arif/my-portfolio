@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { settingsService } from './supabaseService';
+import portfolioService from './portfolioService';
+import { portfolioConfig } from '../config/portfolio';
 
 const SettingsContext = createContext();
 
@@ -15,6 +17,9 @@ export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
 
+  // Check if we're in dashboard mode
+  const isDashboard = window.location.pathname === '/dashboard';
+
   const defaultSettings = useMemo(() => ({
     logo_type: 'initials',
     logo_initials: 'MA',
@@ -29,7 +34,8 @@ export const SettingsProvider = ({ children }) => {
     social_github: 'https://github.com/muneebarif',
     social_instagram: '',
     social_facebook: '',
-    copyright_text: '© 2024 Muneeb Arif. All rights reserved.'
+    copyright_text: '© 2024 Muneeb Arif. All rights reserved.',
+    ...portfolioConfig.defaultSettings
   }), []);
 
   useEffect(() => {
@@ -39,18 +45,26 @@ export const SettingsProvider = ({ children }) => {
     const loadSettingsOnce = async () => {
       try {
         setLoading(true);
-        console.log('🔄 Loading settings from database...');
+        console.log('🔄 Loading settings...', isDashboard ? '(Dashboard mode)' : '(Public mode)');
         
         // Add timeout to prevent infinite loading
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Settings loading timeout')), 10000)
         );
         
-        const settingsPromise = settingsService.getSettings();
+        let settingsPromise;
+        if (isDashboard) {
+          // Dashboard mode: use authenticated settings service
+          settingsPromise = settingsService.getSettings();
+        } else {
+          // Public mode: use public settings service
+          settingsPromise = portfolioService.getPublicSettings();
+        }
+        
         const userSettings = await Promise.race([settingsPromise, timeoutPromise]);
         
         if (isMounted) {
-          console.log('📥 User settings from database:', userSettings);
+          console.log('📥 User settings loaded:', userSettings);
           const mergedSettings = { ...defaultSettings, ...userSettings };
           console.log('🔧 Merged settings:', mergedSettings);
           setSettings(mergedSettings);
@@ -74,22 +88,30 @@ export const SettingsProvider = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, []); // Empty dependency array - only run once
+  }, [isDashboard, defaultSettings]); // Include isDashboard in dependencies
 
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔄 Loading settings from database...');
+      console.log('🔄 Loading settings...', isDashboard ? '(Dashboard mode)' : '(Public mode)');
       
       // Add timeout to prevent infinite loading
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Settings loading timeout')), 10000)
       );
       
-      const settingsPromise = settingsService.getSettings();
+      let settingsPromise;
+      if (isDashboard) {
+        // Dashboard mode: use authenticated settings service
+        settingsPromise = settingsService.getSettings();
+      } else {
+        // Public mode: use public settings service
+        settingsPromise = portfolioService.getPublicSettings();
+      }
+      
       const userSettings = await Promise.race([settingsPromise, timeoutPromise]);
       
-      console.log('📥 User settings from database:', userSettings);
+      console.log('📥 User settings loaded:', userSettings);
       const mergedSettings = { ...defaultSettings, ...userSettings };
       console.log('🔧 Merged settings:', mergedSettings);
       setSettings(mergedSettings);
@@ -101,9 +123,15 @@ export const SettingsProvider = ({ children }) => {
       console.log('✅ Settings loading complete');
       setLoading(false);
     }
-  }, []);
+  }, [isDashboard, defaultSettings]);
 
   const updateSettings = useCallback(async (newSettings) => {
+    // Only allow updates in dashboard mode
+    if (!isDashboard) {
+      console.warn('Settings updates are only allowed in dashboard mode');
+      return false;
+    }
+    
     try {
       await settingsService.updateMultipleSettings(newSettings);
       setSettings(prev => ({ ...prev, ...newSettings }));
@@ -112,7 +140,7 @@ export const SettingsProvider = ({ children }) => {
       console.error('Error updating settings:', error);
       return false;
     }
-  }, []);
+  }, [isDashboard]);
 
   const refreshSettings = useCallback(async () => {
     await loadSettings();

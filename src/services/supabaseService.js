@@ -999,4 +999,393 @@ export const nicheService = {
       )
       .subscribe();
   }
-}; 
+};
+
+// ================ PORTFOLIO CONFIGURATION SERVICE ================
+// Service to manage portfolio owner configuration
+
+export const portfolioConfigService = {
+  // Cache for configuration to avoid repeated requests
+  _configCache: null,
+  _configPromise: null,
+
+  // Configure portfolio owner in database
+  async configurePortfolioOwner(email) {
+    if (!email) {
+      console.log('📝 No email provided for portfolio configuration');
+      return { success: false, message: 'No email provided' };
+    }
+
+    try {
+      console.log('🔧 Configuring portfolio owner:', email);
+
+      // First, get the user ID for this email
+      const { data: userId, error: userError } = await supabase
+        .rpc('get_user_id_by_email', { user_email: email });
+
+      if (userError) {
+        console.error('❌ Error getting user ID:', userError);
+        return { success: false, message: `User lookup failed: ${userError.message}` };
+      }
+
+      if (!userId) {
+        console.error('❌ No user found with email:', email);
+        return { success: false, message: `No user found with email: ${email}` };
+      }
+
+      // Configure the portfolio owner in the database
+      const { data, error } = await supabase
+        .from('portfolio_config')
+        .upsert({
+          owner_email: email,
+          owner_user_id: userId,
+          is_active: true,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'owner_email'
+        })
+        .select();
+
+      if (error) {
+        console.error('❌ Error configuring portfolio owner:', error);
+        return { success: false, message: `Configuration failed: ${error.message}` };
+      }
+
+      console.log('✅ Portfolio owner configured successfully:', data);
+      
+      // Clear cache after successful configuration
+      this._configCache = null;
+      this._configPromise = null;
+      
+      return { success: true, message: 'Portfolio owner configured successfully', data };
+
+    } catch (error) {
+      console.error('❌ Error in configurePortfolioOwner:', error);
+      return { success: false, message: `Configuration error: ${error.message}` };
+    }
+  },
+
+  // Get current portfolio owner configuration
+  async getPortfolioConfig() {
+    try {
+      const { data, error } = await supabase
+        .from('portfolio_config')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error getting portfolio config:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getPortfolioConfig:', error);
+      return null;
+    }
+  },
+
+  // Check if portfolio is configured and set it up if needed (with caching)
+  async ensurePortfolioConfigured() {
+    // Return cached result if available
+    if (this._configCache) {
+      return this._configCache;
+    }
+
+    // Return existing promise if already in progress
+    if (this._configPromise) {
+      return this._configPromise;
+    }
+
+    // Create new promise and cache it
+    this._configPromise = this._doEnsurePortfolioConfigured();
+    
+    try {
+      const result = await this._configPromise;
+      // Cache successful results for 5 minutes
+      if (result.success) {
+        this._configCache = result;
+        setTimeout(() => {
+          this._configCache = null;
+        }, 5 * 60 * 1000); // 5 minutes
+      }
+      return result;
+    } finally {
+      this._configPromise = null;
+    }
+  },
+
+  // Internal implementation without caching
+  async _doEnsurePortfolioConfigured() {
+    try {
+      // Get the owner email from environment
+      const { portfolioConfig } = await import('../config/portfolio');
+      const ownerEmail = portfolioConfig.ownerEmail;
+
+      if (!ownerEmail) {
+        console.log('📝 No portfolio owner email configured in environment');
+        return { success: true, message: 'No configuration needed' };
+      }
+
+      // Check if already configured
+      const currentConfig = await this.getPortfolioConfig();
+      if (currentConfig && currentConfig.owner_email === ownerEmail) {
+        console.log('✅ Portfolio already configured for:', ownerEmail);
+        return { success: true, message: 'Already configured', config: currentConfig };
+      }
+
+      // Configure the portfolio owner
+      console.log('🔧 Setting up portfolio configuration...');
+      return await this.configurePortfolioOwner(ownerEmail);
+
+    } catch (error) {
+      console.error('❌ Error ensuring portfolio configured:', error);
+      return { success: false, message: `Setup error: ${error.message}` };
+    }
+  },
+
+  // Clear cache (useful for testing or when configuration changes)
+  clearCache() {
+    this._configCache = null;
+    this._configPromise = null;
+  }
+};
+
+// ================ USER RESOLUTION SERVICE ================
+// Helper service to resolve user information
+
+export const userResolutionService = {
+  // Get user ID by email (for portfolio owner resolution)
+  // This works by checking if there are any projects/data for a user with matching email
+  async getUserIdByEmail(email) {
+    if (!email) return null;
+    
+    try {
+      // We can't directly query auth.users, but we can find users through their data
+      // First, try to find via projects table (which has user_id and we can join with auth)
+      const { data, error } = await supabase
+        .rpc('get_user_id_by_email', { user_email: email });
+      
+      if (error) {
+        console.log('RPC function not available, falling back to alternative method');
+        // Fallback: return null and let the app use fallback data
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error resolving user by email:', error);
+      return null;
+    }
+  },
+
+  // Get current authenticated user info
+  async getCurrentUserInfo() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return null;
+      
+      return {
+        id: user.id,
+        email: user.email
+      };
+    } catch (error) {
+      console.error('Error getting current user info:', error);
+      return null;
+    }
+  }
+};
+
+// ================ PUBLIC PORTFOLIO OPERATIONS ================
+// These functions fetch data for public display without authentication
+
+export const publicPortfolioService = {
+  // Cache for user resolution to avoid repeated calls
+  _userIdCache: null,
+  _isInitialized: false,
+
+  // Initialize configuration once
+  async initialize() {
+    if (this._isInitialized) {
+      return;
+    }
+
+    console.log('🚀 Initializing portfolio service...');
+    
+    try {
+      // First, check if we're authenticated (dashboard mode)
+      const currentUser = await userResolutionService.getCurrentUserInfo();
+      if (currentUser) {
+        console.log('📊 Dashboard mode: Loading data for authenticated user:', currentUser.email);
+        this._userIdCache = currentUser.id;
+        this._isInitialized = true;
+        return;
+      }
+
+      // For public mode, ensure portfolio is configured in the database
+      console.log('🌐 Public mode: Setting up portfolio configuration...');
+      const setupResult = await portfolioConfigService.ensurePortfolioConfigured();
+      
+      if (setupResult.success) {
+        console.log('✅ Portfolio configuration ready');
+      } else {
+        console.log('⚠️ Portfolio configuration failed:', setupResult.message);
+      }
+      
+      // In public mode, we don't cache user ID - let RLS policies handle filtering
+      this._userIdCache = null;
+      this._isInitialized = true;
+
+    } catch (error) {
+      console.error('❌ Error initializing portfolio service:', error);
+      this._userIdCache = null;
+      this._isInitialized = true;
+    }
+  },
+
+  // Get published projects for public display
+  async getPublishedProjects() {
+    try {
+      // Initialize only once
+      await this.initialize();
+      
+      const { data, error } = await supabase
+        .from(TABLES.PROJECTS)
+        .select(`
+          *,
+          project_images (*)
+        `)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching published projects from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getProjects();
+    }
+  },
+
+  // Get categories for public display
+  async getCategories() {
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.CATEGORIES)
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching categories from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getCategories();
+    }
+  },
+
+  // Get domains and technologies for public display
+  async getDomainsTechnologies() {
+    try {
+      // Initialize only once
+      await this.initialize();
+      
+      const { data, error } = await supabase
+        .from('domains_technologies')
+        .select(`
+          *,
+          tech_skills (*)
+        `)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getTechnologies();
+    }
+  },
+
+  // Get niches for public display
+  async getNiches() {
+    try {
+      const { data, error } = await supabase
+        .from('niche')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching niches from Supabase, using fallback data:', error);
+      // Show fallback notification
+      fallbackUtils.showFallbackNotification();
+      // Return fallback data when Supabase fails
+      return fallbackDataService.getNiches();
+    }
+  },
+
+  // Get settings for public display
+  async getPublicSettings() {
+    try {
+      // Initialize only once
+      await this.initialize();
+      
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*');
+
+      if (error) throw error;
+      
+      // Convert array to object for easier access
+      const settingsObj = {};
+      (data || []).forEach(setting => {
+        settingsObj[setting.key] = setting.value;
+      });
+      
+      return settingsObj;
+    } catch (error) {
+      console.error('Error fetching public settings:', error);
+      return {};
+    }
+  },
+
+  // Clear cache when needed (e.g., when user signs in/out)
+  clearCache() {
+    this._userIdCache = null;
+    this._isInitialized = false;
+  },
+
+  // Legacy method - kept for backward compatibility but now just calls initialize()
+  async determineUserId() {
+    await this.initialize();
+    return this._userIdCache;
+  }
+};
+
+// ================ GLOBAL AUTH STATE LISTENER ================
+// Clear cache when auth state changes to ensure correct data loading
+
+// Set up global auth state listener
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('🔄 Auth state changed:', event);
+  
+  // Clear caches when auth state changes
+  publicPortfolioService.clearCache();
+  portfolioConfigService.clearCache();
+  
+  // Additional cleanup based on event type
+  if (event === 'SIGNED_OUT') {
+    console.log('👋 User signed out - cache cleared for public mode');
+  } else if (event === 'SIGNED_IN') {
+    console.log('👋 User signed in - cache cleared for dashboard mode');
+  }
+}); 

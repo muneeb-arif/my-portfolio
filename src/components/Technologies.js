@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TechnologyCard from './TechnologyCard';
-import { domainsTechnologiesService } from '../services/supabaseService';
+import portfolioService from '../services/portfolioService';
 
 const Technologies = () => {
   const [technologiesData, setTechnologiesData] = useState([]);
@@ -13,7 +13,7 @@ const Technologies = () => {
   const loadTechnologies = async () => {
     try {
       setLoading(true);
-      const data = await domainsTechnologiesService.getDomainsTechnologies();
+      const data = await portfolioService.getDomainsTechnologies();
       setTechnologiesData(data);
     } catch (error) {
       console.error('Error loading technologies:', error);
@@ -99,22 +99,40 @@ const Technologies = () => {
         {/* Technologies Grid - 4x2 layout */}
         {technologiesData.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {technologiesData.map((tech, index) => (
-              <TechnologyCard
-                key={tech.id}
-                icon={getIconComponent(tech.icon)}
-                title={tech.title}
-                technologies={
-                  tech.tech_skills 
-                    ? tech.tech_skills
-                        .sort((a, b) => (b.level || 0) - (a.level || 0)) // Sort by skill level descending
-                        .map(skill => ({ name: skill.title, level: skill.level }))
-                    : []
-                }
-                backgroundImage={`https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000000)}?w=400&h=300&fit=crop&crop=center`}
-                animationDelay={index * 0.1}
-              />
-            ))}
+            {technologiesData.map((tech, index) => {
+              // Use predefined background images or gradients instead of random Unsplash URLs
+              const backgroundImages = [
+                `/images/domains/web-development.jpeg`,
+                `/images/domains/mobile-development.jpeg`,
+                `/images/domains/ai-ml.jpeg`,
+                `/images/domains/cloud-computing.jpeg`,
+                `/images/domains/blockchain.jpeg`,
+                `/images/domains/cybersecurity.jpeg`,
+                `/images/domains/data-science.jpeg`,
+                `/images/domains/devops.jpeg`,
+                `/images/domains/ui-ux.jpeg`
+              ];
+              
+              // Use predefined image or gradient as fallback
+              const backgroundImage = backgroundImages[index % backgroundImages.length];
+              
+              return (
+                <TechnologyCard
+                  key={tech.id}
+                  icon={getIconComponent(tech.icon)}
+                  title={tech.title}
+                  technologies={
+                    tech.tech_skills 
+                      ? tech.tech_skills
+                          .sort((a, b) => (b.level || 0) - (a.level || 0)) // Sort by skill level descending
+                          .map(skill => ({ name: skill.title, level: skill.level }))
+                      : []
+                  }
+                  backgroundImage={backgroundImage}
+                  animationDelay={index * 0.1}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-20">

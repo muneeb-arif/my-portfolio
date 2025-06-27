@@ -11,8 +11,10 @@ import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import Dashboard from './components/dashboard/Dashboard';
 import DynamicHead from './components/DynamicHead';
+import Toast from './components/Toast';
 import portfolioService from './services/portfolioService';
 import { SettingsProvider } from './services/settingsContext';
+import { checkEnvMissing } from './config/supabase';
 
 function App() {
   // Check if we're on the dashboard route
@@ -24,6 +26,19 @@ function App() {
   const [projects, setProjects] = useState([]);
   const [filters, setFilters] = useState(['All']);
   const [loading, setLoading] = useState(true);
+  const [showEnvToast, setShowEnvToast] = useState(false);
+
+  // Check for missing environment variables on app load
+  useEffect(() => {
+    if (checkEnvMissing()) {
+      // Show toast after a short delay to ensure app is loaded
+      const timer = setTimeout(() => {
+        setShowEnvToast(true);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Load projects and categories on component mount
   useEffect(() => {
@@ -215,6 +230,16 @@ function App() {
     <SettingsProvider>
       <DynamicHead />
       <div className="App">
+        {/* Environment Variables Missing Toast */}
+        {showEnvToast && (
+          <Toast
+            message="Missing .env file with Supabase credentials. The app is running in demo mode with fallback data."
+            type="warning"
+            duration={8000}
+            onClose={() => setShowEnvToast(false)}
+          />
+        )}
+
         {/* Header */}
         <Header />
 
