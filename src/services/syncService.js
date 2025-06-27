@@ -2,6 +2,97 @@ import { supabase } from '../config/supabase';
 import { fallbackDataService } from './fallbackDataService';
 
 export const syncService = {
+  // Reset/Clear ALL user data
+  async resetAllUserData() {
+    try {
+      console.log('🗑️ Starting complete data reset...');
+      
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      const userId = user.id;
+      let deletedCounts = {
+        project_images: 0,
+        tech_skills: 0,
+        projects: 0,
+        domains_technologies: 0,
+        categories: 0,
+        niche: 0,
+        settings: 0
+      };
+
+      // Delete user-specific data in correct order (dependencies first)
+      
+      // 1. Delete project images first (depends on projects)
+      const { count: imageCount } = await supabase
+        .from('project_images')
+        .delete()
+        .eq('user_id', userId);
+      deletedCounts.project_images = imageCount || 0;
+
+      // 2. Delete tech skills (depends on domains_technologies)
+      const { count: skillsCount } = await supabase
+        .from('tech_skills')
+        .delete()
+        .eq('user_id', userId);
+      deletedCounts.tech_skills = skillsCount || 0;
+
+      // 3. Delete projects
+      const { count: projectsCount } = await supabase
+        .from('projects')
+        .delete()
+        .eq('user_id', userId);
+      deletedCounts.projects = projectsCount || 0;
+
+      // 4. Delete domains/technologies
+      const { count: techCount } = await supabase
+        .from('domains_technologies')
+        .delete()
+        .eq('user_id', userId);
+      deletedCounts.domains_technologies = techCount || 0;
+
+      // 5. Delete user categories
+      const { count: categoriesCount } = await supabase
+        .from('categories')
+        .delete()
+        .eq('user_id', userId);
+      deletedCounts.categories = categoriesCount || 0;
+
+      // 6. Delete user niches
+      const { count: nicheCount } = await supabase
+        .from('niche')
+        .delete()
+        .eq('user_id', userId);
+      deletedCounts.niche = nicheCount || 0;
+
+      // 7. Delete user settings
+      const { count: settingsCount } = await supabase
+        .from('settings')
+        .delete()
+        .eq('user_id', userId);
+      deletedCounts.settings = settingsCount || 0;
+
+      console.log('✅ Data reset completed:', deletedCounts);
+      
+      return {
+        success: true,
+        message: 'All user data has been reset successfully!',
+        deletedCounts
+      };
+
+    } catch (error) {
+      console.error('❌ Data reset failed:', error);
+      return {
+        success: false,
+        message: `Reset failed: ${error.message}`,
+        error
+      };
+    }
+  },
+
   // Sync all fallback data to database
   async syncAllData() {
     try {
@@ -27,7 +118,7 @@ export const syncService = {
       console.log('🗑️ Clearing existing data...');
       await this.clearAllData(userId);
 
-      // 2. Sync Categories
+      // 2. Sync Categories (now user-specific)
       console.log('📁 Syncing categories...');
       const categoriesResult = await this.syncCategories(userId);
       results.categories = categoriesResult;
@@ -38,9 +129,9 @@ export const syncService = {
       results.technologies = techResult.technologies;
       results.skills = techResult.skills;
 
-      // 4. Sync Niches
+      // 4. Sync Niches (now user-specific)
       console.log('🏆 Syncing niches...');
-      const nichesResult = await this.syncNiches();
+      const nichesResult = await this.syncNiches(userId);
       results.niches = nichesResult;
 
       // 5. Sync Projects
@@ -70,20 +161,18 @@ export const syncService = {
     try {
       console.log('🗑️ Clearing existing data...');
       
-      // Clear user-specific data first (these should work with RLS)
+      // Clear user-specific data in correct order (dependencies first)
       const userDataOperations = [
         supabase.from('project_images').delete().eq('user_id', userId),
         supabase.from('tech_skills').delete().eq('user_id', userId),
         supabase.from('projects').delete().eq('user_id', userId),
-        supabase.from('domains_technologies').delete().eq('user_id', userId)
+        supabase.from('domains_technologies').delete().eq('user_id', userId),
+        supabase.from('categories').delete().eq('user_id', userId),
+        supabase.from('niche').delete().eq('user_id', userId)
       ];
 
-      const userResults = await Promise.all(userDataOperations);
-      console.log('✅ User data cleared:', userResults.map(r => r.count || 0));
-
-      // For global tables (categories and niches), we'll handle them in the sync functions
-      // This avoids RLS and UUID issues
-      console.log('⚠️ Global tables will be handled during sync (replace approach)');
+      const userResults = await Promise.allSettled(userDataOperations);
+      console.log('✅ User data cleared:', userResults.map(r => r.status === 'fulfilled' ? (r.value.count || 0) : 0));
       
       console.log('✅ All existing data cleared successfully');
     } catch (error) {
@@ -92,7 +181,7 @@ export const syncService = {
     }
   },
 
-  // Sync categories - FORCE REPLACE APPROACH
+  // Sync categories - NOW USER-SPECIFIC
   async syncCategories(userId) {
     try {
       const fallbackCategories = fallbackDataService.getCategories();
@@ -100,24 +189,13 @@ export const syncService = {
 
       console.log('📁 Starting categories sync...');
 
-      // First, try to delete existing categories by name
-      for (const category of fallbackCategories) {
-        try {
-          const deleteResult = await supabase.from('categories').delete().eq('name', category.name);
-          if (deleteResult.count > 0) {
-            console.log(`🗑️ Deleted existing category: ${category.name}`);
-          }
-        } catch (error) {
-          console.log(`⚠️ Could not delete category ${category.name}:`, error.message);
-        }
-      }
-
-      // Then insert new ones
+      // Insert categories with user_id
       for (const category of fallbackCategories) {
         try {
           const { error } = await supabase
             .from('categories')
             .insert({
+              user_id: userId,
               name: category.name,
               description: category.description,
               color: category.color
@@ -133,10 +211,11 @@ export const syncService = {
               const { error: upsertError } = await supabase
                 .from('categories')
                 .upsert({
+                  user_id: userId,
                   name: category.name,
                   description: category.description,
                   color: category.color
-                }, { onConflict: 'name' });
+                }, { onConflict: 'name,user_id' });
               
               if (!upsertError) {
                 syncedCount++;
@@ -251,7 +330,7 @@ export const syncService = {
   },
 
   // Sync niches - FORCE REPLACE APPROACH
-  async syncNiches() {
+  async syncNiches(userId) {
     try {
       const fallbackNiches = fallbackDataService.getNiches();
       let syncedCount = 0;
@@ -260,7 +339,7 @@ export const syncService = {
         try {
           // First try to delete existing niche with same title
           try {
-            await supabase.from('niche').delete().eq('title', niche.title);
+            await supabase.from('niche').delete().eq('title', niche.title).eq('user_id', userId);
           } catch (error) {
             // Ignore delete errors
           }
@@ -268,6 +347,7 @@ export const syncService = {
           const { error } = await supabase
             .from('niche')
             .insert({
+              user_id: userId,
               title: niche.title,
               overview: niche.overview,
               tools: niche.tools,
@@ -594,6 +674,7 @@ export const syncService = {
           const { error } = await supabase
             .from('categories')
             .insert({
+              user_id: userId,
               name: category.name,
               description: category.description,
               color: category.color
@@ -627,6 +708,7 @@ export const syncService = {
           const { error } = await supabase
             .from('niche')
             .insert({
+              user_id: userId,
               title: niche.title,
               overview: niche.overview,
               tools: niche.tools,

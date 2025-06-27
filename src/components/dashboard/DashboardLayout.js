@@ -33,6 +33,8 @@ const DashboardLayout = ({ user, onSignOut }) => {
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importMessage, setImportMessage] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
   const [stats, setStats] = useState({
     totalProjects: 0,
     publishedProjects: 0,
@@ -185,6 +187,41 @@ const DashboardLayout = ({ user, onSignOut }) => {
     }
   };
 
+  const handleResetData = async () => {
+    // Confirm action with user
+    const confirmed = window.confirm(
+      '⚠️ WARNING: This will permanently delete ALL your data including projects, technologies, categories, niches, and settings. This action cannot be undone.\n\nAre you sure you want to continue?'
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      setIsResetting(true);
+      setResetMessage('🗑️ Resetting all data...');
+      
+      const result = await syncService.resetAllUserData();
+      
+      if (result.success) {
+        setResetMessage(`✅ ${result.message}`);
+        setIsDatabaseEmpty(true);
+        
+        // Reload dashboard data and status after reset
+        setTimeout(() => {
+          loadDashboardData();
+          checkDatabaseStatus();
+          setResetMessage('');
+        }, 2000);
+      } else {
+        setResetMessage(`❌ ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Reset error:', error);
+      setResetMessage(`❌ Reset failed: ${error.message}`);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const handleNavClick = (sectionId) => {
     setActiveSection(sectionId);
     setSidebarOpen(false); // Close mobile sidebar
@@ -210,6 +247,9 @@ const DashboardLayout = ({ user, onSignOut }) => {
             importMessage={importMessage}
             onFileSelect={handleFileSelect}
             onImportData={handleImportData}
+            isResetting={isResetting}
+            resetMessage={resetMessage}
+            onResetData={handleResetData}
           />
         );
       case 'projects':
@@ -248,6 +288,9 @@ const DashboardLayout = ({ user, onSignOut }) => {
             importMessage={importMessage}
             onFileSelect={handleFileSelect}
             onImportData={handleImportData}
+            isResetting={isResetting}
+            resetMessage={resetMessage}
+            onResetData={handleResetData}
           />
         );
     }
@@ -321,7 +364,7 @@ const DashboardLayout = ({ user, onSignOut }) => {
 };
 
 // Overview Section Component
-const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isSyncing, syncMessage, onSyncData, isBackingUp, backupMessage, onBackupData, importFile, isImporting, importMessage, onFileSelect, onImportData }) => {
+const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isSyncing, syncMessage, onSyncData, isBackingUp, backupMessage, onBackupData, importFile, isImporting, importMessage, onFileSelect, onImportData, isResetting, resetMessage, onResetData }) => {
   const recentProjects = projects.slice(0, 5);
 
   return (
@@ -467,6 +510,15 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
             >
               {isBackingUp ? '📦 Backing up...' : '📦 Backup Data'}
             </button>
+
+            <button 
+              className={`btn-reset ${isResetting ? 'resetting' : ''}`}
+              onClick={onResetData}
+              disabled={isResetting}
+              style={{ backgroundColor: '#dc3545', color: 'white' }}
+            >
+              {isResetting ? '🗑️ Resetting...' : '🗑️ Reset All Data'}
+            </button>
           </div>
 
           <div className="sync-warning">
@@ -518,6 +570,13 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
       {importMessage && (
         <div className="import-message-container">
           <p className="import-message">{importMessage}</p>
+        </div>
+      )}
+
+      {/* Reset Message Display */}
+      {resetMessage && (
+        <div className="reset-message-container">
+          <p className="reset-message">{resetMessage}</p>
         </div>
       )}
     </div>
