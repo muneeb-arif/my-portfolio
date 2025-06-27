@@ -120,62 +120,85 @@ export const fallbackDataService = {
 
   // Fallback technologies data
   getTechnologies() {
-    return [
+    const technologies = [
       {
         id: 1,
         title: "Web Development",
         type: "domain",
-        sort_order: 1
+        sort_order: 1,
+        icon: "Code"
       },
       {
         id: 2,
         title: "Mobile Development",
         type: "domain",
-        sort_order: 2
+        sort_order: 2,
+        icon: "Smartphone"
       },
       {
         id: 3,
         title: "AI/ML",
         type: "domain",
-        sort_order: 3
+        sort_order: 3,
+        icon: "Cpu"
       },
       {
         id: 4,
         title: "Cloud Computing",
         type: "domain",
-        sort_order: 4
+        sort_order: 4,
+        icon: "Cloud"
       },
       {
         id: 5,
         title: "Blockchain",
         type: "domain",
-        sort_order: 5
+        sort_order: 5,
+        icon: "Link"
       },
       {
         id: 6,
         title: "Cybersecurity",
         type: "domain",
-        sort_order: 6
+        sort_order: 6,
+        icon: "Shield"
       },
       {
         id: 7,
         title: "Data Science",
         type: "domain",
-        sort_order: 7
+        sort_order: 7,
+        icon: "BarChart"
       },
       {
         id: 8,
         title: "DevOps",
         type: "domain",
-        sort_order: 8
+        sort_order: 8,
+        icon: "Settings"
       },
       {
         id: 9,
         title: "UI/UX Design",
         type: "domain",
-        sort_order: 9
+        sort_order: 9,
+        icon: "Monitor"
       }
     ];
+
+    // Get skills data
+    const skills = this.getSkills();
+
+    // Attach tech_skills to each technology
+    return technologies.map(tech => ({
+      ...tech,
+      tech_skills: skills
+        .filter(skill => skill.domain_id === tech.id)
+        .map(skill => ({
+          title: skill.name,
+          level: skill.level
+        }))
+    }));
   },
 
   // Fallback skills data - Updated to match website data

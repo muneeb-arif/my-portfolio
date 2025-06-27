@@ -68,6 +68,26 @@ Looking forward to hearing from you!`
     };
   };
 
+  // Handle image fallback with hierarchy: local → unsplash → default
+  const handleImageError = (e) => {
+    const currentSrc = e.target.src;
+    
+    // If it's a local image that failed, try Unsplash
+    if (currentSrc.includes('/images/domains/') && !currentSrc.includes('default.jpeg')) {
+      const imageName = currentSrc.split('/').pop().replace('.jpeg', '').replace('.jpg', '').replace('.png', '');
+      const unsplashQuery = imageName.replace('-', ' ');
+      e.target.src = `https://source.unsplash.com/800x600/?${unsplashQuery}`;
+    }
+    // If Unsplash fails, fall back to default
+    else if (currentSrc.includes('source.unsplash.com')) {
+      e.target.src = '/images/domains/default.jpeg';
+    }
+    // If default also fails, hide the image section
+    else {
+      e.target.parentElement.style.display = 'none';
+    }
+  };
+
   if (!domain) return null;
 
   const { title, subtitle, badge, modalContent, icon: Icon, image, tags, ai_driven } = domain;
@@ -193,6 +213,7 @@ Looking forward to hearing from you!`
                 src={image}
                 alt={title}
                 className="w-full h-full object-cover"
+                onError={handleImageError}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               

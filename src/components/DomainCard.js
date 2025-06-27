@@ -3,6 +3,27 @@ import React from 'react';
 const DomainCard = ({ domain, onClick, isSelected }) => {
   const { title, subtitle, tags, badge, image, icon: Icon, ai_driven } = domain;
 
+  // Handle image fallback with hierarchy: local → unsplash → default
+  const handleImageError = (e) => {
+    const currentSrc = e.target.src;
+    
+    // If it's a local image that failed, try Unsplash
+    if (currentSrc.includes('/images/domains/') && !currentSrc.includes('default.jpeg')) {
+      const imageName = currentSrc.split('/').pop().replace('.jpeg', '').replace('.jpg', '').replace('.png', '');
+      const unsplashQuery = imageName.replace('-', ' ');
+      e.target.src = `https://source.unsplash.com/400x300/?${unsplashQuery}`;
+    }
+    // If Unsplash fails, fall back to default
+    else if (currentSrc.includes('source.unsplash.com')) {
+      e.target.src = '/images/domains/default.jpeg';
+    }
+    // If default also fails, show icon fallback (handled below)
+    else {
+      e.target.style.display = 'none';
+      e.target.nextElementSibling.style.display = 'flex';
+    }
+  };
+
   return (
     <div
       onClick={() => onClick(domain)}
@@ -34,11 +55,24 @@ const DomainCard = ({ domain, onClick, isSelected }) => {
       {/* Image/Icon Section */}
       <div className="relative h-32 bg-gradient-to-br from-sand-light to-sand overflow-hidden">
         {image ? (
-          <img 
-            src={image} 
-            alt={title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          <>
+            <img 
+              src={image} 
+              alt={title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={handleImageError}
+            />
+            {/* Icon fallback (hidden by default, shown if image fails) */}
+            <div className="hidden items-center justify-center h-full w-full absolute inset-0 bg-gradient-to-br from-sand-light to-sand">
+              {Icon ? (
+                <Icon className="w-16 h-16 text-sand-dark" />
+              ) : (
+                <div className="w-16 h-16 bg-sand-dark rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">{title.charAt(0)}</span>
+                </div>
+              )}
+            </div>
+          </>
         ) : Icon ? (
           <div className="flex items-center justify-center h-full">
             <Icon className="w-16 h-16 text-sand-dark" />
