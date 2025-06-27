@@ -14,7 +14,7 @@ const Toast = ({ message, type = 'info', duration = 5000, onClose }) => {
 
   const getToastStyles = () => {
     const baseStyles = `
-      fixed top-4 right-4 z-50 max-w-sm w-full bg-white rounded-lg shadow-lg border-l-4 p-4
+      fixed top-4 right-4 z-[100] max-w-sm w-full bg-white rounded-lg shadow-lg border-l-4 p-4
       transform transition-all duration-300 ease-in-out
       ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
     `;

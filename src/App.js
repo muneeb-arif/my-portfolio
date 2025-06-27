@@ -235,7 +235,7 @@ function App() {
           <Toast
             message="Missing .env file with Supabase credentials. The app is running in demo mode with fallback data."
             type="warning"
-            duration={8000}
+            duration={10000}
             onClose={() => setShowEnvToast(false)}
           />
         )}
