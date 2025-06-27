@@ -4,6 +4,31 @@ A comprehensive, modern portfolio website built with React.js and Tailwind CSS, 
 
 ![Portfolio Homepage](screenshot.png)
 
+## 🎛️ Dashboard Management System
+
+The portfolio includes a comprehensive dashboard for managing all content dynamically:
+
+### **Dashboard Overview**
+![Dashboard Overview](dashboard1.png)
+*Main dashboard interface showing overview statistics and quick access to all management sections*
+
+### **Content Management**
+![Content Management](dashboard2.png)
+*Projects, categories, technologies, and domains management with CRUD operations*
+
+### **Appearance Settings**
+![Appearance Settings](dashboard3.png)
+*Dynamic appearance customization including logo, banner, avatar, and color scheme settings*
+
+### **Key Dashboard Features**
+- **Projects Management**: Add, edit, delete portfolio projects with images and details
+- **Categories Management**: Organize projects with custom categories
+- **Technologies & Skills**: Manage technology stacks and skill levels
+- **Domains & Niches**: Configure domain expertise areas
+- **Appearance Settings**: Customize logo, banner, avatar, and color schemes
+- **Data Sync**: Backup and restore functionality with fallback data
+- **Real-time Updates**: Changes reflect immediately on the frontend
+
 ## 🌟 Live Features Overview
 
 ### 🎯 **Complete Portfolio Experience**
@@ -91,6 +116,23 @@ A comprehensive, modern portfolio website built with React.js and Tailwind CSS, 
 - **SweetAlert2** - Professional popup notifications and alerts
 - **Modern JavaScript (ES6+)** - Async/await, destructuring, modules
 
+### **Backend & Database**
+- **Supabase** - PostgreSQL database with real-time subscriptions
+- **Row Level Security (RLS)** - Secure data access policies
+- **File Storage** - Image upload and management
+- **Authentication** - User management and session handling
+- **Real-time Updates** - Live data synchronization
+
+### **Database Schema**
+The application uses a comprehensive database schema with tables for:
+- **Projects**: Portfolio projects with images and details
+- **Categories**: Project categorization
+- **Technologies**: Tech stacks and skills
+- **Domains**: Domain expertise areas
+- **Settings**: Dynamic appearance and content settings
+
+For detailed database setup instructions, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
+
 ### **Form Management & Validation**
 - **Real-time Validation** - Field-level validation with immediate feedback
 - **Error State Management** - Visual error indicators with red borders and backgrounds
@@ -132,6 +174,14 @@ npm start
 # Build for production
 npm run build
 ```
+
+### **Backend Setup**
+1. **Create a Supabase project** at [supabase.com](https://supabase.com)
+2. **Run the database setup script** from [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
+3. **Configure environment variables** with your Supabase credentials
+4. **Upload images** to the Supabase storage bucket
+
+For complete backend setup instructions, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
 ### **Dependencies**
 ```json
