@@ -32,6 +32,50 @@ export const SettingsProvider = ({ children }) => {
     copyright_text: '© 2024 Muneeb Arif. All rights reserved.'
   }), []);
 
+  useEffect(() => {
+    // Only load settings once on mount
+    let isMounted = true;
+    
+    const loadSettingsOnce = async () => {
+      try {
+        setLoading(true);
+        console.log('🔄 Loading settings from database...');
+        
+        // Add timeout to prevent infinite loading
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Settings loading timeout')), 10000)
+        );
+        
+        const settingsPromise = settingsService.getSettings();
+        const userSettings = await Promise.race([settingsPromise, timeoutPromise]);
+        
+        if (isMounted) {
+          console.log('📥 User settings from database:', userSettings);
+          const mergedSettings = { ...defaultSettings, ...userSettings };
+          console.log('🔧 Merged settings:', mergedSettings);
+          setSettings(mergedSettings);
+        }
+      } catch (error) {
+        console.error('❌ Error loading settings:', error);
+        if (isMounted) {
+          console.log('🔄 Falling back to default settings');
+          setSettings(defaultSettings);
+        }
+      } finally {
+        if (isMounted) {
+          console.log('✅ Settings loading complete');
+          setLoading(false);
+        }
+      }
+    };
+
+    loadSettingsOnce();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - only run once
+
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
@@ -57,13 +101,9 @@ export const SettingsProvider = ({ children }) => {
       console.log('✅ Settings loading complete');
       setLoading(false);
     }
-  }, [defaultSettings]);
+  }, []);
 
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
-
-  const updateSettings = async (newSettings) => {
+  const updateSettings = useCallback(async (newSettings) => {
     try {
       await settingsService.updateMultipleSettings(newSettings);
       setSettings(prev => ({ ...prev, ...newSettings }));
@@ -72,24 +112,24 @@ export const SettingsProvider = ({ children }) => {
       console.error('Error updating settings:', error);
       return false;
     }
-  };
+  }, []);
 
-  const refreshSettings = async () => {
+  const refreshSettings = useCallback(async () => {
     await loadSettings();
-  };
+  }, [loadSettings]);
 
-  const getSetting = (key) => {
+  const getSetting = useCallback((key) => {
     return settings[key] || defaultSettings[key] || '';
-  };
+  }, [settings, defaultSettings]);
 
-  const value = {
+  const value = useMemo(() => ({
     settings,
     loading,
     updateSettings,
     getSetting,
     reloadSettings: loadSettings,
     refreshSettings
-  };
+  }), [settings, loading, updateSettings, getSetting, loadSettings, refreshSettings]);
 
   return (
     <SettingsContext.Provider value={value}>

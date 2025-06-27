@@ -51,8 +51,6 @@ const Header = () => {
   const logoInitials = getSetting('logo_initials');
   const logoImage = getSetting('logo_image');
 
-  console.log('🏷️ Header settings:', { logoType, logoInitials, logoImage });
-
   return (
     <>
       <header 

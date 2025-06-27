@@ -103,7 +103,7 @@ const DynamicHead = () => {
 
     console.log('🌐 Updated document head:', { newTitle, bannerTagline, avatarImage });
 
-  }, [getSetting, loading]);
+  }, [loading]);
 
   // This component doesn't render anything visible
   return null;

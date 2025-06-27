@@ -4,14 +4,6 @@ import { useSettings } from '../services/settingsContext';
 const Hero = () => {
   const { getSetting } = useSettings();
 
-  console.log('🎨 Hero settings:', {
-    banner_name: getSetting('banner_name'),
-    banner_title: getSetting('banner_title'),
-    banner_tagline: getSetting('banner_tagline'),
-    hero_banner_image: getSetting('hero_banner_image'),
-    avatar_image: getSetting('avatar_image')
-  });
-
   const scrollToPortfolio = () => {
     const portfolioSection = document.getElementById('portfolio');
     if (portfolioSection) {
