@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import ClientOnboardingForm from './ClientOnboardingForm';
-import ContactForm from './ContactForm';
-import { FileText, Mail, Github, Linkedin, Instagram } from 'lucide-react';
+import { FileText, Mail, Github, Instagram } from 'lucide-react';
+import { useSettings } from '../services/settingsContext';
 
 const Footer = () => {
+  const { getSetting } = useSettings();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isContactFormOpen, setIsContactFormOpen] = useState(false);
 
   const openForm = () => {
     setIsFormOpen(true);
@@ -15,17 +15,9 @@ const Footer = () => {
     setIsFormOpen(false);
   };
 
-  const openContactForm = () => {
-    setIsContactFormOpen(true);
-  };
-
-  const closeContactForm = () => {
-    setIsContactFormOpen(false);
-  };
-
   // Email click handler
   const handleEmailClick = () => {
-    const mailtoLink = `mailto:muneebarif11@gmail.com?subject=${encodeURIComponent('Get Started - TheExpertWays.com')}`;
+    const mailtoLink = `mailto:${getSetting('social_email')}?subject=${encodeURIComponent('Get Started - TheExpertWays.com')}`;
     window.location.href = mailtoLink;
   };
 
@@ -77,36 +69,41 @@ const Footer = () => {
                 >
                   <Mail className="w-5 h-5" />
                 </button>
-                <a 
-                  href="https://github.com/muneeb-arif" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
-                  title="GitHub Profile"
-                  onClick={() => console.log('GitHub clicked')}
-                >
-                  <Github className="w-5 h-5" />
-                </a>
-                <a 
-                  href="https://www.linkedin.com/in/muneebarif11/" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
-                  title="LinkedIn Profile"
-                  onClick={() => console.log('LinkedIn clicked')}
-                >
-                  <Linkedin className="w-5 h-5" />
-                </a>
-                <a 
-                  href="https://instagram.com/thexpertways" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
-                  title="Instagram Profile"
-                  onClick={() => console.log('Instagram clicked')}
-                >
-                  <Instagram className="w-5 h-5" />
-                </a>
+                {getSetting('social_github') && (
+                  <a 
+                    href={getSetting('social_github')} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
+                    title="GitHub Profile"
+                  >
+                    <Github className="w-5 h-5" />
+                  </a>
+                )}
+                {getSetting('social_instagram') && (
+                  <a 
+                    href={getSetting('social_instagram')} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
+                    title="Instagram Profile"
+                  >
+                    <Instagram className="w-5 h-5" />
+                  </a>
+                )}
+                {getSetting('social_facebook') && (
+                  <a 
+                    href={getSetting('social_facebook')} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white/70 hover:text-white transition-all duration-300 cursor-pointer inline-block p-2 rounded-lg hover:bg-white/10 hover:scale-110 transform"
+                    title="Facebook Profile"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  </a>
+                )}
               </div>
             </div>
 
@@ -201,7 +198,7 @@ const Footer = () => {
           {/* Bottom Section */}
           <div className="border-t border-white/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
             <div className="text-white/60 text-sm mb-4 md:mb-0">
-              © 2024 M.A. All rights reserved.
+              {getSetting('copyright_text')}
             </div>
             <div className="flex flex-wrap gap-4 justify-center md:justify-end">
               <button 
@@ -235,9 +232,6 @@ const Footer = () => {
 
       {/* Client Onboarding Form Modal */}
       <ClientOnboardingForm isOpen={isFormOpen} onClose={closeForm} />
-
-      {/* Contact Form Modal */}
-      <ContactForm isOpen={isContactFormOpen} onClose={closeContactForm} />
     </>
   );
 };

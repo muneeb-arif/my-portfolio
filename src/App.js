@@ -10,7 +10,9 @@ import ProjectLifeCycle from './components/ProjectLifeCycle';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import Dashboard from './components/dashboard/Dashboard';
+import DynamicHead from './components/DynamicHead';
 import portfolioService from './services/portfolioService';
+import { SettingsProvider } from './services/settingsContext';
 
 function App() {
   // Check if we're on the dashboard route
@@ -210,203 +212,206 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-sand-light relative overflow-hidden pb-20 lg:pb-0">
-      {/* Header */}
-      <Header />
+    <SettingsProvider>
+      <DynamicHead />
+      <div className="App">
+        {/* Header */}
+        <Header />
 
-      {/* Floating Sand Particles - Back Layer */}
-      <div className="fixed inset-0 pointer-events-none z-10">
-        {particles.filter(p => p.layer === 'back').map(particle => (
-          <div
-            key={`back-${particle.id}`}
-            className="absolute rounded-full"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              width: `${particle.size * 0.9}px`,
-              height: `${particle.size * 0.9}px`,
-              backgroundColor: particle.color,
-              opacity: particle.opacity * 0.7,
-              transform: `rotate(${particle.rotation}deg)`,
-              transition: 'none',
-              filter: 'blur(0.5px)'
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Floating Sand Particles - Front Layer */}
-      <div className="fixed inset-0 pointer-events-none z-40">
-        {particles.filter(p => p.layer === 'front').map(particle => (
-          <div
-            key={`front-${particle.id}`}
-            className="absolute rounded-full"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              width: `${particle.size}px`,
-              height: `${particle.size}px`,
-              backgroundColor: particle.color,
-              opacity: particle.opacity,
-              transform: `rotate(${particle.rotation}deg)`,
-              transition: 'none',
-              boxShadow: `0 0 ${particle.size}px ${particle.color}40`
-            }}
-          />
-        ))}
-      </div>
-
-      <Hero />
-      
-      {/* Portfolio Section with Textural Background */}
-      <div className="relative overflow-hidden">
-        {/* Textural Background Elements */}
-        <div className="absolute inset-0">
-          {/* Subtle Sand Dune Pattern */}
-          <div className="absolute inset-0 opacity-30">
-            <svg width="100%" height="100%" viewBox="0 0 1000 800" className="absolute inset-0">
-              <defs>
-                <pattern id="sandTexture" patternUnits="userSpaceOnUse" width="100" height="100">
-                  <rect width="100" height="100" fill="#F5E6D3"/>
-                  <circle cx="20" cy="20" r="1" fill="#C9A77D" opacity="0.6"/>
-                  <circle cx="80" cy="40" r="0.5" fill="#B8936A" opacity="0.7"/>
-                  <circle cx="40" cy="70" r="1.5" fill="#C9A77D" opacity="0.5"/>
-                  <circle cx="70" cy="10" r="0.8" fill="#B8936A" opacity="0.6"/>
-                  <circle cx="10" cy="60" r="1.2" fill="#E9CBA7" opacity="0.8"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#sandTexture)"/>
-            </svg>
-          </div>
-
-          {/* Geometric Sand Patterns */}
-          <div className="absolute inset-0 opacity-20">
-            <svg width="100%" height="100%" viewBox="0 0 400 400" className="absolute inset-0">
-              <defs>
-                <pattern id="hexPattern" patternUnits="userSpaceOnUse" width="60" height="52">
-                  <polygon points="30,5 50,20 50,35 30,50 10,35 10,20" 
-                           fill="none" stroke="#C9A77D" strokeWidth="1" opacity="0.8"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#hexPattern)"/>
-            </svg>
-          </div>
-
-          {/* Flowing Sand Waves */}
-          <div className="absolute inset-0 opacity-25">
-            <svg width="100%" height="100%" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
-              <path d="M0,200 Q300,150 600,200 T1200,200 L1200,300 Q900,250 600,300 T0,300 Z" 
-                    fill="rgba(201, 167, 125, 0.3)"/>
-              <path d="M0,400 Q400,350 800,400 T1200,400 L1200,500 Q800,450 400,500 T0,500 Z" 
-                    fill="rgba(233, 203, 167, 0.2)"/>
-              <path d="M0,600 Q200,550 600,600 T1200,600 L1200,700 Q600,650 200,700 T0,700 Z" 
-                    fill="rgba(184, 147, 106, 0.4)"/>
-            </svg>
-          </div>
-
-          {/* Scattered Dots for Texture */}
-          <div className="absolute inset-0 opacity-40">
-            {[...Array(50)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute rounded-full bg-wet-sand"
-                style={{
-                  width: Math.random() * 4 + 2 + 'px',
-                  height: Math.random() * 4 + 2 + 'px',
-                  left: Math.random() * 100 + '%',
-                  top: Math.random() * 100 + '%',
-                  opacity: Math.random() * 0.6 + 0.3
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Additional Visible Sand Grains */}
-          <div className="absolute inset-0 opacity-35">
-            {[...Array(30)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute rounded-full"
-                style={{
-                  width: Math.random() * 6 + 3 + 'px',
-                  height: Math.random() * 6 + 3 + 'px',
-                  backgroundColor: `rgba(${184 + Math.random() * 40}, ${147 + Math.random() * 40}, ${106 + Math.random() * 40}, ${0.3 + Math.random() * 0.4})`,
-                  left: Math.random() * 100 + '%',
-                  top: Math.random() * 100 + '%',
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Gradient Overlay for Depth */}
-          <div className="absolute inset-0 bg-gradient-to-b from-sand-light/30 via-transparent to-sand-light/20"></div>
-        </div>
-
-        {/* Portfolio Content */}
-        <div className="relative z-10 container mx-auto px-4 py-16">
-          <FilterMenu 
-            filters={filters}
-            activeFilter={activeFilter}
-            onFilterChange={handleFilterChange}
-          />
-          
-          {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-warm-brown mb-4"></div>
-                <p className="text-warm-brown">Loading projects...</p>
-              </div>
-            </div>
-          ) : filteredProjects.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-xl font-semibold text-warm-brown mb-2">No Projects Found</h3>
-              <p className="text-gray-600 mb-4">
-                {activeFilter === 'All' 
-                  ? "No published projects available yet."
-                  : `No projects found in "${activeFilter}" category.`
-                }
-              </p>
-              <button 
-                onClick={() => handleFilterChange('All')}
-                className="text-warm-brown hover:underline"
-              >
-                View All Projects
-              </button>
-            </div>
-          ) : (
-            <PortfolioGrid 
-              projects={filteredProjects}
-              onProjectClick={handleProjectClick}
+        {/* Floating Sand Particles - Back Layer */}
+        <div className="fixed inset-0 pointer-events-none z-10">
+          {particles.filter(p => p.layer === 'back').map(particle => (
+            <div
+              key={`back-${particle.id}`}
+              className="absolute rounded-full"
+              style={{
+                left: `${particle.x}%`,
+                top: `${particle.y}%`,
+                width: `${particle.size * 0.9}px`,
+                height: `${particle.size * 0.9}px`,
+                backgroundColor: particle.color,
+                opacity: particle.opacity * 0.7,
+                transform: `rotate(${particle.rotation}deg)`,
+                transition: 'none',
+                filter: 'blur(0.5px)'
+              }}
             />
-          )}
+          ))}
         </div>
+
+        {/* Floating Sand Particles - Front Layer */}
+        <div className="fixed inset-0 pointer-events-none z-40">
+          {particles.filter(p => p.layer === 'front').map(particle => (
+            <div
+              key={`front-${particle.id}`}
+              className="absolute rounded-full"
+              style={{
+                left: `${particle.x}%`,
+                top: `${particle.y}%`,
+                width: `${particle.size}px`,
+                height: `${particle.size}px`,
+                backgroundColor: particle.color,
+                opacity: particle.opacity,
+                transform: `rotate(${particle.rotation}deg)`,
+                transition: 'none',
+                boxShadow: `0 0 ${particle.size}px ${particle.color}40`
+              }}
+            />
+          ))}
+        </div>
+
+        <Hero />
+        
+        {/* Portfolio Section with Textural Background */}
+        <div className="relative overflow-hidden">
+          {/* Textural Background Elements */}
+          <div className="absolute inset-0">
+            {/* Subtle Sand Dune Pattern */}
+            <div className="absolute inset-0 opacity-30">
+              <svg width="100%" height="100%" viewBox="0 0 1000 800" className="absolute inset-0">
+                <defs>
+                  <pattern id="sandTexture" patternUnits="userSpaceOnUse" width="100" height="100">
+                    <rect width="100" height="100" fill="#F5E6D3"/>
+                    <circle cx="20" cy="20" r="1" fill="#C9A77D" opacity="0.6"/>
+                    <circle cx="80" cy="40" r="0.5" fill="#B8936A" opacity="0.7"/>
+                    <circle cx="40" cy="70" r="1.5" fill="#C9A77D" opacity="0.5"/>
+                    <circle cx="70" cy="10" r="0.8" fill="#B8936A" opacity="0.6"/>
+                    <circle cx="10" cy="60" r="1.2" fill="#E9CBA7" opacity="0.8"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#sandTexture)"/>
+              </svg>
+            </div>
+
+            {/* Geometric Sand Patterns */}
+            <div className="absolute inset-0 opacity-20">
+              <svg width="100%" height="100%" viewBox="0 0 400 400" className="absolute inset-0">
+                <defs>
+                  <pattern id="hexPattern" patternUnits="userSpaceOnUse" width="60" height="52">
+                    <polygon points="30,5 50,20 50,35 30,50 10,35 10,20" 
+                             fill="none" stroke="#C9A77D" strokeWidth="1" opacity="0.8"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#hexPattern)"/>
+              </svg>
+            </div>
+
+            {/* Flowing Sand Waves */}
+            <div className="absolute inset-0 opacity-25">
+              <svg width="100%" height="100%" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+                <path d="M0,200 Q300,150 600,200 T1200,200 L1200,300 Q900,250 600,300 T0,300 Z" 
+                      fill="rgba(201, 167, 125, 0.3)"/>
+                <path d="M0,400 Q400,350 800,400 T1200,400 L1200,500 Q800,450 400,500 T0,500 Z" 
+                      fill="rgba(233, 203, 167, 0.2)"/>
+                <path d="M0,600 Q200,550 600,600 T1200,600 L1200,700 Q600,650 200,700 T0,700 Z" 
+                      fill="rgba(184, 147, 106, 0.4)"/>
+              </svg>
+            </div>
+
+            {/* Scattered Dots for Texture */}
+            <div className="absolute inset-0 opacity-40">
+              {[...Array(50)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-full bg-wet-sand"
+                  style={{
+                    width: Math.random() * 4 + 2 + 'px',
+                    height: Math.random() * 4 + 2 + 'px',
+                    left: Math.random() * 100 + '%',
+                    top: Math.random() * 100 + '%',
+                    opacity: Math.random() * 0.6 + 0.3
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Additional Visible Sand Grains */}
+            <div className="absolute inset-0 opacity-35">
+              {[...Array(30)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-full"
+                  style={{
+                    width: Math.random() * 6 + 3 + 'px',
+                    height: Math.random() * 6 + 3 + 'px',
+                    backgroundColor: `rgba(${184 + Math.random() * 40}, ${147 + Math.random() * 40}, ${106 + Math.random() * 40}, ${0.3 + Math.random() * 0.4})`,
+                    left: Math.random() * 100 + '%',
+                    top: Math.random() * 100 + '%',
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Gradient Overlay for Depth */}
+            <div className="absolute inset-0 bg-gradient-to-b from-sand-light/30 via-transparent to-sand-light/20"></div>
+          </div>
+
+          {/* Portfolio Content */}
+          <div className="relative z-10 container mx-auto px-4 py-16">
+            <FilterMenu 
+              filters={filters}
+              activeFilter={activeFilter}
+              onFilterChange={handleFilterChange}
+            />
+            
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-warm-brown mb-4"></div>
+                  <p className="text-warm-brown">Loading projects...</p>
+                </div>
+              </div>
+            ) : filteredProjects.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">📝</div>
+                <h3 className="text-xl font-semibold text-warm-brown mb-2">No Projects Found</h3>
+                <p className="text-gray-600 mb-4">
+                  {activeFilter === 'All' 
+                    ? "No published projects available yet."
+                    : `No projects found in "${activeFilter}" category.`
+                  }
+                </p>
+                <button 
+                  onClick={() => handleFilterChange('All')}
+                  className="text-warm-brown hover:underline"
+                >
+                  View All Projects
+                </button>
+              </div>
+            ) : (
+              <PortfolioGrid 
+                projects={filteredProjects}
+                onProjectClick={handleProjectClick}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Technologies Section */}
+        <Technologies />
+
+        {/* Domains / Niche Section */}
+        <DomainsNiche />
+
+        {/* Project Delivery Life Cycle Section */}
+        <ProjectLifeCycle />
+
+        {/* Footer */}
+        <Footer />
+
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav />
+
+        {selectedProject && (
+          <Modal 
+            project={selectedProject}
+            onClose={closeModal}
+            onNavigate={handleProjectNavigation}
+            {...getNavigationState()}
+          />
+        )}
       </div>
-
-      {/* Technologies Section */}
-      <Technologies />
-
-      {/* Domains / Niche Section */}
-      <DomainsNiche />
-
-      {/* Project Delivery Life Cycle Section */}
-      <ProjectLifeCycle />
-
-      {/* Footer */}
-      <Footer />
-
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
-
-      {selectedProject && (
-        <Modal 
-          project={selectedProject}
-          onClose={closeModal}
-          onNavigate={handleProjectNavigation}
-          {...getNavigationState()}
-        />
-      )}
-    </div>
+    </SettingsProvider>
   );
 }
 

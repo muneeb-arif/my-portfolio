@@ -321,54 +321,149 @@ export const imageService = {
 // ================ SETTINGS OPERATIONS ================
 
 export const settingsService = {
-  // Get user settings
+  // Get all settings for a user
   async getSettings() {
+    try {
+      console.log('🔍 Getting user from auth...');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('❌ No authenticated user found');
+        throw new Error('Not authenticated');
+      }
+      console.log('✅ User authenticated:', user.id);
+
+      console.log('🔍 Fetching settings from database...');
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('❌ Database error:', error);
+        throw error;
+      }
+      
+      console.log('📊 Raw settings data:', data);
+      
+      // Convert array to object for easier access
+      const settingsObj = {};
+      (data || []).forEach(setting => {
+        settingsObj[setting.key] = setting.value;
+      });
+      
+      console.log('🔧 Processed settings object:', settingsObj);
+      return settingsObj;
+    } catch (error) {
+      console.error('❌ Error in getSettings:', error);
+      return {};
+    }
+  },
+
+  // Get a specific setting
+  async getSetting(key) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
-        .from(TABLES.SETTINGS)
-        .select('*')
-        .eq('user_id', user.id);
+        .from('settings')
+        .select('value')
+        .eq('user_id', user.id)
+        .eq('key', key)
+        .single();
 
       if (error) throw error;
-      
-      // Convert array to object
-      const settings = {};
-      data?.forEach(setting => {
-        settings[setting.key] = setting.value;
-      });
-      
-      return settings;
+      return data?.value || null;
     } catch (error) {
-      console.error('Error fetching settings:', error);
-      throw error;
+      console.error(`Error fetching setting ${key}:`, error);
+      return null;
     }
   },
 
-  // Update setting
+  // Update or create a setting
   async updateSetting(key, value) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
-        .from(TABLES.SETTINGS)
+      const { error } = await supabase
+        .from('settings')
         .upsert({
           user_id: user.id,
           key: key,
           value: value
-        })
-        .select()
-        .single();
+        }, { onConflict: 'user_id,key' });
 
       if (error) throw error;
-      return data;
+      return true;
     } catch (error) {
-      console.error('Error updating setting:', error);
+      console.error(`Error updating setting ${key}:`, error);
       throw error;
     }
+  },
+
+  // Update multiple settings at once
+  async updateMultipleSettings(settings) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const settingsData = Object.entries(settings).map(([key, value]) => ({
+        user_id: user.id,
+        key: key,
+        value: value
+      }));
+
+      const { error } = await supabase
+        .from('settings')
+        .upsert(settingsData, { onConflict: 'user_id,key' });
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error updating multiple settings:', error);
+      throw error;
+    }
+  },
+
+  // Delete a setting
+  async deleteSetting(key) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('settings')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('key', key);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error(`Error deleting setting ${key}:`, error);
+      throw error;
+    }
+  },
+
+  // Get default appearance settings
+  getDefaultAppearanceSettings() {
+    return {
+      logo_type: 'initials', // 'initials' or 'image'
+      logo_initials: 'MA',
+      logo_image: '',
+      hero_banner_image: '/images/hero-bg.png',
+      avatar_image: '/images/profile/avatar.jpeg',
+      banner_name: 'Muneeb Arif',
+      banner_title: 'Principal Software Engineer',
+      banner_tagline: 'I craft dreams, not projects.',
+      resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
+      social_email: 'muneeb@example.com',
+      social_github: 'https://github.com/muneebarif',
+      social_instagram: '',
+      social_facebook: '',
+      copyright_text: '© 2024 Muneeb Arif. All rights reserved.'
+    };
   }
 };
 

@@ -3,6 +3,7 @@ import { authService } from '../../services/supabaseService';
 import Login from './Login';
 import DashboardLayout from './DashboardLayout';
 import './Dashboard.css';
+import { SettingsProvider } from '../../services/settingsContext';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
@@ -99,10 +100,12 @@ const Dashboard = () => {
 
   // Show dashboard if user is authenticated
   return (
-    <DashboardLayout 
-      user={user} 
-      onSignOut={handleSignOut} 
-    />
+    <SettingsProvider>
+      <DashboardLayout 
+        user={user} 
+        onSignOut={handleSignOut} 
+      />
+    </SettingsProvider>
   );
 };
 

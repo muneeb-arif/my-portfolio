@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ClientOnboardingForm from './ClientOnboardingForm';
 import ContactForm from './ContactForm';
-import { Menu, X, FileText, Mail } from 'lucide-react';
+import { FileText, Mail } from 'lucide-react';
+import { useSettings } from '../services/settingsContext';
 
 const Header = () => {
+  const { getSetting } = useSettings();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -45,6 +47,12 @@ const Header = () => {
     }
   };
 
+  const logoType = getSetting('logo_type');
+  const logoInitials = getSetting('logo_initials');
+  const logoImage = getSetting('logo_image');
+
+  console.log('🏷️ Header settings:', { logoType, logoInitials, logoImage });
+
   return (
     <>
       <header 
@@ -64,7 +72,7 @@ const Header = () => {
             <div className="flex items-center">
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="relative text-4xl lg:text-5xl font-bold transition-all duration-500 cursor-pointer magnetic group"
+                className="relative transition-all duration-500 cursor-pointer magnetic group"
                 style={{ 
                   fontFamily: 'Playfair Display, serif',
                   letterSpacing: '0.15em',
@@ -74,17 +82,27 @@ const Header = () => {
                   textShadow: '2px 2px 0px rgba(240, 217, 184, 0.4)'
                 }}
               >
-                <span className="relative inline-block group-hover:scale-110 transition-transform duration-300">
-                  M
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full opacity-70 animate-pulse"></span>
-                </span>
-                <span className="relative inline-block group-hover:scale-110 transition-transform duration-300 delay-75">
-                  A
-                  <span className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-gradient-to-br from-amber-300 to-amber-500 rounded-full opacity-60 animate-pulse delay-500"></span>
-                </span>
-                
-                {/* Decorative underline */}
-                <div className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-desert-sand to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {logoType === 'image' && logoImage ? (
+                  <img 
+                    src={logoImage} 
+                    alt="Logo" 
+                    className="h-12 lg:h-16 w-auto group-hover:scale-110 transition-transform duration-300"
+                  />
+                ) : (
+                  <>
+                    <span className="relative inline-block group-hover:scale-110 transition-transform duration-300 text-4xl lg:text-5xl font-bold">
+                      {logoInitials.charAt(0)}
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full opacity-70 animate-pulse"></span>
+                    </span>
+                    <span className="relative inline-block group-hover:scale-110 transition-transform duration-300 delay-75 text-4xl lg:text-5xl font-bold">
+                      {logoInitials.charAt(1)}
+                      <span className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-gradient-to-br from-amber-300 to-amber-500 rounded-full opacity-60 animate-pulse delay-500"></span>
+                    </span>
+                    
+                    {/* Decorative underline */}
+                    <div className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-desert-sand to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </>
+                )}
               </button>
             </div>
 

@@ -1054,4 +1054,159 @@
 
 .sync-warning strong {
   color: #78350f;
+}
+
+/* ================ APPEARANCE SETTINGS STYLES ================ */
+
+.appearance-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 800px;
+}
+
+.settings-group {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.settings-group h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #f3f4f6;
+  padding-bottom: 0.5rem;
+}
+
+.settings-group .form-group {
+  margin-bottom: 1rem;
+}
+
+.settings-group .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.settings-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.settings-group input[type="text"],
+.settings-group input[type="email"],
+.settings-group input[type="url"],
+.settings-group select,
+.settings-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #f9fafb;
+}
+
+.settings-group input[type="text"]:focus,
+.settings-group input[type="email"]:focus,
+.settings-group input[type="url"]:focus,
+.settings-group select:focus,
+.settings-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: white;
+}
+
+.settings-group input[type="file"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.settings-group input[type="file"]:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.settings-group input[type="file"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.current-file {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f3f4f6;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+}
+
+.current-file p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.message {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.message.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.message.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .appearance-settings {
+    gap: 1.5rem;
+  }
+  
+  .settings-group {
+    padding: 1rem;
+  }
+  
+  .settings-group h3 {
+    font-size: 1rem;
+  }
+  
+  .settings-group input[type="text"],
+  .settings-group input[type="email"],
+  .settings-group input[type="url"],
+  .settings-group select,
+  .settings-group textarea {
+    padding: 0.625rem;
+    font-size: 0.875rem;
+  }
 } 

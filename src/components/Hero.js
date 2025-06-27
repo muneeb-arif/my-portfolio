@@ -1,6 +1,17 @@
 import React from 'react';
+import { useSettings } from '../services/settingsContext';
 
 const Hero = () => {
+  const { getSetting } = useSettings();
+
+  console.log('🎨 Hero settings:', {
+    banner_name: getSetting('banner_name'),
+    banner_title: getSetting('banner_title'),
+    banner_tagline: getSetting('banner_tagline'),
+    hero_banner_image: getSetting('hero_banner_image'),
+    avatar_image: getSetting('avatar_image')
+  });
+
   const scrollToPortfolio = () => {
     const portfolioSection = document.getElementById('portfolio');
     if (portfolioSection) {
@@ -11,8 +22,8 @@ const Hero = () => {
   const handleResumeDownload = () => {
     // Create a temporary link element to trigger download
     const link = document.createElement('a');
-    link.href = '/images/profile/principal-software-engineer-muneeb.resume.pdf';
-    link.download = 'Muneeb-Arif-Principal-Software-Engineer-Resume.pdf';
+    link.href = getSetting('resume_file');
+    link.download = 'Resume.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -24,7 +35,7 @@ const Hero = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/images/hero-bg.png')`,
+          backgroundImage: `url('${getSetting('hero_banner_image')}')`,
         }}
       />
       
@@ -100,13 +111,13 @@ const Hero = () => {
           <div className="flex-1 text-center lg:text-left space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-gray-800 leading-tight">
-                Muneeb Arif
+                {getSetting('banner_name')}
               </h1>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-700">
-                Principal Software Engineer
+                {getSetting('banner_title')}
               </h2>
               <p className="text-lg md:text-xl text-gray-600 max-w-lg leading-relaxed">
-                I craft dreams, not projects.
+                {getSetting('banner_tagline')}
               </p>
             </div>
 
@@ -137,13 +148,13 @@ const Hero = () => {
               <div 
                 className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-8 border-white shadow-2xl relative z-10"
                 style={{
-                  backgroundImage: `url('./images/profile/avatar.jpeg')`,
+                  backgroundImage: `url('${getSetting('avatar_image')}')`,
                   backgroundSize: '100%',
                   backgroundPosition: 'center top',
                   backgroundRepeat: 'no-repeat'
                 }}
                 role="img"
-                aria-label="Muneeb Arif - Principal Software Engineer"
+                aria-label={`${getSetting('banner_name')} - ${getSetting('banner_title')}`}
               ></div>
 
               {/* Ripple Effects */}
