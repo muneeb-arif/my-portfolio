@@ -11,6 +11,8 @@ const DynamicHead = () => {
     const bannerTitle = getSetting('banner_title');
     const bannerTagline = getSetting('banner_tagline');
     const avatarImage = getSetting('avatar_image');
+    const socialGithub = getSetting('social_github');
+    const socialEmail = getSetting('social_email');
 
     // Update document title
     const newTitle = bannerName && bannerTitle 
@@ -100,6 +102,51 @@ const DynamicHead = () => {
         document.head.appendChild(newTwitterImage);
       }
     }
+
+    // Add structured data (JSON-LD)
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": bannerName,
+      "jobTitle": bannerTitle,
+      "description": bannerTagline,
+      "url": window.location.origin,
+      "image": avatarImage,
+      "sameAs": [
+        socialGithub,
+        "https://linkedin.com/in/muneebarif"
+      ].filter(Boolean),
+      "email": socialEmail,
+      "knowsAbout": [
+        "React.js",
+        "Node.js",
+        "JavaScript",
+        "TypeScript",
+        "Full-stack Development",
+        "Web Development",
+        "Software Engineering"
+      ],
+      "worksFor": {
+        "@type": "Organization",
+        "name": "Freelance"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "US"
+      }
+    };
+
+    // Remove existing structured data
+    const existingScript = document.querySelector('script[type="application/ld+json"]');
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    // Add new structured data
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify(structuredData);
+    document.head.appendChild(script);
 
     console.log('🌐 Updated document head:', { newTitle, bannerTagline, avatarImage });
 

@@ -147,6 +147,7 @@ const Hero = () => {
                 }}
                 role="img"
                 aria-label={`${getSetting('banner_name')} - ${getSetting('banner_title')}`}
+                title={`${getSetting('banner_name')} - ${getSetting('banner_title')}`}
               ></div>
 
               {/* Ripple Effects */}
