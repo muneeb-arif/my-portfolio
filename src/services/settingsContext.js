@@ -16,9 +16,10 @@ export const useSettings = () => {
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
-  // Check if we're in dashboard mode
-  const isDashboard = window.location.pathname === '/dashboard';
+  // Check if we're in dashboard mode (memoized to prevent re-calculations)
+  const isDashboard = useMemo(() => window.location.pathname === '/dashboard', []);
 
   const defaultSettings = useMemo(() => ({
     logo_type: 'initials',
@@ -39,13 +40,29 @@ export const SettingsProvider = ({ children }) => {
   }), []);
 
   useEffect(() => {
-    // Only load settings once on mount
+    // Prevent loading if already initialized
+    if (initialized) {
+      return;
+    }
+
     let isMounted = true;
     
     const loadSettingsOnce = async () => {
       try {
         setLoading(true);
-        console.log('🔄 Loading settings...', isDashboard ? '(Dashboard mode)' : '(Public mode)');
+        console.log('🔄 SettingsContext: Loading settings ONCE...', isDashboard ? '(Dashboard mode)' : '(Public mode)');
+        
+        // ===== DEBUG INFO (only once) =====
+        console.log('🌐 Environment Variables:');
+        console.log('  - REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
+        console.log('  - REACT_APP_SUPABASE_URL:', process.env.REACT_APP_SUPABASE_URL ? 'SET' : 'NOT SET');
+        console.log('  - REACT_APP_SUPABASE_ANON_KEY:', process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
+        
+        console.log('📋 Portfolio Config:');
+        console.log('  - ownerEmail:', portfolioConfig.ownerEmail);
+        console.log('  - defaultSettings:', portfolioConfig.defaultSettings);
+        
+        console.log('🎯 Mode:', isDashboard ? 'Dashboard (authenticated)' : 'Public (non-authenticated)');
         
         // Add timeout to prevent infinite loading
         const timeoutPromise = new Promise((_, reject) => 
@@ -55,29 +72,47 @@ export const SettingsProvider = ({ children }) => {
         let settingsPromise;
         if (isDashboard) {
           // Dashboard mode: use authenticated settings service
+          console.log('🔐 Dashboard mode: Using settingsService.getSettings()');
           settingsPromise = settingsService.getSettings();
         } else {
           // Public mode: use public settings service
+          console.log('🌐 Public mode: Using portfolioService.getPublicSettings()');
           settingsPromise = portfolioService.getPublicSettings();
         }
         
         const userSettings = await Promise.race([settingsPromise, timeoutPromise]);
         
         if (isMounted) {
-          console.log('📥 User settings loaded:', userSettings);
+          console.log('📥 Raw user settings loaded:');
+          console.log('  - Settings object:', userSettings);
+          console.log('  - banner_name:', userSettings.banner_name);
+          console.log('  - banner_title:', userSettings.banner_title);
+          console.log('  - banner_tagline:', userSettings.banner_tagline);
+          console.log('  - Total settings keys:', Object.keys(userSettings || {}).length);
+          
           const mergedSettings = { ...defaultSettings, ...userSettings };
-          console.log('🔧 Merged settings:', mergedSettings);
+          console.log('🔧 Merged settings:');
+          console.log('  - Final banner_name:', mergedSettings.banner_name);
+          console.log('  - Final banner_title:', mergedSettings.banner_title);
+          console.log('  - Final banner_tagline:', mergedSettings.banner_tagline);
+          
           setSettings(mergedSettings);
+          setInitialized(true); // Mark as initialized to prevent re-loading
         }
       } catch (error) {
         console.error('❌ Error loading settings:', error);
+        console.log('🔄 SettingsContext: Falling back to default settings');
+        console.log('  - Default banner_name:', defaultSettings.banner_name);
+        console.log('  - Default banner_title:', defaultSettings.banner_title);
+        console.log('  - Default banner_tagline:', defaultSettings.banner_tagline);
+        
         if (isMounted) {
-          console.log('🔄 Falling back to default settings');
           setSettings(defaultSettings);
+          setInitialized(true); // Mark as initialized even on error
         }
       } finally {
         if (isMounted) {
-          console.log('✅ Settings loading complete');
+          console.log('✅ SettingsContext: Settings loading complete');
           setLoading(false);
         }
       }
@@ -88,12 +123,14 @@ export const SettingsProvider = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, [isDashboard, defaultSettings]); // Include isDashboard in dependencies
+  }, []); // Remove dependencies to prevent infinite loops
 
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔄 Loading settings...', isDashboard ? '(Dashboard mode)' : '(Public mode)');
+      // Get current mode
+      const currentIsDashboard = window.location.pathname === '/dashboard';
+      console.log('🔄 SettingsContext: Manual reload - Loading settings...', currentIsDashboard ? '(Dashboard mode)' : '(Public mode)');
       
       // Add timeout to prevent infinite loading
       const timeoutPromise = new Promise((_, reject) => 
@@ -101,7 +138,7 @@ export const SettingsProvider = ({ children }) => {
       );
       
       let settingsPromise;
-      if (isDashboard) {
+      if (currentIsDashboard) {
         // Dashboard mode: use authenticated settings service
         settingsPromise = settingsService.getSettings();
       } else {
@@ -111,23 +148,24 @@ export const SettingsProvider = ({ children }) => {
       
       const userSettings = await Promise.race([settingsPromise, timeoutPromise]);
       
-      console.log('📥 User settings loaded:', userSettings);
+      console.log('📥 SettingsContext: Manual reload - User settings loaded:', userSettings);
       const mergedSettings = { ...defaultSettings, ...userSettings };
-      console.log('🔧 Merged settings:', mergedSettings);
+      console.log('🔧 SettingsContext: Manual reload - Merged settings:', mergedSettings);
       setSettings(mergedSettings);
     } catch (error) {
-      console.error('❌ Error loading settings:', error);
-      console.log('🔄 Falling back to default settings');
+      console.error('❌ SettingsContext: Manual reload - Error loading settings:', error);
+      console.log('🔄 SettingsContext: Manual reload - Falling back to default settings');
       setSettings(defaultSettings);
     } finally {
-      console.log('✅ Settings loading complete');
+      console.log('✅ SettingsContext: Manual reload - Settings loading complete');
       setLoading(false);
     }
-  }, [isDashboard, defaultSettings]);
+  }, [defaultSettings]); // Only depend on defaultSettings
 
   const updateSettings = useCallback(async (newSettings) => {
     // Only allow updates in dashboard mode
-    if (!isDashboard) {
+    const currentIsDashboard = window.location.pathname === '/dashboard';
+    if (!currentIsDashboard) {
       console.warn('Settings updates are only allowed in dashboard mode');
       return false;
     }
@@ -140,14 +178,21 @@ export const SettingsProvider = ({ children }) => {
       console.error('Error updating settings:', error);
       return false;
     }
-  }, [isDashboard]);
+  }, []); // Remove dependencies to prevent re-creation
 
   const refreshSettings = useCallback(async () => {
     await loadSettings();
   }, [loadSettings]);
 
   const getSetting = useCallback((key) => {
-    return settings[key] || defaultSettings[key] || '';
+    const value = settings[key] || defaultSettings[key] || '';
+    // Only log once per unique key to reduce console noise
+    if (!getSetting._loggedKeys) getSetting._loggedKeys = new Set();
+    if (!getSetting._loggedKeys.has(key)) {
+      console.log(`🔍 getSetting('${key}') = "${value}"`);
+      getSetting._loggedKeys.add(key);
+    }
+    return value;
   }, [settings, defaultSettings]);
 
   const value = useMemo(() => ({

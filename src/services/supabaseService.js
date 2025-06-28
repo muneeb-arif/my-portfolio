@@ -1065,56 +1065,59 @@ export const portfolioConfigService = {
     }
   },
 
-  // Get portfolio configuration matching the email in .env
+  // Get portfolio configuration matching the EXACT email in .env (no fallbacks)
   async getPortfolioConfig() {
     try {
+      console.log('🔍 portfolioConfigService.getPortfolioConfig: Starting...');
+      
       // Get the email from .env config
       const { portfolioConfig } = await import('../config/portfolio');
       const envEmail = portfolioConfig.ownerEmail;
 
-      console.log('🔍 Loading portfolio config for email:', envEmail);
+      console.log('📧 portfolioConfigService.getPortfolioConfig: Environment configuration:');
+      console.log('   - envEmail from portfolioConfig.ownerEmail:', envEmail);
+      console.log('   - process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
 
-      if (envEmail) {
-        // Look for the .env email in active portfolio configs
-        const { data, error } = await supabase
-          .from('portfolio_config')
-          .select('*')
-          .eq('owner_email', envEmail)
-          .eq('is_active', true)
-          .single();
-
-        if (!error && data) {
-          console.log('✅ Found matching portfolio config for .env email:', envEmail);
-          return data;
-        }
-
-        console.log('⚠️ .env email not found in portfolio_config table:', envEmail);
-      } else {
-        console.log('⚠️ No email configured in .env');
-      }
-
-      // Fallback: get any active configuration
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('portfolio_config')
-        .select('*')
-        .eq('is_active', true)
-        .limit(1)
-        .single();
-
-      if (fallbackError && fallbackError.code !== 'PGRST116') {
-        console.error('Error getting fallback portfolio config:', fallbackError);
+      // STRICT: Only return data for the exact email in .env, no fallbacks
+      if (!envEmail) {
+        console.log('❌ portfolioConfigService.getPortfolioConfig: No email configured in .env - returning null');
         return null;
       }
 
-      if (fallbackData) {
-        console.log('⚠️ Using fallback config for:', fallbackData.owner_email);
-      } else {
-        console.log('⚠️ No active portfolio configs found - will use demo data');
+      console.log('🎯 portfolioConfigService.getPortfolioConfig: STRICT MODE - Looking ONLY for .env email:', envEmail);
+      
+      // Look for the EXACT .env email in active portfolio configs
+      const { data, error } = await supabase
+        .from('portfolio_config')
+        .select('*')
+        .eq('owner_email', envEmail)
+        .eq('is_active', true)
+        .single();
+
+      console.log('📊 portfolioConfigService.getPortfolioConfig: Exact email query result:');
+      console.log('   - Searching for:', envEmail);
+      console.log('   - Error:', error);
+      console.log('   - Data:', data);
+
+      if (error) {
+        console.log('❌ portfolioConfigService.getPortfolioConfig: .env email not found or error:', error.message);
+        console.log('   - This means the email', envEmail, 'is not configured in portfolio_config table');
+        return null;
       }
 
-      return fallbackData;
+      if (data) {
+        console.log('✅ portfolioConfigService.getPortfolioConfig: Found EXACT match for .env email:', envEmail);
+        console.log('   - owner_user_id:', data.owner_user_id);
+        console.log('   - is_active:', data.is_active);
+        console.log('   - created_at:', data.created_at);
+        console.log('   - updated_at:', data.updated_at);
+        return data;
+      }
+
+      console.log('❌ portfolioConfigService.getPortfolioConfig: No data returned for .env email');
+      return null;
     } catch (error) {
-      console.error('Error in getPortfolioConfig:', error);
+      console.error('❌ portfolioConfigService.getPortfolioConfig: Error in getPortfolioConfig:', error);
       return null;
     }
   },
@@ -1420,33 +1423,59 @@ export const publicPortfolioService = {
   // Get settings for public display
   async getPublicSettings() {
     try {
+      console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
+      
       // Initialize only once
       await this.initialize();
+      
+      console.log('🔍 publicPortfolioService.getPublicSettings: Getting portfolio config...');
       
       // Get the user ID for the .env email
       const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
       
+      console.log('📋 publicPortfolioService.getPublicSettings: Portfolio config result:', portfolioConfig);
+      
       if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        console.log('⚠️ No portfolio config found for settings');
+        console.log('⚠️ publicPortfolioService.getPublicSettings: No portfolio config found for settings');
+        console.log('   - portfolioConfig exists:', !!portfolioConfig);
+        console.log('   - owner_user_id exists:', portfolioConfig?.owner_user_id);
         return {};
       }
+
+      console.log('🔍 publicPortfolioService.getPublicSettings: Querying settings table...');
+      console.log('   - Using user_id:', portfolioConfig.owner_user_id);
+      console.log('   - Portfolio config owner_email:', portfolioConfig.owner_email);
 
       const { data, error } = await supabase
         .from('settings')
         .select('*')
         .eq('user_id', portfolioConfig.owner_user_id);  // ← NOW filtering by correct user!
 
-      if (error) throw error;
+      console.log('📊 publicPortfolioService.getPublicSettings: Supabase query result:');
+      console.log('   - Error:', error);
+      console.log('   - Data length:', data?.length || 0);
+      console.log('   - Raw data:', data);
+
+      if (error) {
+        console.error('❌ publicPortfolioService.getPublicSettings: Supabase error:', error);
+        throw error;
+      }
       
       // Convert array to object for easier access
       const settingsObj = {};
       (data || []).forEach(setting => {
         settingsObj[setting.key] = setting.value;
+        console.log(`   - Setting: ${setting.key} = ${setting.value}`);
       });
+      
+      console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);
+      console.log('   - banner_name:', settingsObj.banner_name);
+      console.log('   - banner_title:', settingsObj.banner_title);
+      console.log('   - banner_tagline:', settingsObj.banner_tagline);
       
       return settingsObj;
     } catch (error) {
-      console.error('Error fetching public settings:', error);
+      console.error('❌ publicPortfolioService.getPublicSettings: Error fetching public settings:', error);
       return {};
     }
   },

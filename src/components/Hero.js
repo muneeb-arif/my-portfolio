@@ -137,13 +137,13 @@ const Hero = ({ isLoading = false }) => {
           <div className="flex-1 text-center lg:text-left space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-gray-800 leading-tight">
-                {settings.bannerName || 'Developer'}
+                {settings.banner_name || 'Developer'}
               </h1>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-700">
-                {settings.bannerTitle || 'Full Stack Developer'}
+                {settings.banner_title || 'Full Stack Developer'}
               </h2>
               <p className="text-lg md:text-xl text-gray-600 max-w-lg leading-relaxed">
-                {settings.tagline || 'Creating amazing digital experiences with modern technologies'}
+                {settings.banner_tagline || 'Creating amazing digital experiences with modern technologies'}
               </p>
             </div>
 

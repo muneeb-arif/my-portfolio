@@ -12,9 +12,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import Dashboard from './components/dashboard/Dashboard';
 import DynamicHead from './components/DynamicHead';
 import Toast from './components/Toast';
-import SkeletonLoader from './components/SkeletonLoader';
-import LoadingOverlay from './components/LoadingOverlay';
-import FadeInContent from './components/FadeInContent';
+import RainLoader from './components/RainLoader';
 import portfolioService from './services/portfolioService';
 import { SettingsProvider } from './services/settingsContext';
 import { checkEnvMissing } from './config/supabase';
@@ -30,14 +28,6 @@ function App() {
   const [filters, setFilters] = useState(['All']);
   const [loading, setLoading] = useState(true);
   const [showEnvToast, setShowEnvToast] = useState(false);
-
-  // New loading states for better UX
-  const [sectionsLoading, setSectionsLoading] = useState({
-    hero: true,
-    projects: true,
-    technologies: true,
-    niches: true
-  });
 
   // Check for missing environment variables on app load
   useEffect(() => {
@@ -75,32 +65,15 @@ function App() {
       console.log(`📊 Loaded ${projectsData?.length || 0} published projects`);
       console.log(`📁 Loaded ${(categoriesData?.length || 1) - 1} categories`); // -1 for 'All'
       
-      // Stagger section loading completion for smooth transitions
-      setSectionsLoading(prev => ({ ...prev, hero: false, projects: false }));
-      
-      // Load technologies after a short delay
-      setTimeout(() => {
-        setSectionsLoading(prev => ({ ...prev, technologies: false }));
-      }, 300);
-      
-      // Load niches after another delay
-      setTimeout(() => {
-        setSectionsLoading(prev => ({ ...prev, niches: false }));
-      }, 600);
-      
     } catch (error) {
       console.error('Error loading portfolio data:', error);
       setProjects([]);
       setFilters(['All']);
-      // Complete all loading states on error
-      setSectionsLoading({
-        hero: false,
-        projects: false,
-        technologies: false,
-        niches: false
-      });
     } finally {
-      setLoading(false);
+      // Add a minimum loading time for smooth UX
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     }
   };
 
@@ -260,6 +233,9 @@ function App() {
     <SettingsProvider>
       <DynamicHead />
       <div className="App">
+        {/* iOS-style Full Screen Loading */}
+        <RainLoader isLoading={loading} message="Loading your portfolio..." />
+
         {/* Environment Variables Missing Toast */}
         {showEnvToast && (
           <Toast
@@ -404,19 +380,12 @@ function App() {
           {/* Portfolio Content */}
           <div className="relative z-10 container mx-auto px-4 py-16">
             <FilterMenu 
-              filters={filters}
-              activeFilter={activeFilter}
+              filters={filters} 
+              activeFilter={activeFilter} 
               onFilterChange={handleFilterChange}
             />
             
-            {loading ? (
-              <div className="flex justify-center items-center py-20">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-warm-brown mb-4"></div>
-                  <p className="text-warm-brown">Loading projects...</p>
-                </div>
-              </div>
-            ) : filteredProjects.length === 0 ? (
+            {filteredProjects.length === 0 ? (
               <div className="text-center py-20">
                 <div className="text-6xl mb-4">📝</div>
                 <h3 className="text-xl font-semibold text-warm-brown mb-2">No Projects Found</h3>
@@ -458,7 +427,7 @@ function App() {
         <MobileBottomNav />
 
         {selectedProject && (
-          <Modal 
+          <Modal
             project={selectedProject}
             onClose={closeModal}
             onNavigate={handleProjectNavigation}
