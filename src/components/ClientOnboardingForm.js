@@ -183,7 +183,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+      // console.log('Form submitted:', formData);
 
     // Validate form before submission
     if (!validateForm()) {

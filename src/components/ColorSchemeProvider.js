@@ -14,7 +14,7 @@ const ColorSchemeProvider = () => {
     const colorScheme = settings?.color_scheme || 'desert';
     
     if (colorScheme !== lastAppliedScheme.current) {
-      console.log('🎨 Applying color scheme:', colorScheme);
+      // console.log('🎨 Applying color scheme:', colorScheme);
       applyColorScheme(colorScheme);
       lastAppliedScheme.current = colorScheme;
       isInitialized.current = true;

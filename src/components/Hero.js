@@ -15,7 +15,7 @@ const Hero = ({ isLoading = false }) => {
         const settingsData = await portfolioService.getPublicSettings();
         setSettings(settingsData);
       } catch (error) {
-        console.error('Error loading hero settings:', error);
+      // console.error('Error loading hero settings:', error);
       } finally {
         setSettingsLoading(false);
       }

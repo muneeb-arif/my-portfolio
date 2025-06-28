@@ -36,7 +36,7 @@ const CategoriesManager = () => {
       const data = await metaService.getCategories();
       setCategories(data);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      // console.error('Error loading categories:', error);
       alert('Error loading categories: ' + error.message);
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ const CategoriesManager = () => {
       alert(`Category ${editingCategory ? 'updated' : 'created'} successfully!`);
       
     } catch (error) {
-      console.error('Error saving category:', error);
+      // console.error('Error saving category:', error);
       alert(`Error ${editingCategory ? 'updating' : 'creating'} category: ${error.message}`);
     } finally {
       setLoading(false);
@@ -130,7 +130,7 @@ const CategoriesManager = () => {
       await loadCategories();
       alert('Category deleted successfully!');
     } catch (error) {
-      console.error('Error deleting category:', error);
+      // console.error('Error deleting category:', error);
       alert('Error deleting category: ' + error.message);
     } finally {
       setLoading(false);

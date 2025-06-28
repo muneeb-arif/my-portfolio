@@ -23,16 +23,16 @@ const Footer = () => {
 
   // Smooth scroll to section function
   const scrollToSection = (sectionId) => {
-    console.log('Scrolling to section:', sectionId);
+      // console.log('Scrolling to section:', sectionId);
     const element = document.getElementById(sectionId);
-    console.log('Found element:', element);
+      // console.log('Found element:', element);
     if (element) {
       element.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
     } else {
-      console.error('Element not found:', sectionId);
+      // console.error('Element not found:', sectionId);
     }
   };
 
@@ -203,7 +203,7 @@ const Footer = () => {
             <div className="flex flex-wrap gap-4 justify-center md:justify-end">
               <button 
                 onClick={() => {
-                  console.log('Privacy button clicked');
+      // console.log('Privacy button clicked');
                   alert('Privacy Policy: This portfolio website collects no personal data. All form submissions are for demonstration purposes only.');
                 }}
                 className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-3 py-2 rounded-lg hover:bg-white/5 hover:scale-105 transform hover:shadow-lg"
@@ -212,7 +212,7 @@ const Footer = () => {
               </button>
               <button 
                 onClick={() => {
-                  console.log('Terms button clicked');
+      // console.log('Terms button clicked');
                   alert('Terms of Service: This portfolio is for demonstration purposes. For actual project terms, please contact directly.');
                 }}
                 className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-3 py-2 rounded-lg hover:bg-white/5 hover:scale-105 transform hover:shadow-lg"

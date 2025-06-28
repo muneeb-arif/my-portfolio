@@ -205,5 +205,5 @@ export const applyColorScheme = (schemeName) => {
   root.style.setProperty('--warm-brown', scheme.colors.text);
   root.style.setProperty('--desert-sand', scheme.colors.primary);
   
-  console.log(`🎨 Applied color scheme: ${scheme.name}`);
+      // console.log(`🎨 Applied color scheme: ${scheme.name}`);
 }; 

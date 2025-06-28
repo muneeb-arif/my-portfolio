@@ -101,7 +101,7 @@ const DynamicHead = () => {
       }
     }
 
-    console.log('🌐 Updated document head:', { newTitle, bannerTagline, avatarImage });
+      // console.log('🌐 Updated document head:', { newTitle, bannerTagline, avatarImage });
 
   }, [loading]);
 

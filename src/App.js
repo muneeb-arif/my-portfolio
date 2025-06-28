@@ -62,11 +62,11 @@ function App() {
       setProjects(projectsData || []);
       setFilters(categoriesData || ['All']);
 
-      console.log(`📊 Loaded ${projectsData?.length || 0} published projects`);
-      console.log(`📁 Loaded ${(categoriesData?.length || 1) - 1} categories`); // -1 for 'All'
+      // console.log(`📊 Loaded ${projectsData?.length || 0} published projects`);
+      // console.log(`📁 Loaded ${(categoriesData?.length || 1) - 1} categories`); // -1 for 'All'
       
     } catch (error) {
-      console.error('Error loading portfolio data:', error);
+      // console.error('Error loading portfolio data:', error);
       setProjects([]);
       setFilters(['All']);
     } finally {
@@ -88,7 +88,7 @@ function App() {
         const filteredProjects = await portfolioService.getPublishedProjectsByCategory(newFilter);
         setProjects(filteredProjects);
       } catch (error) {
-        console.error('Error filtering projects:', error);
+      // console.error('Error filtering projects:', error);
         // Fallback to client-side filtering
         const allProjects = await portfolioService.getPublishedProjects();
         const filtered = newFilter === 'All' 

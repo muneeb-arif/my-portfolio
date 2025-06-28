@@ -19,7 +19,7 @@ export const authService = {
       if (error) throw error;
       return { success: true, user: data.user };
     } catch (error) {
-      console.error('Sign up error:', error);
+      // console.error('Sign up error:', error);
       return { success: false, error: error.message };
     }
   },
@@ -35,7 +35,7 @@ export const authService = {
       if (error) throw error;
       return { success: true, user: data.user };
     } catch (error) {
-      console.error('Sign in error:', error);
+      // console.error('Sign in error:', error);
       return { success: false, error: error.message };
     }
   },
@@ -47,7 +47,7 @@ export const authService = {
       if (error) throw error;
       return { success: true };
     } catch (error) {
-      console.error('Sign out error:', error);
+      // console.error('Sign out error:', error);
       return { success: false, error: error.message };
     }
   },
@@ -71,7 +71,7 @@ export const authService = {
       if (error) throw error;
       return { success: true };
     } catch (error) {
-      console.error('Reset password error:', error);
+      // console.error('Reset password error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -98,7 +98,7 @@ export const projectService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching projects from Supabase, using fallback data:', error);
+      // console.error('Error fetching projects from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -121,7 +121,7 @@ export const projectService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error fetching project:', error);
+      // console.error('Error fetching project:', error);
       throw error;
     }
   },
@@ -144,7 +144,7 @@ export const projectService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error creating project:', error);
+      // console.error('Error creating project:', error);
       throw error;
     }
   },
@@ -162,7 +162,7 @@ export const projectService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error updating project:', error);
+      // console.error('Error updating project:', error);
       throw error;
     }
   },
@@ -178,7 +178,7 @@ export const projectService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting project:', error);
+      // console.error('Error deleting project:', error);
       throw error;
     }
   },
@@ -235,7 +235,7 @@ export const imageService = {
         bucket: bucket
       };
     } catch (error) {
-      console.error('Error uploading image:', error);
+      // console.error('Error uploading image:', error);
       throw error;
     }
   },
@@ -248,7 +248,7 @@ export const imageService = {
       );
       return await Promise.all(uploadPromises);
     } catch (error) {
-      console.error('Error uploading images:', error);
+      // console.error('Error uploading images:', error);
       throw error;
     }
   },
@@ -263,7 +263,7 @@ export const imageService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting image:', error);
+      // console.error('Error deleting image:', error);
       throw error;
     }
   },
@@ -293,7 +293,7 @@ export const imageService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error saving image metadata:', error);
+      // console.error('Error saving image metadata:', error);
       throw error;
     }
   },
@@ -312,7 +312,7 @@ export const imageService = {
         metadata
       };
     } catch (error) {
-      console.error('Error uploading project image:', error);
+      // console.error('Error uploading project image:', error);
       throw error;
     }
   }
@@ -324,26 +324,26 @@ export const settingsService = {
   // Get all settings for a user
   async getSettings() {
     try {
-      console.log('🔍 Getting user from auth...');
+      // console.log('🔍 Getting user from auth...');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('❌ No authenticated user found');
+      // console.log('❌ No authenticated user found');
         throw new Error('Not authenticated');
       }
-      console.log('✅ User authenticated:', user.id);
+      // console.log('✅ User authenticated:', user.id);
 
-      console.log('🔍 Fetching settings from database...');
+      // console.log('🔍 Fetching settings from database...');
       const { data, error } = await supabase
         .from('settings')
         .select('*')
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('❌ Database error:', error);
+      // console.error('❌ Database error:', error);
         throw error;
       }
       
-      console.log('📊 Raw settings data:', data);
+      // console.log('📊 Raw settings data:', data);
       
       // Convert array to object for easier access
       const settingsObj = {};
@@ -351,10 +351,10 @@ export const settingsService = {
         settingsObj[setting.key] = setting.value;
       });
       
-      console.log('🔧 Processed settings object:', settingsObj);
+      // console.log('🔧 Processed settings object:', settingsObj);
       return settingsObj;
     } catch (error) {
-      console.error('❌ Error in getSettings:', error);
+      // console.error('❌ Error in getSettings:', error);
       return {};
     }
   },
@@ -375,7 +375,7 @@ export const settingsService = {
       if (error) throw error;
       return data?.value || null;
     } catch (error) {
-      console.error(`Error fetching setting ${key}:`, error);
+      // console.error(`Error fetching setting ${key}:`, error);
       return null;
     }
   },
@@ -397,7 +397,7 @@ export const settingsService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error(`Error updating setting ${key}:`, error);
+      // console.error(`Error updating setting ${key}:`, error);
       throw error;
     }
   },
@@ -421,7 +421,7 @@ export const settingsService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error updating multiple settings:', error);
+      // console.error('Error updating multiple settings:', error);
       throw error;
     }
   },
@@ -441,7 +441,7 @@ export const settingsService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error(`Error deleting setting ${key}:`, error);
+      // console.error(`Error deleting setting ${key}:`, error);
       throw error;
     }
   },
@@ -481,7 +481,7 @@ export const metaService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching categories from Supabase, using fallback data:', error);
+      // console.error('Error fetching categories from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -504,7 +504,7 @@ export const metaService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error adding category:', error);
+      // console.error('Error adding category:', error);
       throw error;
     }
   },
@@ -525,7 +525,7 @@ export const metaService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error updating category:', error);
+      // console.error('Error updating category:', error);
       throw error;
     }
   },
@@ -556,7 +556,7 @@ export const metaService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting category:', error);
+      // console.error('Error deleting category:', error);
       throw error;
     }
   },
@@ -576,7 +576,7 @@ export const metaService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching technologies:', error);
+      // console.error('Error fetching technologies:', error);
       throw error;
     }
   },
@@ -599,7 +599,7 @@ export const metaService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error adding technology:', error);
+      // console.error('Error adding technology:', error);
       throw error;
     }
   }
@@ -622,7 +622,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
+      // console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -645,7 +645,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching domains from Supabase, using fallback data:', error);
+      // console.error('Error fetching domains from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -668,7 +668,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching technologies from Supabase, using fallback data:', error);
+      // console.error('Error fetching technologies from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -694,7 +694,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error creating domain/technology:', error);
+      // console.error('Error creating domain/technology:', error);
       throw error;
     }
   },
@@ -712,7 +712,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error updating domain/technology:', error);
+      // console.error('Error updating domain/technology:', error);
       throw error;
     }
   },
@@ -728,7 +728,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting domain/technology:', error);
+      // console.error('Error deleting domain/technology:', error);
       throw error;
     }
   },
@@ -752,7 +752,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error adding skill:', error);
+      // console.error('Error adding skill:', error);
       throw error;
     }
   },
@@ -770,7 +770,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error updating skill:', error);
+      // console.error('Error updating skill:', error);
       throw error;
     }
   },
@@ -786,7 +786,7 @@ export const domainsTechnologiesService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting skill:', error);
+      // console.error('Error deleting skill:', error);
       throw error;
     }
   }
@@ -814,7 +814,7 @@ export const bulkService = {
         version: '1.0'
       };
     } catch (error) {
-      console.error('Error exporting data:', error);
+      // console.error('Error exporting data:', error);
       throw error;
     }
   },
@@ -889,7 +889,7 @@ export const bulkService = {
 
       return results;
     } catch (error) {
-      console.error('Error importing data:', error);
+      // console.error('Error importing data:', error);
       throw error;
     }
   }
@@ -909,7 +909,7 @@ export const nicheService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching niches from Supabase, using fallback data:', error);
+      // console.error('Error fetching niches from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -929,7 +929,7 @@ export const nicheService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error fetching niche:', error);
+      // console.error('Error fetching niche:', error);
       throw error;
     }
   },
@@ -946,7 +946,7 @@ export const nicheService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error creating niche:', error);
+      // console.error('Error creating niche:', error);
       throw error;
     }
   },
@@ -964,7 +964,7 @@ export const nicheService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error updating niche:', error);
+      // console.error('Error updating niche:', error);
       throw error;
     }
   },
@@ -980,7 +980,7 @@ export const nicheService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting niche:', error);
+      // console.error('Error deleting niche:', error);
       throw error;
     }
   },
@@ -1013,24 +1013,24 @@ export const portfolioConfigService = {
   // Configure portfolio owner in database
   async configurePortfolioOwner(email) {
     if (!email) {
-      console.log('📝 No email provided for portfolio configuration');
+      // console.log('📝 No email provided for portfolio configuration');
       return { success: false, message: 'No email provided' };
     }
 
     try {
-      console.log('🔧 Configuring portfolio owner:', email);
+      // console.log('🔧 Configuring portfolio owner:', email);
 
       // First, get the user ID for this email
       const { data: userId, error: userError } = await supabase
         .rpc('get_user_id_by_email', { user_email: email });
 
       if (userError) {
-        console.error('❌ Error getting user ID:', userError);
+      // console.error('❌ Error getting user ID:', userError);
         return { success: false, message: `User lookup failed: ${userError.message}` };
       }
 
       if (!userId) {
-        console.error('❌ No user found with email:', email);
+      // console.error('❌ No user found with email:', email);
         return { success: false, message: `No user found with email: ${email}` };
       }
 
@@ -1048,11 +1048,11 @@ export const portfolioConfigService = {
         .select();
 
       if (error) {
-        console.error('❌ Error configuring portfolio owner:', error);
+      // console.error('❌ Error configuring portfolio owner:', error);
         return { success: false, message: `Configuration failed: ${error.message}` };
       }
 
-      console.log('✅ Portfolio owner configured successfully:', data);
+      // console.log('✅ Portfolio owner configured successfully:', data);
       
       // Clear cache after successful configuration
       this.clearCache();
@@ -1060,7 +1060,7 @@ export const portfolioConfigService = {
       return { success: true, message: 'Portfolio owner configured successfully', data };
 
     } catch (error) {
-      console.error('❌ Error in configurePortfolioOwner:', error);
+      // console.error('❌ Error in configurePortfolioOwner:', error);
       return { success: false, message: `Configuration error: ${error.message}` };
     }
   },
@@ -1068,23 +1068,23 @@ export const portfolioConfigService = {
   // Get portfolio configuration matching the EXACT email in .env (no fallbacks)
   async getPortfolioConfig() {
     try {
-      console.log('🔍 portfolioConfigService.getPortfolioConfig: Starting...');
+      // console.log('🔍 portfolioConfigService.getPortfolioConfig: Starting...');
       
       // Get the email from .env config
       const { portfolioConfig } = await import('../config/portfolio');
       const envEmail = portfolioConfig.ownerEmail;
 
-      console.log('📧 portfolioConfigService.getPortfolioConfig: Environment configuration:');
-      console.log('   - envEmail from portfolioConfig.ownerEmail:', envEmail);
-      console.log('   - process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
+      // console.log('📧 portfolioConfigService.getPortfolioConfig: Environment configuration:');
+      // console.log('   - envEmail from portfolioConfig.ownerEmail:', envEmail);
+      // console.log('   - process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
 
       // STRICT: Only return data for the exact email in .env, no fallbacks
       if (!envEmail) {
-        console.log('❌ portfolioConfigService.getPortfolioConfig: No email configured in .env - returning null');
+      // console.log('❌ portfolioConfigService.getPortfolioConfig: No email configured in .env - returning null');
         return null;
       }
 
-      console.log('🎯 portfolioConfigService.getPortfolioConfig: STRICT MODE - Looking ONLY for .env email:', envEmail);
+      // console.log('🎯 portfolioConfigService.getPortfolioConfig: STRICT MODE - Looking ONLY for .env email:', envEmail);
       
       // Look for the EXACT .env email in active portfolio configs
       const { data, error } = await supabase
@@ -1094,30 +1094,30 @@ export const portfolioConfigService = {
         .eq('is_active', true)
         .single();
 
-      console.log('📊 portfolioConfigService.getPortfolioConfig: Exact email query result:');
-      console.log('   - Searching for:', envEmail);
-      console.log('   - Error:', error);
-      console.log('   - Data:', data);
+      // console.log('📊 portfolioConfigService.getPortfolioConfig: Exact email query result:');
+      // console.log('   - Searching for:', envEmail);
+      // console.log('   - Error:', error);
+      // console.log('   - Data:', data);
 
       if (error) {
-        console.log('❌ portfolioConfigService.getPortfolioConfig: .env email not found or error:', error.message);
-        console.log('   - This means the email', envEmail, 'is not configured in portfolio_config table');
+      // console.log('❌ portfolioConfigService.getPortfolioConfig: .env email not found or error:', error.message);
+      // console.log('   - This means the email', envEmail, 'is not configured in portfolio_config table');
         return null;
       }
 
       if (data) {
-        console.log('✅ portfolioConfigService.getPortfolioConfig: Found EXACT match for .env email:', envEmail);
-        console.log('   - owner_user_id:', data.owner_user_id);
-        console.log('   - is_active:', data.is_active);
-        console.log('   - created_at:', data.created_at);
-        console.log('   - updated_at:', data.updated_at);
+      // console.log('✅ portfolioConfigService.getPortfolioConfig: Found EXACT match for .env email:', envEmail);
+      // console.log('   - owner_user_id:', data.owner_user_id);
+      // console.log('   - is_active:', data.is_active);
+      // console.log('   - created_at:', data.created_at);
+      // console.log('   - updated_at:', data.updated_at);
         return data;
       }
 
-      console.log('❌ portfolioConfigService.getPortfolioConfig: No data returned for .env email');
+      // console.log('❌ portfolioConfigService.getPortfolioConfig: No data returned for .env email');
       return null;
     } catch (error) {
-      console.error('❌ portfolioConfigService.getPortfolioConfig: Error in getPortfolioConfig:', error);
+      // console.error('❌ portfolioConfigService.getPortfolioConfig: Error in getPortfolioConfig:', error);
       return null;
     }
   },
@@ -1130,7 +1130,7 @@ export const portfolioConfigService = {
     
     // Clear cache if email changed
     if (this._configCache && this._cachedEmail !== currentEmail) {
-      console.log('📧 Email changed from', this._cachedEmail, 'to', currentEmail, '- clearing cache');
+      // console.log('📧 Email changed from', this._cachedEmail, 'to', currentEmail, '- clearing cache');
       this.clearCache();
       // Also clear public portfolio cache
       publicPortfolioService.clearCache();
@@ -1174,7 +1174,7 @@ export const portfolioConfigService = {
       const envEmail = portfolioConfig.ownerEmail;
 
       if (!envEmail) {
-        console.log('📝 No portfolio owner email in .env');
+      // console.log('📝 No portfolio owner email in .env');
         return { success: true, message: 'No configuration needed' };
       }
 
@@ -1187,23 +1187,23 @@ export const portfolioConfigService = {
         .single();
 
       if (!error && existingConfig) {
-        console.log('✅ .env email already configured:', envEmail);
+      // console.log('✅ .env email already configured:', envEmail);
         return { success: true, message: 'Already configured', config: existingConfig };
       }
 
       // If not found, create/activate it
-      console.log('🔧 Configuring portfolio for .env email:', envEmail);
+      // console.log('🔧 Configuring portfolio for .env email:', envEmail);
       return await this.configurePortfolioOwner(envEmail);
 
     } catch (error) {
-      console.error('❌ Error ensuring portfolio configured:', error);
+      // console.error('❌ Error ensuring portfolio configured:', error);
       return { success: false, message: `Setup error: ${error.message}` };
     }
   },
 
   // Clear cache (useful for testing or when configuration changes)
   clearCache() {
-    console.log('🗑️ Clearing portfolio config cache');
+      // console.log('🗑️ Clearing portfolio config cache');
     this._configCache = null;
     this._configPromise = null;
     this._cachedEmail = null;
@@ -1226,14 +1226,14 @@ export const userResolutionService = {
         .rpc('get_user_id_by_email', { user_email: email });
       
       if (error) {
-        console.log('RPC function not available, falling back to alternative method');
+      // console.log('RPC function not available, falling back to alternative method');
         // Fallback: return null and let the app use fallback data
         return null;
       }
       
       return data;
     } catch (error) {
-      console.error('Error resolving user by email:', error);
+      // console.error('Error resolving user by email:', error);
       return null;
     }
   },
@@ -1249,7 +1249,7 @@ export const userResolutionService = {
         email: user.email
       };
     } catch (error) {
-      console.error('Error getting current user info:', error);
+      // console.error('Error getting current user info:', error);
       return null;
     }
   }
@@ -1265,7 +1265,7 @@ export const publicPortfolioService = {
 
   // Clear cache (call this when email changes)
   clearCache() {
-    console.log('🗑️ Clearing public portfolio cache');
+      // console.log('🗑️ Clearing public portfolio cache');
     this._userIdCache = null;
     this._isInitialized = false;
   },
@@ -1276,26 +1276,26 @@ export const publicPortfolioService = {
       return;
     }
 
-    console.log('🚀 Initializing portfolio service...');
+      // console.log('🚀 Initializing portfolio service...');
     
     try {
       // First, check if we're authenticated (dashboard mode)
       const currentUser = await userResolutionService.getCurrentUserInfo();
       if (currentUser) {
-        console.log('📊 Dashboard mode: Loading data for authenticated user:', currentUser.email);
+      // console.log('📊 Dashboard mode: Loading data for authenticated user:', currentUser.email);
         this._userIdCache = currentUser.id;
         this._isInitialized = true;
         return;
       }
 
       // For public mode, ensure portfolio is configured in the database
-      console.log('🌐 Public mode: Setting up portfolio configuration...');
+      // console.log('🌐 Public mode: Setting up portfolio configuration...');
       const setupResult = await portfolioConfigService.ensurePortfolioConfigured();
       
       if (setupResult.success) {
-        console.log('✅ Portfolio configuration ready');
+      // console.log('✅ Portfolio configuration ready');
       } else {
-        console.log('⚠️ Portfolio configuration failed:', setupResult.message);
+      // console.log('⚠️ Portfolio configuration failed:', setupResult.message);
       }
       
       // In public mode, we don't cache user ID - let RLS policies handle filtering
@@ -1303,7 +1303,7 @@ export const publicPortfolioService = {
       this._isInitialized = true;
 
     } catch (error) {
-      console.error('❌ Error initializing portfolio service:', error);
+      // console.error('❌ Error initializing portfolio service:', error);
       this._userIdCache = null;
       this._isInitialized = true;
     }
@@ -1319,11 +1319,11 @@ export const publicPortfolioService = {
       const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
       
       if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        console.log('⚠️ No portfolio config found, using fallback data');
+      // console.log('⚠️ No portfolio config found, using fallback data');
         return fallbackDataService.getProjects();
       }
 
-      console.log('📊 Fetching projects for user ID:', portfolioConfig.owner_user_id);
+      // console.log('📊 Fetching projects for user ID:', portfolioConfig.owner_user_id);
       
       const { data, error } = await supabase
         .from(TABLES.PROJECTS)
@@ -1337,10 +1337,10 @@ export const publicPortfolioService = {
 
       if (error) throw error;
       
-      console.log(`✅ Found ${data?.length || 0} projects for .env user`);
+      // console.log(`✅ Found ${data?.length || 0} projects for .env user`);
       return data || [];
     } catch (error) {
-      console.error('Error fetching published projects from Supabase, using fallback data:', error);
+      // console.error('Error fetching published projects from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -1359,7 +1359,7 @@ export const publicPortfolioService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching categories from Supabase, using fallback data:', error);
+      // console.error('Error fetching categories from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -1377,7 +1377,7 @@ export const publicPortfolioService = {
       const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
       
       if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        console.log('⚠️ No portfolio config found, using fallback data');
+      // console.log('⚠️ No portfolio config found, using fallback data');
         return fallbackDataService.getTechnologies();
       }
 
@@ -1393,7 +1393,7 @@ export const publicPortfolioService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
+      // console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -1412,7 +1412,7 @@ export const publicPortfolioService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching niches from Supabase, using fallback data:', error);
+      // console.error('Error fetching niches from Supabase, using fallback data:', error);
       // Show fallback notification
       fallbackUtils.showFallbackNotification();
       // Return fallback data when Supabase fails
@@ -1423,41 +1423,41 @@ export const publicPortfolioService = {
   // Get settings for public display
   async getPublicSettings() {
     try {
-      console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
+      // console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
       
       // Initialize only once
       await this.initialize();
       
-      console.log('🔍 publicPortfolioService.getPublicSettings: Getting portfolio config...');
+      // console.log('🔍 publicPortfolioService.getPublicSettings: Getting portfolio config...');
       
       // Get the user ID for the .env email
       const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
       
-      console.log('📋 publicPortfolioService.getPublicSettings: Portfolio config result:', portfolioConfig);
+      // console.log('📋 publicPortfolioService.getPublicSettings: Portfolio config result:', portfolioConfig);
       
       if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        console.log('⚠️ publicPortfolioService.getPublicSettings: No portfolio config found for settings');
-        console.log('   - portfolioConfig exists:', !!portfolioConfig);
-        console.log('   - owner_user_id exists:', portfolioConfig?.owner_user_id);
+      // console.log('⚠️ publicPortfolioService.getPublicSettings: No portfolio config found for settings');
+      // console.log('   - portfolioConfig exists:', !!portfolioConfig);
+      // console.log('   - owner_user_id exists:', portfolioConfig?.owner_user_id);
         return {};
       }
 
-      console.log('🔍 publicPortfolioService.getPublicSettings: Querying settings table...');
-      console.log('   - Using user_id:', portfolioConfig.owner_user_id);
-      console.log('   - Portfolio config owner_email:', portfolioConfig.owner_email);
+      // console.log('🔍 publicPortfolioService.getPublicSettings: Querying settings table...');
+      // console.log('   - Using user_id:', portfolioConfig.owner_user_id);
+      // console.log('   - Portfolio config owner_email:', portfolioConfig.owner_email);
 
       const { data, error } = await supabase
         .from('settings')
         .select('*')
         .eq('user_id', portfolioConfig.owner_user_id);  // ← NOW filtering by correct user!
 
-      console.log('📊 publicPortfolioService.getPublicSettings: Supabase query result:');
-      console.log('   - Error:', error);
-      console.log('   - Data length:', data?.length || 0);
-      console.log('   - Raw data:', data);
+      // console.log('📊 publicPortfolioService.getPublicSettings: Supabase query result:');
+      // console.log('   - Error:', error);
+      // console.log('   - Data length:', data?.length || 0);
+      // console.log('   - Raw data:', data);
 
       if (error) {
-        console.error('❌ publicPortfolioService.getPublicSettings: Supabase error:', error);
+      // console.error('❌ publicPortfolioService.getPublicSettings: Supabase error:', error);
         throw error;
       }
       
@@ -1465,17 +1465,17 @@ export const publicPortfolioService = {
       const settingsObj = {};
       (data || []).forEach(setting => {
         settingsObj[setting.key] = setting.value;
-        console.log(`   - Setting: ${setting.key} = ${setting.value}`);
+      // console.log(`   - Setting: ${setting.key} = ${setting.value}`);
       });
       
-      console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);
-      console.log('   - banner_name:', settingsObj.banner_name);
-      console.log('   - banner_title:', settingsObj.banner_title);
-      console.log('   - banner_tagline:', settingsObj.banner_tagline);
+      // console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);
+      // console.log('   - banner_name:', settingsObj.banner_name);
+      // console.log('   - banner_title:', settingsObj.banner_title);
+      // console.log('   - banner_tagline:', settingsObj.banner_tagline);
       
       return settingsObj;
     } catch (error) {
-      console.error('❌ publicPortfolioService.getPublicSettings: Error fetching public settings:', error);
+      // console.error('❌ publicPortfolioService.getPublicSettings: Error fetching public settings:', error);
       return {};
     }
   },
@@ -1492,7 +1492,7 @@ export const publicPortfolioService = {
 
 // Set up global auth state listener
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log('🔄 Auth state changed:', event);
+      // console.log('🔄 Auth state changed:', event);
   
   // Clear caches when auth state changes
   publicPortfolioService.clearCache();
@@ -1500,8 +1500,8 @@ supabase.auth.onAuthStateChange((event, session) => {
   
   // Additional cleanup based on event type
   if (event === 'SIGNED_OUT') {
-    console.log('👋 User signed out - cache cleared for public mode');
+      // console.log('👋 User signed out - cache cleared for public mode');
   } else if (event === 'SIGNED_IN') {
-    console.log('👋 User signed in - cache cleared for dashboard mode');
+      // console.log('👋 User signed in - cache cleared for dashboard mode');
   }
 }); 

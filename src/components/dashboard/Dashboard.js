@@ -17,28 +17,28 @@ const Dashboard = () => {
 
   const checkAuthState = async () => {
     try {
-      console.log('🔍 Checking authentication state...');
+      // console.log('🔍 Checking authentication state...');
       const { data: { user }, error } = await authService.getCurrentUser();
       
-      console.log('Auth result:', { user, error });
+      // console.log('Auth result:', { user, error });
       
       if (error) {
-        console.error('Auth check error:', error);
+      // console.error('Auth check error:', error);
         // Don't set error for auth session missing - that's normal when not logged in
         if (error.message !== 'Auth session missing!') {
           setError(`Authentication error: ${error.message}`);
         }
       } else {
-        console.log('✅ Authentication check successful');
+      // console.log('✅ Authentication check successful');
         setUser(user);
       }
     } catch (err) {
-      console.error('Auth check error:', err);
+      // console.error('Auth check error:', err);
       // Only set error for actual network/connection issues
       if (err.name === 'TypeError' || err.message.includes('fetch')) {
         setError(`Connection error: ${err.message}`);
       } else {
-        console.log('Non-critical auth error, proceeding to login');
+      // console.log('Non-critical auth error, proceeding to login');
       }
     } finally {
       setLoading(false);
@@ -60,7 +60,7 @@ const Dashboard = () => {
         setError('Failed to sign out');
       }
     } catch (err) {
-      console.error('Sign out error:', err);
+      // console.error('Sign out error:', err);
       setError('Failed to sign out');
     } finally {
       setLoading(false);

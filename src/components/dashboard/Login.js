@@ -93,7 +93,7 @@ const Login = ({ onAuthChange }) => {
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
-      console.error('Auth error:', err);
+      // console.error('Auth error:', err);
     } finally {
       setLoading(false);
     }

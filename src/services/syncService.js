@@ -5,7 +5,7 @@ export const syncService = {
   // Reset/Clear ALL user data
   async resetAllUserData(progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -106,7 +106,7 @@ export const syncService = {
       };
 
     } catch (error) {
-      console.error('❌ Data reset failed:', error);
+      // console.error('❌ Data reset failed:', error);
       return {
         success: false,
         message: `Reset failed: ${error.message}`,
@@ -118,7 +118,7 @@ export const syncService = {
   // Sync all fallback data to database
   async syncAllData(progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -177,7 +177,7 @@ export const syncService = {
       };
 
     } catch (error) {
-      console.error('❌ Data sync failed:', error);
+      // console.error('❌ Data sync failed:', error);
       return {
         success: false,
         message: `Sync failed: ${error.message}`,
@@ -189,7 +189,7 @@ export const syncService = {
   // Clear all existing data - SIMPLIFIED APPROACH
   async clearAllData(userId, progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -214,7 +214,7 @@ export const syncService = {
       
       logProgress('✅ All existing data cleared successfully', 'success');
     } catch (error) {
-      console.error('Error clearing data:', error);
+      // console.error('Error clearing data:', error);
       // Don't throw error, continue with sync
     }
   },
@@ -222,7 +222,7 @@ export const syncService = {
   // Sync categories - NOW USER-SPECIFIC
   async syncCategories(userId, progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -280,7 +280,7 @@ export const syncService = {
       logProgress(`✅ Categories sync completed: ${syncedCount}/${fallbackCategories.length}`, 'success');
       return syncedCount;
     } catch (error) {
-      console.error('Error syncing categories:', error);
+      // console.error('Error syncing categories:', error);
       return 0;
     }
   },
@@ -288,7 +288,7 @@ export const syncService = {
   // Sync technologies and skills - FORCE REPLACE APPROACH
   async syncTechnologiesAndSkills(userId, progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -378,7 +378,7 @@ export const syncService = {
       logProgress(`✅ Technologies sync completed: ${techCount}/${fallbackTechnologies.length} technologies, ${skillCount}/${fallbackSkills.length} skills`, 'success');
       return { technologies: techCount, skills: skillCount };
     } catch (error) {
-      console.error('Error syncing technologies and skills:', error);
+      // console.error('Error syncing technologies and skills:', error);
       return { technologies: 0, skills: 0 };
     }
   },
@@ -386,7 +386,7 @@ export const syncService = {
   // Sync niches - FORCE REPLACE APPROACH
   async syncNiches(userId, progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -433,7 +433,7 @@ export const syncService = {
       logProgress(`✅ Niches sync completed: ${syncedCount}/${fallbackNiches.length}`, 'success');
       return syncedCount;
     } catch (error) {
-      console.error('Error syncing niches:', error);
+      // console.error('Error syncing niches:', error);
       return 0;
     }
   },
@@ -441,7 +441,7 @@ export const syncService = {
   // Sync projects
   async syncProjects(userId, progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -513,7 +513,7 @@ export const syncService = {
       logProgress(`✅ Projects sync completed: ${syncedCount}/${fallbackProjects.length}`, 'success');
       return syncedCount;
     } catch (error) {
-      console.error('Error syncing projects:', error);
+      // console.error('Error syncing projects:', error);
       return 0;
     }
   },
@@ -537,7 +537,7 @@ export const syncService = {
 
       return totalCount === 0;
     } catch (error) {
-      console.error('Error checking database status:', error);
+      // console.error('Error checking database status:', error);
       return false;
     }
   },
@@ -565,7 +565,7 @@ export const syncService = {
         ) === 0
       };
     } catch (error) {
-      console.error('Error getting database status:', error);
+      // console.error('Error getting database status:', error);
       return {
         projects: 0,
         technologies: 0,
@@ -579,7 +579,7 @@ export const syncService = {
   // Backup all data from database
   async backupAllData(progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -699,7 +699,7 @@ export const syncService = {
       };
 
     } catch (error) {
-      console.error('❌ Data backup failed:', error);
+      // console.error('❌ Data backup failed:', error);
       return {
         success: false,
         message: `Backup failed: ${error.message}`,
@@ -711,7 +711,7 @@ export const syncService = {
   // Import data from backup file
   async importFromBackup(file, progressCallback = null) {
     const logProgress = (message, type = 'info') => {
-      console.log(message);
+      // console.log(message);
       if (progressCallback) {
         progressCallback(message, type);
       }
@@ -755,14 +755,14 @@ export const syncService = {
       try {
         await supabase.from('categories').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         await supabase.from('niche').delete().neq('id', 0);
-        console.log('✅ Global tables cleared');
+      // console.log('✅ Global tables cleared');
       } catch (error) {
-        console.log('⚠️ Could not clear global tables:', error.message);
+      // console.log('⚠️ Could not clear global tables:', error.message);
       }
 
       // Import categories first (no dependencies)
       if (backupData.data.categories?.length > 0) {
-        console.log('📁 Importing categories...');
+      // console.log('📁 Importing categories...');
         for (const category of backupData.data.categories) {
           const { error } = await supabase
             .from('categories')
@@ -779,7 +779,7 @@ export const syncService = {
 
       // Import technologies
       if (backupData.data.technologies?.length > 0) {
-        console.log('🎯 Importing technologies...');
+      // console.log('🎯 Importing technologies...');
         for (const tech of backupData.data.technologies) {
           const { error } = await supabase
             .from('domains_technologies')
@@ -796,7 +796,7 @@ export const syncService = {
 
       // Import niches
       if (backupData.data.niches?.length > 0) {
-        console.log('🏆 Importing niches...');
+      // console.log('🏆 Importing niches...');
         for (const niche of backupData.data.niches) {
           const { error } = await supabase
             .from('niche')
@@ -817,7 +817,7 @@ export const syncService = {
 
       // Import projects
       if (backupData.data.projects?.length > 0) {
-        console.log('💼 Importing projects...');
+      // console.log('💼 Importing projects...');
         for (const project of backupData.data.projects) {
           const { error } = await supabase
             .from('projects')
@@ -841,7 +841,7 @@ export const syncService = {
 
       // Import skills (after technologies are imported)
       if (backupData.data.skills?.length > 0) {
-        console.log('⚡ Importing skills...');
+      // console.log('⚡ Importing skills...');
         
         // Create a mapping of tech_id to tech_title for fallback
         const techIdToTitleMap = {};
@@ -858,11 +858,11 @@ export const syncService = {
             // Fallback: if tech_title is missing, try to find it via tech_id
             if (!techTitle && skill.tech_id && techIdToTitleMap[skill.tech_id]) {
               techTitle = techIdToTitleMap[skill.tech_id];
-              console.log(`🔍 Found tech_title via mapping for skill ${skill.title}: ${techTitle}`);
+      // console.log(`🔍 Found tech_title via mapping for skill ${skill.title}: ${techTitle}`);
             }
             
             if (!techTitle) {
-              console.log(`⚠️ No technology found for skill ${skill.title} (tech_title: ${skill.tech_title}, tech_id: ${skill.tech_id})`);
+      // console.log(`⚠️ No technology found for skill ${skill.title} (tech_title: ${skill.tech_title}, tech_id: ${skill.tech_id})`);
               continue;
             }
 
@@ -874,7 +874,7 @@ export const syncService = {
               .eq('user_id', userId);
 
             if (techError) {
-              console.log(`⚠️ Could not find technology for skill ${skill.title}:`, techError.message);
+      // console.log(`⚠️ Could not find technology for skill ${skill.title}:`, techError.message);
               continue;
             }
 
@@ -890,22 +890,22 @@ export const syncService = {
               
               if (!error) {
                 importedCount++;
-                console.log(`✅ Skill imported: ${skill.title} -> ${techTitle}`);
+      // console.log(`✅ Skill imported: ${skill.title} -> ${techTitle}`);
               } else {
-                console.log(`⚠️ Skill import failed for ${skill.title}:`, error.message);
+      // console.log(`⚠️ Skill import failed for ${skill.title}:`, error.message);
               }
             } else {
-              console.log(`⚠️ No technology found for skill ${skill.title} (tech_title: ${techTitle})`);
+      // console.log(`⚠️ No technology found for skill ${skill.title} (tech_title: ${techTitle})`);
             }
           } catch (error) {
-            console.log(`⚠️ Skill import error for ${skill.title}:`, error.message);
+      // console.log(`⚠️ Skill import error for ${skill.title}:`, error.message);
           }
         }
       }
 
       // Import project images (after projects are imported)
       if (backupData.data.project_images?.length > 0) {
-        console.log('🖼️ Importing project images...');
+      // console.log('🖼️ Importing project images...');
         
         // Create a mapping of project_id to project_title for fallback
         const projectIdToTitleMap = {};
@@ -922,11 +922,11 @@ export const syncService = {
             // Fallback: if project_title is missing, try to find it via project_id
             if (!projectTitle && image.project_id && projectIdToTitleMap[image.project_id]) {
               projectTitle = projectIdToTitleMap[image.project_id];
-              console.log(`🔍 Found project_title via mapping for image ${image.name}: ${projectTitle}`);
+      // console.log(`🔍 Found project_title via mapping for image ${image.name}: ${projectTitle}`);
             }
             
             if (!projectTitle) {
-              console.log(`⚠️ No project found for image ${image.name} (project_title: ${image.project_title}, project_id: ${image.project_id})`);
+      // console.log(`⚠️ No project found for image ${image.name} (project_title: ${image.project_title}, project_id: ${image.project_id})`);
               continue;
             }
 
@@ -938,7 +938,7 @@ export const syncService = {
               .eq('user_id', userId);
 
             if (projectError) {
-              console.log(`⚠️ Could not find project for image ${image.name}:`, projectError.message);
+      // console.log(`⚠️ Could not find project for image ${image.name}:`, projectError.message);
               continue;
             }
 
@@ -957,15 +957,15 @@ export const syncService = {
               
               if (!error) {
                 importedCount++;
-                console.log(`✅ Project image imported: ${image.name} -> ${projectTitle}`);
+      // console.log(`✅ Project image imported: ${image.name} -> ${projectTitle}`);
               } else {
-                console.log(`⚠️ Project image import failed for ${image.name}:`, error.message);
+      // console.log(`⚠️ Project image import failed for ${image.name}:`, error.message);
               }
             } else {
-              console.log(`⚠️ No project found for image ${image.name} (project_title: ${projectTitle})`);
+      // console.log(`⚠️ No project found for image ${image.name} (project_title: ${projectTitle})`);
             }
           } catch (error) {
-            console.log(`⚠️ Project image import error for ${image.name}:`, error.message);
+      // console.log(`⚠️ Project image import error for ${image.name}:`, error.message);
           }
         }
       }
@@ -978,7 +978,7 @@ export const syncService = {
       };
 
     } catch (error) {
-      console.error('❌ Data import failed:', error);
+      // console.error('❌ Data import failed:', error);
       return {
         success: false,
         message: `Import failed: ${error.message}`,

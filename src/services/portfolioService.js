@@ -34,7 +34,7 @@ export const portfolioService = {
         }
       })) || [];
     } catch (error) {
-      console.error('Error fetching published projects:', error);
+      // console.error('Error fetching published projects:', error);
       // Return fallback data when Supabase fails
       return this.transformFallbackProjects(fallbackDataService.getProjects());
     }
@@ -50,7 +50,7 @@ export const portfolioService = {
       const allProjects = await this.getPublishedProjects();
       return allProjects.filter(project => project.category === category);
     } catch (error) {
-      console.error('Error fetching projects by category:', error);
+      // console.error('Error fetching projects by category:', error);
       return [];
     }
   },
@@ -64,7 +64,7 @@ export const portfolioService = {
       // Always include 'All' as the first option
       return ['All', ...categoryNames];
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      // console.error('Error fetching categories:', error);
       // Return fallback categories
       const fallbackCategories = fallbackDataService.getCategories();
       return ['All', ...fallbackCategories];
@@ -76,7 +76,7 @@ export const portfolioService = {
     try {
       return await publicPortfolioService.getDomainsTechnologies();
     } catch (error) {
-      console.error('Error fetching domains/technologies:', error);
+      // console.error('Error fetching domains/technologies:', error);
       return fallbackDataService.getTechnologies();
     }
   },
@@ -86,7 +86,7 @@ export const portfolioService = {
     try {
       return await publicPortfolioService.getNiches();
     } catch (error) {
-      console.error('Error fetching niches:', error);
+      // console.error('Error fetching niches:', error);
       return fallbackDataService.getNiches();
     }
   },
@@ -102,7 +102,7 @@ export const portfolioService = {
         ...settings
       };
     } catch (error) {
-      console.error('Error fetching public settings:', error);
+      // console.error('Error fetching public settings:', error);
       return portfolioConfig.defaultSettings;
     }
   },

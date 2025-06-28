@@ -45,7 +45,7 @@ const NicheManager = () => {
       const data = await nicheService.getNiches();
       setNiches(data);
     } catch (error) {
-      console.error('Error loading niches:', error);
+      // console.error('Error loading niches:', error);
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ const NicheManager = () => {
         image: imageData.url
       });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      // console.error('Error uploading image:', error);
       alert('Failed to upload image. Please try again.');
     } finally {
       setUploadingImage(false);
@@ -107,7 +107,7 @@ const NicheManager = () => {
         ai_driven: false
       });
     } catch (error) {
-      console.error('Error saving niche:', error);
+      // console.error('Error saving niche:', error);
     } finally {
       setSavingNiche(false);
     }
@@ -133,7 +133,7 @@ const NicheManager = () => {
         await nicheService.deleteNiche(niche.id);
         setNiches(niches.filter(n => n.id !== niche.id));
       } catch (error) {
-        console.error('Error deleting niche:', error);
+      // console.error('Error deleting niche:', error);
       }
     }
   };
@@ -165,7 +165,7 @@ const NicheManager = () => {
         )
       );
     } catch (error) {
-      console.error('Error reordering niches:', error);
+      // console.error('Error reordering niches:', error);
       loadNiches(); // Reload on error
     }
   };

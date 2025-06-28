@@ -38,10 +38,10 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
       } else {
         // If no categories exist, provide basic default for the dropdown
         setCategories(['Web Development']);
-        console.log('📁 No categories found, using basic default for dropdown');
+      // console.log('📁 No categories found, using basic default for dropdown');
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
+      // console.error('Error loading categories:', error);
       // On error, provide basic default for the dropdown to work
       setCategories(['Web Development']);
     }
@@ -197,24 +197,24 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
       // Upload new images if any
       if (imageFiles.length > 0) {
         setUploadingImages(true);
-        console.log(`📤 Uploading ${imageFiles.length} images for project ${projectData.id}`);
+      // console.log(`📤 Uploading ${imageFiles.length} images for project ${projectData.id}`);
         
         let uploadedCount = 0;
         let failedCount = 0;
         
         for (const file of imageFiles) {
           try {
-            console.log(`📤 Uploading: ${file.name}`);
+      // console.log(`📤 Uploading: ${file.name}`);
             const result = await imageService.uploadProjectImage(projectData.id, file);
-            console.log(`✅ Uploaded: ${file.name}`, result);
+      // console.log(`✅ Uploaded: ${file.name}`, result);
             uploadedCount++;
           } catch (error) {
-            console.error(`❌ Failed to upload ${file.name}:`, error);
+      // console.error(`❌ Failed to upload ${file.name}:`, error);
             failedCount++;
           }
         }
         
-        console.log(`📊 Upload complete: ${uploadedCount} success, ${failedCount} failed`);
+      // console.log(`📊 Upload complete: ${uploadedCount} success, ${failedCount} failed`);
         
         if (failedCount > 0) {
           alert(`Warning: ${failedCount} out of ${imageFiles.length} images failed to upload. Please try again.`);
@@ -233,7 +233,7 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
       alert(`Project ${editingProject ? 'updated' : 'created'} successfully!`);
       
     } catch (error) {
-      console.error('Error saving project:', error);
+      // console.error('Error saving project:', error);
       alert(`Error ${editingProject ? 'updating' : 'creating'} project: ${error.message}`);
     } finally {
       setLoading(false);
@@ -251,7 +251,7 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
       await onProjectsChange();
       alert('Project deleted successfully!');
     } catch (error) {
-      console.error('Error deleting project:', error);
+      // console.error('Error deleting project:', error);
       alert('Error deleting project: ' + error.message);
     }
   };
@@ -265,7 +265,7 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
       await projectService.updateProject(projectId, { status: newStatus });
       await onProjectsChange();
     } catch (error) {
-      console.error('Error updating project status:', error);
+      // console.error('Error updating project status:', error);
       alert('Error updating project status: ' + error.message);
     }
   };

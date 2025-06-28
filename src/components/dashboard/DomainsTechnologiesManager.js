@@ -40,12 +40,12 @@ const DomainsTechnologiesManager = () => {
     try {
       setLoading(true);
       const data = await domainsTechnologiesService.getDomainsTechnologies();
-      console.log('Loaded items:', data);
-      console.log('Items with skills:', data.filter(item => item.tech_skills && item.tech_skills.length > 0));
+      // console.log('Loaded items:', data);
+      // console.log('Items with skills:', data.filter(item => item.tech_skills && item.tech_skills.length > 0));
       setItems(data);
     } catch (err) {
       setError('Failed to load items');
-      console.error('Error loading items:', err);
+      // console.error('Error loading items:', err);
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ const DomainsTechnologiesManager = () => {
       setFormData({ type: 'technology', title: '', icon: '', sort_order: 1 });
     } catch (err) {
       setError('Failed to save item');
-      console.error('Error saving item:', err);
+      // console.error('Error saving item:', err);
     } finally {
       setSavingItem(false);
     }
@@ -93,7 +93,7 @@ const DomainsTechnologiesManager = () => {
         setItems(prev => prev.filter(item => item.id !== id));
       } catch (err) {
         setError('Failed to delete item');
-        console.error('Error deleting item:', err);
+      // console.error('Error deleting item:', err);
       } finally {
         setDeletingItems(prev => {
           const newSet = new Set(prev);
@@ -113,7 +113,7 @@ const DomainsTechnologiesManager = () => {
       setItems(updatedItem);
     } catch (err) {
       setError('Failed to reorder item');
-      console.error('Error reordering item:', err);
+      // console.error('Error reordering item:', err);
     } finally {
       setReorderingItems(prev => {
         const newSet = new Set(prev);
@@ -169,7 +169,7 @@ const DomainsTechnologiesManager = () => {
       }));
     } catch (err) {
       setError('Failed to add skill');
-      console.error('Error adding skill:', err);
+      // console.error('Error adding skill:', err);
     } finally {
       setAddingSkills(prev => {
         const newSet = new Set(prev);
@@ -193,7 +193,7 @@ const DomainsTechnologiesManager = () => {
       })));
     } catch (err) {
       setError('Failed to update skill');
-      console.error('Error updating skill:', err);
+      // console.error('Error updating skill:', err);
     } finally {
       setUpdatingSkills(prev => {
         const newSet = new Set(prev);
@@ -216,7 +216,7 @@ const DomainsTechnologiesManager = () => {
         })));
       } catch (err) {
         setError('Failed to delete skill');
-        console.error('Error deleting skill:', err);
+      // console.error('Error deleting skill:', err);
       } finally {
         setDeletingSkills(prev => {
           const newSet = new Set(prev);

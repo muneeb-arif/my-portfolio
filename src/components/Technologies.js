@@ -16,7 +16,7 @@ const Technologies = () => {
       const data = await portfolioService.getDomainsTechnologies();
       setTechnologiesData(data);
     } catch (error) {
-      console.error('Error loading technologies:', error);
+      // console.error('Error loading technologies:', error);
       // Fallback to empty array if there's an error
       setTechnologiesData([]);
     } finally {

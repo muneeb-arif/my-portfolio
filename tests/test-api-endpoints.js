@@ -10,7 +10,7 @@ const TEST_RESULTS = {};
 function makeRequest(endpoint) {
   return new Promise((resolve, reject) => {
     const url = `${BASE_URL}${endpoint}`;
-    console.log(`\n🔍 Testing endpoint: ${endpoint}`);
+      // console.log(`\n🔍 Testing endpoint: ${endpoint}`);
     
     const request = require('http').get(url, (res) => {
       let data = '';
@@ -34,7 +34,7 @@ function makeRequest(endpoint) {
 
 // Test function to analyze portfolio data
 async function testPortfolioData(scenarioName) {
-  console.log(`\n🧪 ===== TESTING SCENARIO: ${scenarioName} =====`);
+      // console.log(`\n🧪 ===== TESTING SCENARIO: ${scenarioName} =====`);
   
   try {
     // Test main portfolio page
@@ -64,15 +64,15 @@ async function testPortfolioData(scenarioName) {
       dataSource: hasFallbackNotification ? 'FALLBACK' : 'SUPABASE'
     };
     
-    console.log(`✅ Results for ${scenarioName}:`);
-    console.log(`   - Fallback Notification: ${hasFallbackNotification ? '✅' : '❌'}`);
-    console.log(`   - E-Commerce Project: ${hasEcommerceProject ? '✅' : '❌'}`);
-    console.log(`   - AI Project: ${hasAIProject ? '✅' : '❌'}`);
-    console.log(`   - Mobile Banking Project: ${hasMobileBankingProject ? '✅' : '❌'}`);
-    console.log(`   - Data Source: ${TEST_RESULTS[scenarioName].dataSource}`);
+      // console.log(`✅ Results for ${scenarioName}:`);
+      // console.log(`   - Fallback Notification: ${hasFallbackNotification ? '✅' : '❌'}`);
+      // console.log(`   - E-Commerce Project: ${hasEcommerceProject ? '✅' : '❌'}`);
+      // console.log(`   - AI Project: ${hasAIProject ? '✅' : '❌'}`);
+      // console.log(`   - Mobile Banking Project: ${hasMobileBankingProject ? '✅' : '❌'}`);
+      // console.log(`   - Data Source: ${TEST_RESULTS[scenarioName].dataSource}`);
     
   } catch (error) {
-    console.error(`❌ Error testing ${scenarioName}:`, error.message);
+      // console.error(`❌ Error testing ${scenarioName}:`, error.message);
     TEST_RESULTS[scenarioName] = {
       timestamp: new Date().toISOString(),
       error: error.message,
@@ -83,7 +83,7 @@ async function testPortfolioData(scenarioName) {
 
 // Main test function
 async function runTests() {
-  console.log('🚀 Starting Portfolio Data Loading Tests...');
+      // console.log('🚀 Starting Portfolio Data Loading Tests...');
   
   // Test current scenario
   await testPortfolioData('CURRENT_SCENARIO');
@@ -92,9 +92,9 @@ async function runTests() {
   const resultsFile = 'test-results.json';
   fs.writeFileSync(resultsFile, JSON.stringify(TEST_RESULTS, null, 2));
   
-  console.log(`\n📊 Test results saved to: ${resultsFile}`);
-  console.log('\n🎯 Test Summary:');
-  console.log(JSON.stringify(TEST_RESULTS, null, 2));
+      // console.log(`\n📊 Test results saved to: ${resultsFile}`);
+      // console.log('\n🎯 Test Summary:');
+      // console.log(JSON.stringify(TEST_RESULTS, null, 2));
 }
 
 // Run tests

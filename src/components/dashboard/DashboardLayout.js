@@ -87,7 +87,7 @@ const DashboardLayout = ({ user, onSignOut }) => {
         totalViews: projectsData.reduce((sum, p) => sum + (p.views || 0), 0)
       });
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      // console.error('Error loading dashboard data:', error);
     }
   };
 
@@ -97,7 +97,7 @@ const DashboardLayout = ({ user, onSignOut }) => {
       setDatabaseStatus(status);
       setIsDatabaseEmpty(status.isEmpty);
     } catch (error) {
-      console.error('Error checking database status:', error);
+      // console.error('Error checking database status:', error);
     }
   };
 
@@ -156,7 +156,7 @@ const DashboardLayout = ({ user, onSignOut }) => {
         }));
       }
     } catch (error) {
-      console.error('Sync error:', error);
+      // console.error('Sync error:', error);
       setSyncMessage(`❌ Sync failed: ${error.message}`);
       setProgressDisplay(prev => ({
         ...prev,
@@ -220,7 +220,7 @@ const DashboardLayout = ({ user, onSignOut }) => {
         }));
       }
     } catch (error) {
-      console.error('Backup error:', error);
+      // console.error('Backup error:', error);
       setBackupMessage(`❌ Backup failed: ${error.message}`);
       setProgressDisplay(prev => ({
         ...prev,
@@ -307,7 +307,7 @@ const DashboardLayout = ({ user, onSignOut }) => {
         }));
       }
     } catch (error) {
-      console.error('Import error:', error);
+      // console.error('Import error:', error);
       setImportMessage(`❌ Import failed: ${error.message}`);
       setProgressDisplay(prev => ({
         ...prev,
@@ -385,7 +385,7 @@ const DashboardLayout = ({ user, onSignOut }) => {
         }));
       }
     } catch (error) {
-      console.error('Reset error:', error);
+      // console.error('Reset error:', error);
       setResetMessage(`❌ Reset failed: ${error.message}`);
       setProgressDisplay(prev => ({
         ...prev,
@@ -827,7 +827,7 @@ const AppearanceSection = () => {
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🎨 AppearanceSection: Loading settings...');
+      // console.log('🎨 AppearanceSection: Loading settings...');
       
       // Get settings from context instead of loading separately
       const contextSettings = {};
@@ -835,17 +835,17 @@ const AppearanceSection = () => {
         contextSettings[key] = getSetting(key);
       });
       
-      console.log('🎨 AppearanceSection: Context settings loaded:', contextSettings);
+      // console.log('🎨 AppearanceSection: Context settings loaded:', contextSettings);
       setSettings(contextSettings);
       setLogoType(contextSettings.logo_type || 'initials');
-      console.log('🎨 AppearanceSection: Settings applied successfully');
+      // console.log('🎨 AppearanceSection: Settings applied successfully');
     } catch (error) {
-      console.error('❌ AppearanceSection: Error loading settings:', error);
-      console.log('🔄 AppearanceSection: Using default settings');
+      // console.error('❌ AppearanceSection: Error loading settings:', error);
+      // console.log('🔄 AppearanceSection: Using default settings');
       setSettings(defaultSettings);
       setLogoType('initials');
     } finally {
-      console.log('✅ AppearanceSection: Loading complete');
+      // console.log('✅ AppearanceSection: Loading complete');
       setLoading(false);
     }
   }, [defaultSettings, getSetting]);
@@ -899,7 +899,7 @@ const AppearanceSection = () => {
       
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      console.error('Error saving settings:', error);
+      // console.error('Error saving settings:', error);
       setMessage('❌ Error saving settings: ' + error.message);
     } finally {
       setSaving(false);
@@ -920,7 +920,7 @@ const AppearanceSection = () => {
 
       return publicUrl;
     } catch (error) {
-      console.error('Error uploading file:', error);
+      // console.error('Error uploading file:', error);
       throw error;
     }
   };
@@ -940,7 +940,7 @@ const AppearanceSection = () => {
           <button 
             className="btn-secondary mt-4"
             onClick={() => {
-              console.log('🔄 Manual fallback triggered');
+      // console.log('🔄 Manual fallback triggered');
               setLoading(false);
               setSettings(defaultSettings);
               setLogoType('initials');
@@ -962,12 +962,12 @@ const AppearanceSection = () => {
             className="btn-secondary" 
             onClick={async () => {
               try {
-                console.log('🧪 Testing settings service...');
+      // console.log('🧪 Testing settings service...');
                 const testSettings = await settingsService.getSettings();
-                console.log('🧪 Test result:', testSettings);
+      // console.log('🧪 Test result:', testSettings);
                 setMessage(`🧪 Settings test: ${Object.keys(testSettings).length} settings found`);
               } catch (error) {
-                console.error('🧪 Test error:', error);
+      // console.error('🧪 Test error:', error);
                 setMessage(`🧪 Test error: ${error.message}`);
               }
             }}

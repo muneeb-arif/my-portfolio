@@ -18,7 +18,7 @@ const DomainsNiche = () => {
       const data = await portfolioService.getNiches();
       setNichesData(data);
     } catch (error) {
-      console.error('Error loading niches:', error);
+      // console.error('Error loading niches:', error);
       // Fallback to empty array if there's an error
       setNichesData([]);
     } finally {
