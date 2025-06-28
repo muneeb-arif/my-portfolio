@@ -35,24 +35,38 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      
+      // Push a new state to history when modal opens
+      window.history.pushState({ modalOpen: 'onboarding-form' }, '', window.location.href);
+      
+      // Listen for back button press
+      const handlePopState = (event) => {
+        if (event.state && event.state.modalOpen === 'onboarding-form') {
+          // If we're still in the modal state, user pressed back, so close modal
+          handleClose();
+          // Remove the modal state from history
+          window.history.back();
+        }
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+
+      const handleEscape = (event) => {
+        if (event.key === 'Escape') {
+          handleClose();
+        }
+      };
+
+      document.addEventListener('keydown', handleEscape);
+      
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('popstate', handlePopState);
+        document.removeEventListener('keydown', handleEscape);
+      };
     } else {
       document.body.style.overflow = 'unset';
     }
-
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-      document.removeEventListener('keydown', handleEscape);
-    };
   }, [isOpen, onClose]);
 
   const handleInputChange = (field, value) => {
@@ -224,7 +238,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
       `
     }).then((result) => {
       if (result.isConfirmed) {
-        onClose(); // Close the main form
+        handleClose(); // Close the main form
       }
       // If cancelled, keep the form open for another submission
     });
@@ -259,9 +273,18 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
     setTouched({});
   };
 
+  const handleClose = () => {
+    // Handle history state cleanup
+    if (window.history.state && window.history.state.modalOpen === 'onboarding-form') {
+      window.history.back();
+    } else {
+      onClose();
+    }
+  };
+
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleClose();
     }
   };
 
@@ -291,7 +314,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
       onClick={handleBackdropClick}
     >
       <div className="w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in flex flex-col">
@@ -300,7 +323,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-800">Client Onboarding Questionnaire</h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               aria-label="Close form"
             >

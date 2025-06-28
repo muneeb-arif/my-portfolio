@@ -38,6 +38,7 @@ const Hero = ({ isLoading = false }) => {
   const bannerName = settings.banner_name || 'Developer';
   const bannerTitle = settings.banner_title || 'Full Stack Developer';
   const bannerTagline = settings.banner_tagline || 'Creating amazing digital experiences with modern technologies';
+  const resumeFile = settings.resume_file;
 
   const scrollToPortfolio = () => {
     const element = document.getElementById('portfolio');
@@ -46,6 +47,19 @@ const Hero = ({ isLoading = false }) => {
         behavior: 'smooth',
         block: 'start'
       });
+    }
+  };
+
+  const downloadResume = () => {
+    if (resumeFile) {
+      // Create a temporary link element to trigger download
+      const link = document.createElement('a');
+      link.href = resumeFile;
+      link.download = `${bannerName.replace(/\s+/g, '-')}-Resume.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -147,10 +161,18 @@ const Hero = ({ isLoading = false }) => {
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-6">
                 <button
                   onClick={scrollToPortfolio}
-                  className="px-6 sm:px-8 py-3 sm:py-4 bg-white/20 backdrop-blur-sm text-white font-semibold rounded-full hover:bg-white/30 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30 whitespace-nowrap text-sm sm:text-base"
+                  className="px-6 sm:px-8 py-3 sm:py-4 bg-white/20 backdrop-blur-sm text-gray-800 font-semibold rounded-full hover:bg-white/30 hover:text-gray-900 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30 whitespace-nowrap text-sm sm:text-base"
                 >
                   View My Work
                 </button>
+                {resumeFile && (
+                  <button
+                    onClick={downloadResume}
+                    className="px-6 sm:px-8 py-3 sm:py-4 bg-white/90 backdrop-blur-sm text-sand-dark font-semibold rounded-full hover:bg-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/50 whitespace-nowrap text-sm sm:text-base"
+                  >
+                    Download Resume
+                  </button>
+                )}
               </div>
             </div>
           </div>

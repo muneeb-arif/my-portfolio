@@ -1039,145 +1039,233 @@ const AppearanceSection = () => {
           <p>Loading settings from global context...</p>
         </div>
       ) : (
-        <div className="settings-form">
-          {/* Theme Selection */}
-          <div className="settings-group">
-            <h3>🎨 Theme</h3>
-            <div className="theme-grid">
+        <>
+          {/* Theme Selection - Full Width */}
+          <div className="settings-group theme-selection-section">
+            <h3>🎨 Choose Your Theme</h3>
+            <div className="theme-grid-enhanced">
               {Object.entries(themes).map(([key, theme]) => (
                 <div
                   key={key}
-                  className={`theme-option ${currentTheme === key ? 'active' : ''}`}
+                  className={`theme-card ${currentTheme === key ? 'active' : ''}`}
                   onClick={() => handleThemeChange(key)}
                   style={{
-                    backgroundColor: theme['--color-primary'],
-                    border: `2px solid ${currentTheme === key ? theme['--color-secondary'] : 'transparent'}`
+                    background: `linear-gradient(135deg, ${theme['--color-primary']}, ${theme['--color-secondary']})`,
+                    border: currentTheme === key ? `3px solid ${theme['--color-accent'] || theme['--color-secondary']}` : '3px solid transparent',
+                    boxShadow: currentTheme === key ? `0 8px 25px ${theme['--color-primary']}40` : '0 4px 15px rgba(0,0,0,0.1)'
                   }}
                 >
-                  <span>{theme.name}</span>
+                  <div className="theme-preview">
+                    <div className="theme-colors">
+                      <div className="color-dot" style={{ backgroundColor: theme['--color-primary'] }}></div>
+                      <div className="color-dot" style={{ backgroundColor: theme['--color-secondary'] }}></div>
+                      <div className="color-dot" style={{ backgroundColor: theme['--color-accent'] || theme['--color-text'] }}></div>
+                    </div>
+                    <span className="theme-name">{theme.name}</span>
+                    {currentTheme === key && (
+                      <div className="active-indicator">✓ Active</div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Logo Section */}
-          <div className="settings-group">
-            <h3>🏷️ Logo</h3>
-            <div className="form-group">
-              <label>Logo Type</label>
-              <select 
-                value={logoType} 
-                onChange={(e) => {
-                  setLogoType(e.target.value);
-                  handleInputChange('logo_type', e.target.value);
-                }}
-              >
-                <option value="initials">Text Initials</option>
-                <option value="image">Logo Image</option>
-              </select>
-            </div>
+                     {/* Two Column Layout */}
+           <div className="settings-form-grid">
+             {/* Left Column */}
+             <div className="settings-column">
+               {/* Logo Section */}
+               <div className="settings-group">
+                 <h3>🏷️ Logo</h3>
+                 <div className="form-group">
+                   <label>Logo Type</label>
+                   <select 
+                     value={logoType} 
+                     onChange={(e) => {
+                       setLogoType(e.target.value);
+                       handleInputChange('logo_type', e.target.value);
+                     }}
+                   >
+                     <option value="initials">Text Initials</option>
+                     <option value="image">Logo Image</option>
+                   </select>
+                 </div>
 
-            {logoType === 'initials' ? (
-              <div className="form-group">
-                <label>Logo Initials</label>
-                <input
-                  type="text"
-                  value={localSettings.logo_initials || 'MA'}
-                  onChange={(e) => handleInputChange('logo_initials', e.target.value)}
-                  placeholder="MA"
-                  maxLength={4}
-                />
-              </div>
-            ) : (
-              <div className="form-group">
-                <label>Logo Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setLogoFile(e.target.files[0])}
-                />
-                {localSettings.logo_image && (
-                  <div className="current-file">
-                    <p>Current: {localSettings.logo_image.split('/').pop()}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                 {logoType === 'initials' ? (
+                   <div className="form-group">
+                     <label>Logo Initials</label>
+                     <input
+                       type="text"
+                       value={localSettings.logo_initials || 'MA'}
+                       onChange={(e) => handleInputChange('logo_initials', e.target.value)}
+                       placeholder="MA"
+                       maxLength={4}
+                     />
+                   </div>
+                 ) : (
+                   <div className="form-group">
+                     <label>Logo Image</label>
+                     <input
+                       type="file"
+                       accept="image/*"
+                       onChange={(e) => setLogoFile(e.target.files[0])}
+                     />
+                     {localSettings.logo_image && (
+                       <div className="current-file">
+                         <p>Current: {localSettings.logo_image.split('/').pop()}</p>
+                       </div>
+                     )}
+                   </div>
+                 )}
+               </div>
 
-          {/* Banner Content Section */}
-          <div className="settings-group">
-            <h3>📝 Banner Content</h3>
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                value={localSettings.banner_name || ''}
-                onChange={(e) => handleInputChange('banner_name', e.target.value)}
-                placeholder="Your Name"
-              />
-            </div>
-            <div className="form-group">
-              <label>Title</label>
-              <input
-                type="text"
-                value={localSettings.banner_title || ''}
-                onChange={(e) => handleInputChange('banner_title', e.target.value)}
-                placeholder="Your Professional Title"
-              />
-            </div>
-            <div className="form-group">
-              <label>Tagline</label>
-              <textarea
-                value={localSettings.banner_tagline || ''}
-                onChange={(e) => handleInputChange('banner_tagline', e.target.value)}
-                placeholder="Your tagline or description"
-                rows={3}
-              />
-            </div>
-          </div>
+               {/* Banner Content Section */}
+               <div className="settings-group">
+                 <h3>📝 Banner Content</h3>
+                 <div className="form-group">
+                   <label>Name</label>
+                   <input
+                     type="text"
+                     value={localSettings.banner_name || ''}
+                     onChange={(e) => handleInputChange('banner_name', e.target.value)}
+                     placeholder="Your Name"
+                   />
+                 </div>
+                 <div className="form-group">
+                   <label>Title</label>
+                   <input
+                     type="text"
+                     value={localSettings.banner_title || ''}
+                     onChange={(e) => handleInputChange('banner_title', e.target.value)}
+                     placeholder="Your Professional Title"
+                   />
+                 </div>
+                 <div className="form-group">
+                   <label>Tagline</label>
+                   <textarea
+                     value={localSettings.banner_tagline || ''}
+                     onChange={(e) => handleInputChange('banner_tagline', e.target.value)}
+                     placeholder="Your tagline or description"
+                     rows={3}
+                   />
+                 </div>
+               </div>
 
-          {/* Social Links Section */}
-          <div className="settings-group">
-            <h3>🔗 Social Links</h3>
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={localSettings.social_email || ''}
-                onChange={(e) => handleInputChange('social_email', e.target.value)}
-                placeholder="your@email.com"
-              />
-            </div>
-            <div className="form-group">
-              <label>GitHub URL</label>
-              <input
-                type="url"
-                value={localSettings.social_github || ''}
-                onChange={(e) => handleInputChange('social_github', e.target.value)}
-                placeholder="https://github.com/username"
-              />
-            </div>
-            <div className="form-group">
-              <label>Instagram URL</label>
-              <input
-                type="url"
-                value={localSettings.social_instagram || ''}
-                onChange={(e) => handleInputChange('social_instagram', e.target.value)}
-                placeholder="https://instagram.com/username"
-              />
-            </div>
-            <div className="form-group">
-              <label>Facebook URL</label>
-              <input
-                type="url"
-                value={localSettings.social_facebook || ''}
-                onChange={(e) => handleInputChange('social_facebook', e.target.value)}
-                placeholder="https://facebook.com/username"
-              />
-            </div>
-          </div>
-        </div>
+               {/* Hero Banner Section */}
+               <div className="settings-group">
+                 <h3>🖼️ Hero Banner</h3>
+                 <div className="form-group">
+                   <label>Banner Image</label>
+                   <input
+                     type="file"
+                     accept="image/*"
+                     onChange={(e) => setHeroFile(e.target.files[0])}
+                   />
+                   {localSettings.hero_banner_image && (
+                     <div className="current-file">
+                       <p>Current: {localSettings.hero_banner_image.split('/').pop()}</p>
+                     </div>
+                   )}
+                 </div>
+               </div>
+             </div>
+
+             {/* Right Column */}
+             <div className="settings-column">
+               {/* Avatar Section */}
+               <div className="settings-group">
+                 <h3>👤 Avatar</h3>
+                 <div className="form-group">
+                   <label>Profile Picture</label>
+                   <input
+                     type="file"
+                     accept="image/*"
+                     onChange={(e) => setAvatarFile(e.target.files[0])}
+                   />
+                   {localSettings.avatar_image && (
+                     <div className="current-file">
+                       <p>Current: {localSettings.avatar_image.split('/').pop()}</p>
+                     </div>
+                   )}
+                 </div>
+               </div>
+
+               {/* Resume Section */}
+               <div className="settings-group">
+                 <h3>📄 Resume</h3>
+                 <div className="form-group">
+                   <label>Resume PDF</label>
+                   <input
+                     type="file"
+                     accept=".pdf"
+                     onChange={(e) => setResumeFile(e.target.files[0])}
+                   />
+                   {localSettings.resume_file && (
+                     <div className="current-file">
+                       <p>Current: {localSettings.resume_file.split('/').pop()}</p>
+                     </div>
+                   )}
+                 </div>
+               </div>
+
+               {/* Social Links Section */}
+               <div className="settings-group">
+                 <h3>🔗 Social Links</h3>
+                 <div className="form-group">
+                   <label>Email</label>
+                   <input
+                     type="email"
+                     value={localSettings.social_email || ''}
+                     onChange={(e) => handleInputChange('social_email', e.target.value)}
+                     placeholder="your@email.com"
+                   />
+                 </div>
+                 <div className="form-group">
+                   <label>GitHub URL</label>
+                   <input
+                     type="url"
+                     value={localSettings.social_github || ''}
+                     onChange={(e) => handleInputChange('social_github', e.target.value)}
+                     placeholder="https://github.com/username"
+                   />
+                 </div>
+                 <div className="form-group">
+                   <label>Instagram URL</label>
+                   <input
+                     type="url"
+                     value={localSettings.social_instagram || ''}
+                     onChange={(e) => handleInputChange('social_instagram', e.target.value)}
+                     placeholder="https://instagram.com/username"
+                   />
+                 </div>
+                 <div className="form-group">
+                   <label>Facebook URL</label>
+                   <input
+                     type="url"
+                     value={localSettings.social_facebook || ''}
+                     onChange={(e) => handleInputChange('social_facebook', e.target.value)}
+                     placeholder="https://facebook.com/username"
+                   />
+                 </div>
+               </div>
+
+               {/* Footer Section */}
+               <div className="settings-group">
+                 <h3>📄 Footer</h3>
+                 <div className="form-group">
+                   <label>Copyright Text</label>
+                   <input
+                     type="text"
+                     value={localSettings.copyright_text || ''}
+                     onChange={(e) => handleInputChange('copyright_text', e.target.value)}
+                     placeholder="© 2024 Your Name. All rights reserved."
+                   />
+                 </div>
+               </div>
+             </div>
+           </div>
+         </>
       )}
     </div>
   );

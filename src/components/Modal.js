@@ -72,10 +72,25 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
     
+    // Push a new state to history when modal opens
+    window.history.pushState({ modalOpen: 'project-modal' }, '', window.location.href);
+    
+    // Listen for back button press
+    const handlePopState = (event) => {
+      if (event.state && event.state.modalOpen === 'project-modal') {
+        // If we're still in the modal state, user pressed back, so close modal
+        handleClose();
+        // Remove the modal state from history
+        window.history.back();
+      }
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
     // Handle keyboard navigation
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        onClose();
+        handleClose();
       } else if (event.key === 'ArrowLeft' && canNavigateLeft) {
         onNavigate('prev');
       } else if (event.key === 'ArrowRight' && canNavigateRight) {
@@ -87,13 +102,23 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
 
     return () => {
       document.body.style.overflow = 'unset';
+      window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [onClose, onNavigate, canNavigateLeft, canNavigateRight]);
 
+  const handleClose = () => {
+    // Handle history state cleanup
+    if (window.history.state && window.history.state.modalOpen === 'project-modal') {
+      window.history.back();
+    } else {
+      onClose();
+    }
+  };
+
   const handleBackdropClick = (event) => {
     if (event.target === event.currentTarget) {
-      onClose();
+      handleClose();
     }
   };
 
@@ -123,7 +148,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
       onClick={handleBackdropClick}
     >
       {/* Desktop Project Navigation Arrows - Outside Modal */}
@@ -174,7 +199,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
               )}
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               aria-label="Close modal"
             >

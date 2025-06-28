@@ -27,7 +27,7 @@ const LoadingOverlay = ({ isLoading, children, type = 'fade' }) => {
       <div className={`transition-all duration-700 ${isLoading ? 'filter blur-sm scale-95' : 'filter blur-0 scale-100'}`}>
         {children}
         {isLoading && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="fixed inset-0 flex items-center justify-center z-[80] pointer-events-none">
             <div className="bg-white rounded-lg shadow-xl p-8 text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
               <p className="text-gray-700">Loading...</p>

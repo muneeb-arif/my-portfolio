@@ -24,24 +24,38 @@ const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      
+      // Push a new state to history when modal opens
+      window.history.pushState({ modalOpen: 'contact-form' }, '', window.location.href);
+      
+      // Listen for back button press
+      const handlePopState = (event) => {
+        if (event.state && event.state.modalOpen === 'contact-form') {
+          // If we're still in the modal state, user pressed back, so close modal
+          onClose();
+          // Remove the modal state from history
+          window.history.back();
+        }
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      
+      const handleEscape = (event) => {
+        if (event.key === 'Escape') {
+          handleClose();
+        }
+      };
+
+      document.addEventListener('keydown', handleEscape);
+      
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('popstate', handlePopState);
+        document.removeEventListener('keydown', handleEscape);
+      };
     } else {
       document.body.style.overflow = 'unset';
     }
-
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-      document.removeEventListener('keydown', handleEscape);
-    };
   }, [isOpen, onClose]);
 
   // Pre-fill form data when component opens with prefillData
@@ -242,7 +256,7 @@ ${formData.name}
       `
     }).then((result) => {
       if (result.isConfirmed) {
-        onClose(); // Close the main form
+        handleClose(); // Close the main form
       }
       // If cancelled, keep the form open for another message
     });
@@ -289,7 +303,13 @@ ${formData.name}
     });
     setErrors({});
     setTouched({});
-    onClose();
+    
+    // Handle history state cleanup
+    if (window.history.state && window.history.state.modalOpen === 'contact-form') {
+      window.history.back();
+    } else {
+      onClose();
+    }
   };
 
   const handleBackdropClick = (e) => {
@@ -302,7 +322,7 @@ ${formData.name}
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-custom bg-black/50"
       onClick={handleBackdropClick}
     >
       <div className="w-full max-w-3xl max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden animate-fade-in flex flex-col">
