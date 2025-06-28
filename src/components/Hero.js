@@ -1,52 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowRight, Play } from 'lucide-react';
-import ClientOnboardingForm from './ClientOnboardingForm';
+import React, { useMemo } from 'react';
 import { useSettings } from '../services/settingsContext';
 import SkeletonLoader from './SkeletonLoader';
-import portfolioService from '../services/portfolioService';
 
 const Hero = ({ isLoading = false }) => {
-  const { getSetting } = useSettings();
-  const [settings, setSettings] = useState({});
-  const [settingsLoading, setSettingsLoading] = useState(true);
+  const { settings, loading } = useSettings();
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const settingsData = await portfolioService.getPublicSettings();
-        setSettings(settingsData);
-      } catch (error) {
-      // console.error('Error loading hero settings:', error);
-      } finally {
-        setSettingsLoading(false);
-      }
-    };
-
-    if (!isLoading) {
-      loadSettings();
+  // Create stable avatar URL with fixed cache buster to prevent infinite re-renders (must be before early returns)
+  const avatarUrl = useMemo(() => {
+    const avatarImage = settings?.avatar_image || '/images/profile/avatar.jpeg';
+    
+    if (!avatarImage) return '/images/profile/avatar.jpeg';
+    
+    // For database URLs, use a stable cache buster based on the URL itself
+    if (avatarImage.startsWith('http')) {
+      // Use a hash of the URL or just add a simple version parameter
+      return `${avatarImage}?v=${Date.now()}`;
     }
-  }, [isLoading]);
+    
+    // For local images, use as-is
+    return avatarImage;
+  }, [settings?.avatar_image]);
 
-  const isContentLoading = isLoading || settingsLoading;
-
-  const scrollToPortfolio = () => {
-    const portfolioSection = document.getElementById('portfolio');
-    if (portfolioSection) {
-      portfolioSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleResumeDownload = () => {
-    // Create a temporary link element to trigger download
-    const link = document.createElement('a');
-    link.href = getSetting('resume_file');
-    link.download = 'Resume.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  if (isContentLoading) {
+  // Wait for settings to load completely
+  if (loading || isLoading || !settings || Object.keys(settings).length === 0) {
     return (
       <section className="hero-section relative overflow-hidden">
         <div className="container mx-auto px-4 py-20">
@@ -56,13 +32,30 @@ const Hero = ({ isLoading = false }) => {
     );
   }
 
+  // Get values directly from settings with fallbacks
+  const avatarImage = settings.avatar_image || '/images/profile/avatar.jpeg';
+  const heroBannerImage = settings.hero_banner_image || '/images/hero-bg.png';
+  const bannerName = settings.banner_name || 'Developer';
+  const bannerTitle = settings.banner_title || 'Full Stack Developer';
+  const bannerTagline = settings.banner_tagline || 'Creating amazing digital experiences with modern technologies';
+
+  const scrollToPortfolio = () => {
+    const element = document.getElementById('portfolio');
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   return (
     <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('${getSetting('hero_banner_image')}')`,
+          backgroundImage: `url('${heroBannerImage}')`,
         }}
       />
       
@@ -140,13 +133,13 @@ const Hero = ({ isLoading = false }) => {
             <div className="inline-block backdrop-blur-md bg-white/10 rounded-2xl p-6 sm:p-8 md:p-10 lg:p-12 border border-white/20 shadow-2xl max-w-full w-full sm:w-auto">
               <div className="space-y-4">
                 <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight drop-shadow-lg">
-                  {settings.banner_name || 'Developer'}
+                  {bannerName}
                 </h1>
                 <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-white/90 drop-shadow-lg">
-                  {settings.banner_title || 'Full Stack Developer'}
+                  {bannerTitle}
                 </h2>
                 <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-lg leading-relaxed drop-shadow-lg">
-                  {settings.banner_tagline || 'Creating amazing digital experiences with modern technologies'}
+                  {bannerTagline}
                 </p>
               </div>
 
@@ -157,15 +150,6 @@ const Hero = ({ isLoading = false }) => {
                   className="px-6 sm:px-8 py-3 sm:py-4 bg-white/20 backdrop-blur-sm text-white font-semibold rounded-full hover:bg-white/30 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30 whitespace-nowrap text-sm sm:text-base"
                 >
                   View My Work
-                </button>
-                <button
-                  onClick={handleResumeDownload}
-                  className="px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/40 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-full hover:bg-white/20 hover:border-white/60 transform hover:scale-105 transition-all duration-300 flex items-center gap-2 justify-center shadow-lg hover:shadow-xl whitespace-nowrap text-sm sm:text-base"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Resume
                 </button>
               </div>
             </div>
@@ -178,13 +162,13 @@ const Hero = ({ isLoading = false }) => {
               <div 
                 className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-8 border-white shadow-2xl relative z-10"
                 style={{
-                  backgroundImage: `url('${getSetting('avatar_image')}')`,
+                  backgroundImage: `url('${avatarUrl}')`,
                   backgroundSize: '100%',
                   backgroundPosition: 'center top',
                   backgroundRepeat: 'no-repeat'
                 }}
                 role="img"
-                aria-label={`${settings.bannerName || 'Developer'} - ${settings.bannerTitle || 'Full Stack Developer'}`}
+                aria-label={`${bannerName} - ${bannerTitle}`}
               ></div>
 
               {/* Ripple Effects */}

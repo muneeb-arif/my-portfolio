@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Avatar Issue</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Avatar Issue Debug</h1>
+    <div id="results"></div>
+
+    <script>
+        const supabaseUrl = 'https://bpniquvjzwxjimeczjuf.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbmlxdXZqend4amltZWN6anVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NjY5NzgsImV4cCI6MjA2NTI0Mjk3OH0.b9zch2Wndt0yHGmeXPczfvHJeQxYobEL3CkrZRmHxFE';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function debugAvatarIssue() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Running Debug Tests...</h2>';
+
+            try {
+                // Test 1: Check if portfolio_config table exists and has the user
+                results.innerHTML += '<h3>Test 1: Portfolio Config</h3>';
+                const { data: portfolioConfig, error: configError } = await supabase
+                    .from('portfolio_config')
+                    .select('*')
+                    .eq('owner_email', 'muneebarif11@gmail.com');
+                
+                results.innerHTML += `<p>Portfolio Config Query Result:</p>`;
+                results.innerHTML += `<pre>Error: ${JSON.stringify(configError, null, 2)}</pre>`;
+                results.innerHTML += `<pre>Data: ${JSON.stringify(portfolioConfig, null, 2)}</pre>`;
+
+                if (portfolioConfig && portfolioConfig.length > 0) {
+                    const userId = portfolioConfig[0].owner_user_id;
+                    
+                    // Test 2: Check settings for this user
+                    results.innerHTML += '<h3>Test 2: User Settings</h3>';
+                    const { data: settings, error: settingsError } = await supabase
+                        .from('settings')
+                        .select('*')
+                        .eq('user_id', userId);
+                    
+                    results.innerHTML += `<p>Settings Query Result for user_id: ${userId}</p>`;
+                    results.innerHTML += `<pre>Error: ${JSON.stringify(settingsError, null, 2)}</pre>`;
+                    results.innerHTML += `<pre>Data: ${JSON.stringify(settings, null, 2)}</pre>`;
+
+                    // Find avatar_image setting specifically
+                    const avatarSetting = settings?.find(s => s.key === 'avatar_image');
+                    results.innerHTML += `<h4>Avatar Image Setting:</h4>`;
+                    results.innerHTML += `<pre>${JSON.stringify(avatarSetting, null, 2)}</pre>`;
+                }
+
+                // Test 3: Check all users in auth (if accessible)
+                results.innerHTML += '<h3>Test 3: Check Environment</h3>';
+                results.innerHTML += `<p>REACT_APP_PORTFOLIO_OWNER_EMAIL should be: muneebarif11@gmail.com</p>`;
+                
+            } catch (error) {
+                results.innerHTML += `<h3>Error:</h3><pre>${JSON.stringify(error, null, 2)}</pre>`;
+            }
+        }
+
+        // Run the debug when page loads
+        window.onload = debugAvatarIssue;
+    </script>
+</body>
+</html> 

@@ -1476,41 +1476,42 @@ export const publicPortfolioService = {
   // Get settings for public display
   async getPublicSettings() {
     try {
-      // console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
+      console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
+      console.log('  - process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
       
       // Initialize only once
       await this.initialize();
       
-      // console.log('🔍 publicPortfolioService.getPublicSettings: Getting portfolio config...');
+      console.log('🔍 publicPortfolioService.getPublicSettings: Getting portfolio config...');
       
       // Get the user ID for the .env email
       const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
       
-      // console.log('📋 publicPortfolioService.getPublicSettings: Portfolio config result:', portfolioConfig);
+      console.log('📋 publicPortfolioService.getPublicSettings: Portfolio config result:', portfolioConfig);
       
       if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-      // console.log('⚠️ publicPortfolioService.getPublicSettings: No portfolio config found for settings');
-      // console.log('   - portfolioConfig exists:', !!portfolioConfig);
-      // console.log('   - owner_user_id exists:', portfolioConfig?.owner_user_id);
+        console.log('⚠️ publicPortfolioService.getPublicSettings: No portfolio config found for settings');
+        console.log('   - portfolioConfig exists:', !!portfolioConfig);
+        console.log('   - owner_user_id exists:', portfolioConfig?.owner_user_id);
         return {};
       }
 
-      // console.log('🔍 publicPortfolioService.getPublicSettings: Querying settings table...');
-      // console.log('   - Using user_id:', portfolioConfig.owner_user_id);
-      // console.log('   - Portfolio config owner_email:', portfolioConfig.owner_email);
+      console.log('🔍 publicPortfolioService.getPublicSettings: Querying settings table...');
+      console.log('   - Using user_id:', portfolioConfig.owner_user_id);
+      console.log('   - Portfolio config owner_email:', portfolioConfig.owner_email);
 
       const { data, error } = await supabase
         .from('settings')
         .select('*')
         .eq('user_id', portfolioConfig.owner_user_id);  // ← NOW filtering by correct user!
 
-      // console.log('📊 publicPortfolioService.getPublicSettings: Supabase query result:');
-      // console.log('   - Error:', error);
-      // console.log('   - Data length:', data?.length || 0);
-      // console.log('   - Raw data:', data);
+      console.log('📊 publicPortfolioService.getPublicSettings: Supabase query result:');
+      console.log('   - Error:', error);
+      console.log('   - Data length:', data?.length || 0);
+      console.log('   - Raw data:', data);
 
       if (error) {
-      // console.error('❌ publicPortfolioService.getPublicSettings: Supabase error:', error);
+        console.error('❌ publicPortfolioService.getPublicSettings: Supabase error:', error);
         throw error;
       }
       
@@ -1518,17 +1519,18 @@ export const publicPortfolioService = {
       const settingsObj = {};
       (data || []).forEach(setting => {
         settingsObj[setting.key] = setting.value;
-      // console.log(`   - Setting: ${setting.key} = ${setting.value}`);
+        console.log(`   - Setting: ${setting.key} = ${setting.value}`);
       });
       
-      // console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);
-      // console.log('   - banner_name:', settingsObj.banner_name);
-      // console.log('   - banner_title:', settingsObj.banner_title);
-      // console.log('   - banner_tagline:', settingsObj.banner_tagline);
+      console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);
+      console.log('   - banner_name:', settingsObj.banner_name);
+      console.log('   - banner_title:', settingsObj.banner_title);
+      console.log('   - banner_tagline:', settingsObj.banner_tagline);
+      console.log('   - avatar_image:', settingsObj.avatar_image);
       
       return settingsObj;
     } catch (error) {
-      // console.error('❌ publicPortfolioService.getPublicSettings: Error fetching public settings:', error);
+      console.error('❌ publicPortfolioService.getPublicSettings: Error fetching public settings:', error);
       return {};
     }
   },

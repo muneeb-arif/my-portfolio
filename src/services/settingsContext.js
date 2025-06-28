@@ -23,6 +23,7 @@ export const SettingsProvider = ({ children }) => {
   // Check if we're in dashboard mode (memoized to prevent re-calculations)
   const isDashboard = useMemo(() => window.location.pathname === '/dashboard', []);
 
+  // Make defaultSettings completely stable to prevent infinite loops
   const defaultSettings = useMemo(() => ({
     logo_type: 'initials',
     logo_initials: 'MA',
@@ -39,12 +40,14 @@ export const SettingsProvider = ({ children }) => {
     social_facebook: '',
     copyright_text: '© 2024 Muneeb Arif. All rights reserved.',
     theme_name: 'sand', // Add default theme
-    ...portfolioConfig.defaultSettings
-  }), []);
+  }), []); // STABLE - no external dependencies
 
+  // Load settings once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Prevent loading if already initialized
     if (initialized) {
+      console.log('⏭️ Settings already initialized, skipping load');
       return;
     }
 
@@ -155,7 +158,7 @@ export const SettingsProvider = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, []); // EMPTY - all dependencies are now stable
 
   const loadSettings = useCallback(async () => {
     try {
@@ -218,7 +221,8 @@ export const SettingsProvider = ({ children }) => {
       console.log('✅ SettingsContext: Manual reload - Settings loading complete');
       setLoading(false);
     }
-  }, [defaultSettings]); // Only depend on defaultSettings
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // STABLE - no dependencies needed since defaultSettings is stable
 
   const updateSettings = useCallback(async (newSettings) => {
     // Only allow updates in dashboard mode
@@ -244,14 +248,9 @@ export const SettingsProvider = ({ children }) => {
 
   const getSetting = useCallback((key) => {
     const value = settings[key] || defaultSettings[key] || '';
-    // Only log once per unique key to reduce console noise
-    if (!getSetting._loggedKeys) getSetting._loggedKeys = new Set();
-    if (!getSetting._loggedKeys.has(key)) {
-      console.log(`🔍 getSetting('${key}') = "${value}"`);
-      getSetting._loggedKeys.add(key);
-    }
     return value;
-  }, [settings, defaultSettings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings]); // Only depend on settings - defaultSettings is stable, loading not needed for logic
 
   const value = useMemo(() => ({
     settings,
