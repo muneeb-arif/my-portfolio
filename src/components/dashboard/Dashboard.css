@@ -5,8 +5,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--color-button-primary);
+  color: var(--color-text-inverse);
 }
 
 .loading-spinner {
@@ -36,7 +36,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-button-primary);
   padding: 20px;
 }
 
@@ -64,17 +64,18 @@
 }
 
 .retry-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-button-secondary);
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
-  color: white;
+  color: var(--color-button-secondary-text);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .retry-btn:hover {
+  background: var(--color-button-secondary-hover);
   transform: translateY(-1px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 } 

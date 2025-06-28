@@ -2,22 +2,182 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== COMPREHENSIVE THEME VARIABLES ===== */
+/* These variables are dynamically updated by the theme system */
+:root {
+  /* Primary Colors (Default: Sand Theme) */
+  --color-primary: #B8936A;
+  --color-primary-light: #E9CBA7;
+  --color-primary-dark: #8B6F47;
+  --color-primary-subtle: #F5E6D3;
+  
+  /* Secondary Colors */
+  --color-secondary: #C9A77D;
+  --color-secondary-light: #F5E6D3;
+  --color-secondary-dark: #9A7B5A;
+  
+  /* Header and Footer */
+  --color-header-bg: #8B6F47;
+  --color-header-text: #F5E6D3;
+  --color-footer-bg: #8B6F47;
+  --color-footer-text: #F5E6D3;
+  
+  /* Buttons */
+  --color-button-primary: #B8936A;
+  --color-button-primary-hover: #8B6F47;
+  --color-button-primary-text: #FFFFFF;
+  --color-button-secondary: #E9CBA7;
+  --color-button-secondary-hover: #C9A77D;
+  --color-button-secondary-text: #8B6F47;
+  
+  /* Backgrounds */
+  --color-background: #FEFEFE;
+  --color-surface: #FFFFFF;
+  --color-section-bg: #F5E6D3;
+  --color-card-bg: #FFFFFF;
+  
+  /* Text colors */
+  --color-text: #2D3748;
+  --color-text-light: #4A5568;
+  --color-text-muted: #718096;
+  --color-text-inverse: #FFFFFF;
+  
+  /* Navigation */
+  --color-nav-active: #B8936A;
+  --color-nav-hover: #E9CBA7;
+  --color-nav-text: #4A5568;
+  
+  /* Status colors */
+  --color-success: #48BB78;
+  --color-warning: #ED8936;
+  --color-error: #F56565;
+  --color-info: #4299E1;
+}
+
+/* ===== THEME-BASED UTILITY CLASSES ===== */
+
+/* Header and Footer Styles */
+.theme-header {
+  background-color: var(--color-header-bg) !important;
+  color: var(--color-header-text) !important;
+}
+
+.theme-footer {
+  background-color: var(--color-footer-bg) !important;
+  color: var(--color-footer-text) !important;
+}
+
+/* Button Styles */
+.theme-btn-primary {
+  background-color: var(--color-button-primary) !important;
+  color: var(--color-button-primary-text) !important;
+  border-color: var(--color-button-primary) !important;
+}
+
+.theme-btn-primary:hover {
+  background-color: var(--color-button-primary-hover) !important;
+  border-color: var(--color-button-primary-hover) !important;
+}
+
+.theme-btn-secondary {
+  background-color: var(--color-button-secondary) !important;
+  color: var(--color-button-secondary-text) !important;
+  border-color: var(--color-button-secondary) !important;
+}
+
+.theme-btn-secondary:hover {
+  background-color: var(--color-button-secondary-hover) !important;
+  color: var(--color-button-secondary-text) !important;
+  border-color: var(--color-button-secondary-hover) !important;
+}
+
+/* Background Styles */
+.theme-section-bg {
+  background-color: var(--color-section-bg) !important;
+}
+
+.theme-card-bg {
+  background-color: var(--color-card-bg) !important;
+}
+
+/* Text Styles */
+.theme-text {
+  color: var(--color-text) !important;
+}
+
+.theme-text-light {
+  color: var(--color-text-light) !important;
+}
+
+.theme-text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+.theme-text-inverse {
+  color: var(--color-text-inverse) !important;
+}
+
+/* Navigation Styles */
+.theme-nav-active {
+  background-color: var(--color-nav-active) !important;
+  color: var(--color-text-inverse) !important;
+}
+
+.theme-nav-hover:hover {
+  background-color: var(--color-nav-hover) !important;
+  color: var(--color-nav-text) !important;
+}
+
+/* Primary Color Utilities */
+.theme-primary {
+  color: var(--color-primary) !important;
+}
+
+.theme-primary-bg {
+  background-color: var(--color-primary) !important;
+}
+
+.theme-primary-light {
+  color: var(--color-primary-light) !important;
+}
+
+.theme-primary-light-bg {
+  background-color: var(--color-primary-light) !important;
+}
+
+.theme-primary-dark {
+  color: var(--color-primary-dark) !important;
+}
+
+.theme-primary-dark-bg {
+  background-color: var(--color-primary-dark) !important;
+}
+
+/* Gradient Utilities */
+.theme-gradient {
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 50%, var(--color-primary-dark) 100%) !important;
+}
+
+.theme-button-gradient {
+  background: linear-gradient(135deg, var(--color-button-primary) 0%, var(--color-button-primary-hover) 100%) !important;
+}
+
 /* Custom scrollbar for webkit browsers */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5E6D3;
+  background: var(--color-primary-subtle);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C9A77D;
+  background: var(--color-primary);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8936A;
+  background: var(--color-primary-dark);
 }
 
 /* Smooth scrolling */
@@ -28,7 +188,7 @@ html {
 /* Custom focus styles */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #B8936A;
+  outline: 2px solid var(--color-primary-dark);
   outline-offset: 2px;
 }
 
@@ -215,4 +375,102 @@ a:focus-visible {
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* ===== SPECIAL THEME-SPECIFIC STYLES ===== */
+
+/* Dark Theme Support */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Cyberpunk Theme Special Effects */
+.cyberpunk-glow {
+  box-shadow: 0 0 20px var(--color-primary), 0 0 40px var(--color-secondary);
+  animation: cyberpunkPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes cyberpunkPulse {
+  from {
+    text-shadow: 0 0 10px var(--color-primary);
+  }
+  to {
+    text-shadow: 0 0 20px var(--color-primary), 0 0 30px var(--color-secondary);
+  }
+}
+
+/* Cosmic Theme Special Effects */
+.cosmic-sparkle {
+  position: relative;
+  overflow: hidden;
+}
+
+.cosmic-sparkle::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, var(--color-primary) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: cosmicFloat 20s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes cosmicFloat {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  100% {
+    transform: translateY(-50px) translateX(-50px);
+  }
+}
+
+/* Cherry Theme Special Effects */
+.cherry-bloom {
+  background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
+  background-size: 400% 400%;
+  animation: cherryBloom 3s ease-in-out infinite;
+}
+
+@keyframes cherryBloom {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Tropical Theme Special Effects */
+.tropical-wave {
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  background-size: 200% 100%;
+  animation: tropicalWave 2s linear infinite;
+}
+
+@keyframes tropicalWave {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Theme-specific scrollbar styling */
+::-webkit-scrollbar-track {
+  background: var(--color-primary-subtle);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-dark);
 } 

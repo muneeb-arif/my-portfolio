@@ -193,13 +193,13 @@
 }
 
 .form-actions .btn-primary {
-  background: #8B4513;
-  color: white;
+  background: var(--color-button-primary);
+  color: var(--color-button-primary-text);
   border: none;
 }
 
 .form-actions .btn-primary:hover:not(:disabled) {
-  background: #7a3e0f;
+  background: var(--color-button-primary-hover);
 }
 
 .form-actions .btn-primary:disabled {
@@ -292,8 +292,8 @@
 }
 
 .btn-edit {
-  background: #3b82f6;
-  color: white;
+  background: var(--color-info);
+  color: var(--color-text-inverse);
   border: none;
   padding: 6px 12px;
   border-radius: 6px;
@@ -303,7 +303,8 @@
 }
 
 .btn-edit:hover {
-  background: #2563eb;
+  background: var(--color-info);
+  filter: brightness(0.9);
 }
 
 .btn-delete {
@@ -349,8 +350,8 @@
 }
 
 .empty-state .btn-primary {
-  background: #8B4513;
-  color: white;
+  background: var(--color-button-primary);
+  color: var(--color-button-primary-text);
   border: none;
   padding: 12px 24px;
   border-radius: 8px;
@@ -360,7 +361,7 @@
 }
 
 .empty-state .btn-primary:hover {
-  background: #7a3e0f;
+  background: var(--color-button-primary-hover);
 }
 
 /* Responsive Design */

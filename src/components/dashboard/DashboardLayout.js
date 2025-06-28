@@ -9,6 +9,7 @@ import DomainsTechnologiesManager from './DomainsTechnologiesManager';
 import NicheManager from './NicheManager';
 import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
+import { applyTheme, getCurrentTheme, themes, saveThemeToSettings } from '../../utils/themeUtils';
 import './DashboardLayout.css';
 import './ProjectsManager.css';
 import './CategoriesManager.css';
@@ -806,6 +807,7 @@ const AppearanceSection = () => {
   const [heroFile, setHeroFile] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
+  const [currentTheme, setCurrentTheme] = useState('sand');
 
   const defaultSettings = useMemo(() => ({
     logo_type: 'initials',
@@ -821,7 +823,8 @@ const AppearanceSection = () => {
     social_github: 'https://github.com/muneebarif',
     social_instagram: '',
     social_facebook: '',
-    copyright_text: '© 2024 Muneeb Arif. All rights reserved.'
+    copyright_text: '© 2024 Muneeb Arif. All rights reserved.',
+    theme_name: 'sand'
   }), []);
 
   const loadSettings = useCallback(async () => {
@@ -838,12 +841,18 @@ const AppearanceSection = () => {
       // console.log('🎨 AppearanceSection: Context settings loaded:', contextSettings);
       setSettings(contextSettings);
       setLogoType(contextSettings.logo_type || 'initials');
+      
+      // Load current theme from settings
+      const themeFromSettings = contextSettings.theme_name || 'sand';
+      setCurrentTheme(themeFromSettings);
+      
       // console.log('🎨 AppearanceSection: Settings applied successfully');
     } catch (error) {
       // console.error('❌ AppearanceSection: Error loading settings:', error);
       // console.log('🔄 AppearanceSection: Using default settings');
       setSettings(defaultSettings);
       setLogoType('initials');
+      setCurrentTheme('sand');
     } finally {
       // console.log('✅ AppearanceSection: Loading complete');
       setLoading(false);
@@ -853,6 +862,35 @@ const AppearanceSection = () => {
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  const handleThemeChange = async (themeName) => {
+    try {
+      // Apply theme immediately for instant feedback
+      applyTheme(themeName);
+      setCurrentTheme(themeName);
+      
+      // Save to database
+      const saved = await saveThemeToSettings(themeName, settingsService);
+      
+      if (saved) {
+        setMessage(`✅ Theme saved to database: ${themeName.charAt(0).toUpperCase() + themeName.slice(1)}!`);
+        
+        // Update local settings state
+        setSettings(prev => ({ ...prev, theme_name: themeName }));
+        
+        // Refresh settings context to sync with other components
+        await refreshSettings();
+      } else {
+        setMessage(`⚠️ Theme applied locally: ${themeName.charAt(0).toUpperCase() + themeName.slice(1)} (database save failed)`);
+      }
+      
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      // console.error('Error changing theme:', error);
+      setMessage(`❌ Error changing theme: ${error.message}`);
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -881,6 +919,9 @@ const AppearanceSection = () => {
         const resumeUrl = await uploadFile(resumeFile, 'images');
         updatedSettings.resume_file = resumeUrl;
       }
+
+      // Include current theme in settings save
+      updatedSettings.theme_name = currentTheme;
 
       // Update settings in database
       await settingsService.updateMultipleSettings(updatedSettings);
@@ -1005,6 +1046,29 @@ const AppearanceSection = () => {
       )}
 
       <div className="appearance-settings">
+        {/* Theme Section */}
+        <div className="settings-group">
+          <h3>🎨 Color Theme</h3>
+          <div className="form-group">
+            <label>Select Theme</label>
+            <select 
+              value={currentTheme} 
+              onChange={(e) => handleThemeChange(e.target.value)}
+              className="theme-selector"
+            >
+              {Object.entries(themes).map(([key, theme]) => (
+                <option key={key} value={key}>
+                  {key.charAt(0).toUpperCase() + key.slice(1)} - {theme.name}
+                </option>
+              ))}
+            </select>
+            <small className="form-hint">
+              Change the color scheme of your portfolio instantly. 
+              Current theme: <strong>{currentTheme.charAt(0).toUpperCase() + currentTheme.slice(1)}</strong>
+            </small>
+          </div>
+        </div>
+
         {/* Logo Section */}
         <div className="settings-group">
           <h3>🏷️ Logo</h3>

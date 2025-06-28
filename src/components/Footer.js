@@ -38,7 +38,7 @@ const Footer = () => {
 
   return (
     <>
-      <footer style={{ backgroundColor: 'rgb(55 65 81 / var(--tw-bg-opacity, 1))' }} className="py-12 relative overflow-hidden">
+      <footer className="py-12 relative overflow-hidden theme-footer">
         {/* Background Pattern - Behind content */}
         <div className="absolute inset-0 opacity-5 z-0 pointer-events-none">
           <div className="absolute inset-0" 

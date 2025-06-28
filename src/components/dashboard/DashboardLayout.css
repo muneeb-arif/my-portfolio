@@ -89,12 +89,12 @@
 .user-avatar {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-button-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-text-inverse);
   font-weight: 600;
   font-size: 1.1rem;
 }
@@ -153,8 +153,8 @@
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--color-nav-active);
+  color: var(--color-text-inverse);
   position: relative;
 }
 
@@ -277,7 +277,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-button-primary);
+  color: var(--color-text-inverse);
   border-radius: 12px;
   margin-right: 0.5rem;
 }
@@ -385,8 +386,8 @@
 
 /* Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--color-button-primary);
+  color: var(--color-button-primary-text);
   border: none;
   border-radius: 8px;
   padding: 0.75rem 1.5rem;
@@ -400,8 +401,9 @@
 }
 
 .btn-primary:hover {
+  background: var(--color-button-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .btn-secondary {
@@ -1209,4 +1211,42 @@
     padding: 0.625rem;
     font-size: 0.875rem;
   }
+}
+
+/* Theme Selector */
+.theme-selector {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: #2d3748;
+  transition: all 0.2s ease;
+  width: 100%;
+  cursor: pointer;
+}
+
+.theme-selector:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+
+.theme-selector:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: white;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #718096;
+  line-height: 1.4;
+}
+
+.form-hint strong {
+  color: var(--color-primary);
+  font-weight: 600;
 } 

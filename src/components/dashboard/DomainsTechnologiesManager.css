@@ -53,8 +53,8 @@
 }
 
 .add-item-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--color-button-primary);
+  color: var(--color-button-primary-text);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
@@ -64,12 +64,13 @@
   align-items: center;
   gap: 0.5rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .add-item-btn:hover {
+  background: var(--color-button-primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.35);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .form-overlay {
@@ -180,13 +181,15 @@
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+  background: var(--color-success);
+  color: var(--color-text-inverse);
   border: none;
   flex: 1;
 }
 
 .save-btn:hover {
+  background: var(--color-success);
+  filter: brightness(0.9);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25);
 }
@@ -250,8 +253,8 @@
 }
 
 .sort-order-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--color-button-primary);
+  color: var(--color-button-primary-text);
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.25rem 0.5rem;
@@ -512,8 +515,8 @@
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+  background: var(--color-success);
+  color: var(--color-text-inverse);
   border: none;
   flex: 1;
   padding: 0.75rem 1.5rem;
@@ -527,6 +530,8 @@
 }
 
 .save-btn:hover:not(:disabled) {
+  background: var(--color-success);
+  filter: brightness(0.9);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25);
 }

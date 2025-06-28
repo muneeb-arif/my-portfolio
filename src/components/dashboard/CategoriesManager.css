@@ -114,8 +114,8 @@
 }
 
 .category-actions .btn-edit {
-  background: #3b82f6;
-  color: white;
+  background: var(--color-info);
+  color: var(--color-text-inverse);
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
@@ -125,12 +125,13 @@
 }
 
 .category-actions .btn-edit:hover {
-  background: #2563eb;
+  background: var(--color-info);
+  filter: brightness(0.9);
 }
 
 .category-actions .btn-delete {
-  background: #ef4444;
-  color: white;
+  background: var(--color-error);
+  color: var(--color-text-inverse);
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
@@ -140,7 +141,8 @@
 }
 
 .category-actions .btn-delete:hover {
-  background: #dc2626;
+  background: var(--color-error);
+  filter: brightness(0.9);
 }
 
 /* Loading State */
@@ -159,7 +161,7 @@
   width: 32px;
   height: 32px;
   border: 3px solid #f3f4f6;
-  border-top: 3px solid #8B4513;
+  border-top: 3px solid var(--color-button-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -204,8 +206,8 @@
 }
 
 .empty-state .btn-primary {
-  background: #8B4513;
-  color: white;
+  background: var(--color-button-primary);
+  color: var(--color-button-primary-text);
   border: none;
   padding: 12px 24px;
   border-radius: 8px;
@@ -215,7 +217,7 @@
 }
 
 .empty-state .btn-primary:hover {
-  background: #7a3e0f;
+  background: var(--color-button-primary-hover);
 }
 
 /* Responsive Design */

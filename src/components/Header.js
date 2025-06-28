@@ -55,13 +55,12 @@ const Header = () => {
     <>
       <header 
         className={`
-          fixed top-0 left-0 right-0 z-50 transition-all duration-300
+          fixed top-0 left-0 right-0 z-50 transition-all duration-300 theme-header
           ${isScrolled 
             ? 'shadow-lg border-b border-gray-600/30' 
             : ''
           }
         `}
-        style={{ backgroundColor: 'rgb(55 65 81 / var(--tw-bg-opacity, 1))' }}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 lg:h-20">
