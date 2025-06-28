@@ -1,8 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSettings } from '../services/settingsContext';
+import SkeletonLoader from './SkeletonLoader';
+import FadeInContent from './FadeInContent';
+import portfolioService from '../services/portfolioService';
 
-const Hero = () => {
+const Hero = ({ isLoading = false }) => {
   const { getSetting } = useSettings();
+  const [settings, setSettings] = useState({});
+  const [settingsLoading, setSettingsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settingsData = await portfolioService.getPublicSettings();
+        setSettings(settingsData);
+      } catch (error) {
+        console.error('Error loading hero settings:', error);
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+
+    if (!isLoading) {
+      loadSettings();
+    }
+  }, [isLoading]);
+
+  const isContentLoading = isLoading || settingsLoading;
 
   const scrollToPortfolio = () => {
     const portfolioSection = document.getElementById('portfolio');
@@ -20,6 +44,16 @@ const Hero = () => {
     link.click();
     document.body.removeChild(link);
   };
+
+  if (isContentLoading) {
+    return (
+      <section className="hero-section relative overflow-hidden">
+        <div className="container mx-auto px-4 py-20">
+          <SkeletonLoader type="hero" count={1} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden">
@@ -103,13 +137,13 @@ const Hero = () => {
           <div className="flex-1 text-center lg:text-left space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-gray-800 leading-tight">
-                {getSetting('banner_name')}
+                {settings.bannerName || 'Developer'}
               </h1>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-700">
-                {getSetting('banner_title')}
+                {settings.bannerTitle || 'Full Stack Developer'}
               </h2>
               <p className="text-lg md:text-xl text-gray-600 max-w-lg leading-relaxed">
-                {getSetting('banner_tagline')}
+                {settings.tagline || 'Creating amazing digital experiences with modern technologies'}
               </p>
             </div>
 
@@ -146,7 +180,7 @@ const Hero = () => {
                   backgroundRepeat: 'no-repeat'
                 }}
                 role="img"
-                aria-label={`${getSetting('banner_name')} - ${getSetting('banner_title')}`}
+                aria-label={`${settings.bannerName || 'Developer'} - ${settings.bannerTitle || 'Full Stack Developer'}`}
               ></div>
 
               {/* Ripple Effects */}

@@ -1005,9 +1005,10 @@ export const nicheService = {
 // Service to manage portfolio owner configuration
 
 export const portfolioConfigService = {
-  // Cache for configuration to avoid repeated requests
+  // Cache to avoid repeated configuration calls
   _configCache: null,
   _configPromise: null,
+  _cachedEmail: null, // Track which email the cache is for
 
   // Configure portfolio owner in database
   async configurePortfolioOwner(email) {
@@ -1054,8 +1055,7 @@ export const portfolioConfigService = {
       console.log('✅ Portfolio owner configured successfully:', data);
       
       // Clear cache after successful configuration
-      this._configCache = null;
-      this._configPromise = null;
+      this.clearCache();
       
       return { success: true, message: 'Portfolio owner configured successfully', data };
 
@@ -1072,8 +1072,7 @@ export const portfolioConfigService = {
       const { portfolioConfig } = await import('../config/portfolio');
       const envEmail = portfolioConfig.ownerEmail;
 
-      console.log('🔍 DEBUG: Portfolio Config Check');
-      console.log('   .env email:', envEmail);
+      console.log('🔍 Loading portfolio config for email:', envEmail);
 
       if (envEmail) {
         // Look for the .env email in active portfolio configs
@@ -1084,21 +1083,12 @@ export const portfolioConfigService = {
           .eq('is_active', true)
           .single();
 
-        console.log('   Query result:', { data, error: error?.message });
-
         if (!error && data) {
           console.log('✅ Found matching portfolio config for .env email:', envEmail);
-          console.log('   User ID:', data.owner_user_id);
           return data;
         }
 
         console.log('⚠️ .env email not found in portfolio_config table:', envEmail);
-        
-        // Check all portfolio configs for debugging
-        const { data: allConfigs } = await supabase
-          .from('portfolio_config')
-          .select('*');
-        console.log('   All portfolio configs in DB:', allConfigs);
       } else {
         console.log('⚠️ No email configured in .env');
       }
@@ -1131,8 +1121,20 @@ export const portfolioConfigService = {
 
   // Check if portfolio is configured and set it up if needed (with caching)
   async ensurePortfolioConfigured() {
-    // Return cached result if available
-    if (this._configCache) {
+    // Check if we have a cached email and if it matches current .env
+    const { portfolioConfig } = await import('../config/portfolio');
+    const currentEmail = portfolioConfig.ownerEmail;
+    
+    // Clear cache if email changed
+    if (this._configCache && this._cachedEmail !== currentEmail) {
+      console.log('📧 Email changed from', this._cachedEmail, 'to', currentEmail, '- clearing cache');
+      this.clearCache();
+      // Also clear public portfolio cache
+      publicPortfolioService.clearCache();
+    }
+    
+    // Return cached result if available and email matches
+    if (this._configCache && this._cachedEmail === currentEmail) {
       return this._configCache;
     }
 
@@ -1149,8 +1151,10 @@ export const portfolioConfigService = {
       // Cache successful results for 5 minutes
       if (result.success) {
         this._configCache = result;
+        this._cachedEmail = currentEmail; // Store the email this cache is for
         setTimeout(() => {
           this._configCache = null;
+          this._cachedEmail = null;
         }, 5 * 60 * 1000); // 5 minutes
       }
       return result;
@@ -1196,8 +1200,10 @@ export const portfolioConfigService = {
 
   // Clear cache (useful for testing or when configuration changes)
   clearCache() {
+    console.log('🗑️ Clearing portfolio config cache');
     this._configCache = null;
     this._configPromise = null;
+    this._cachedEmail = null;
   }
 };
 
@@ -1254,6 +1260,13 @@ export const publicPortfolioService = {
   _userIdCache: null,
   _isInitialized: false,
 
+  // Clear cache (call this when email changes)
+  clearCache() {
+    console.log('🗑️ Clearing public portfolio cache');
+    this._userIdCache = null;
+    this._isInitialized = false;
+  },
+
   // Initialize configuration once
   async initialize() {
     if (this._isInitialized) {
@@ -1299,6 +1312,16 @@ export const publicPortfolioService = {
       // Initialize only once
       await this.initialize();
       
+      // Get the user ID for the .env email
+      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+      
+      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+        console.log('⚠️ No portfolio config found, using fallback data');
+        return fallbackDataService.getProjects();
+      }
+
+      console.log('📊 Fetching projects for user ID:', portfolioConfig.owner_user_id);
+      
       const { data, error } = await supabase
         .from(TABLES.PROJECTS)
         .select(`
@@ -1306,9 +1329,12 @@ export const publicPortfolioService = {
           project_images (*)
         `)
         .eq('status', 'published')
+        .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log(`✅ Found ${data?.length || 0} projects for .env user`);
       return data || [];
     } catch (error) {
       console.error('Error fetching published projects from Supabase, using fallback data:', error);
@@ -1344,12 +1370,21 @@ export const publicPortfolioService = {
       // Initialize only once
       await this.initialize();
       
+      // Get the user ID for the .env email
+      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+      
+      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+        console.log('⚠️ No portfolio config found, using fallback data');
+        return fallbackDataService.getTechnologies();
+      }
+
       const { data, error } = await supabase
         .from('domains_technologies')
         .select(`
           *,
           tech_skills (*)
         `)
+        .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
@@ -1388,9 +1423,18 @@ export const publicPortfolioService = {
       // Initialize only once
       await this.initialize();
       
+      // Get the user ID for the .env email
+      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+      
+      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+        console.log('⚠️ No portfolio config found for settings');
+        return {};
+      }
+
       const { data, error } = await supabase
         .from('settings')
-        .select('*');
+        .select('*')
+        .eq('user_id', portfolioConfig.owner_user_id);  // ← NOW filtering by correct user!
 
       if (error) throw error;
       
@@ -1405,12 +1449,6 @@ export const publicPortfolioService = {
       console.error('Error fetching public settings:', error);
       return {};
     }
-  },
-
-  // Clear cache when needed (e.g., when user signs in/out)
-  clearCache() {
-    this._userIdCache = null;
-    this._isInitialized = false;
   },
 
   // Legacy method - kept for backward compatibility but now just calls initialize()

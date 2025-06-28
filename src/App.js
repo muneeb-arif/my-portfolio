@@ -12,6 +12,9 @@ import MobileBottomNav from './components/MobileBottomNav';
 import Dashboard from './components/dashboard/Dashboard';
 import DynamicHead from './components/DynamicHead';
 import Toast from './components/Toast';
+import SkeletonLoader from './components/SkeletonLoader';
+import LoadingOverlay from './components/LoadingOverlay';
+import FadeInContent from './components/FadeInContent';
 import portfolioService from './services/portfolioService';
 import { SettingsProvider } from './services/settingsContext';
 import { checkEnvMissing } from './config/supabase';
@@ -27,6 +30,14 @@ function App() {
   const [filters, setFilters] = useState(['All']);
   const [loading, setLoading] = useState(true);
   const [showEnvToast, setShowEnvToast] = useState(false);
+
+  // New loading states for better UX
+  const [sectionsLoading, setSectionsLoading] = useState({
+    hero: true,
+    projects: true,
+    technologies: true,
+    niches: true
+  });
 
   // Check for missing environment variables on app load
   useEffect(() => {
@@ -51,7 +62,7 @@ function App() {
     try {
       setLoading(true);
       
-      // Load projects and categories in parallel
+      // Load different sections with staggered timing for better UX
       const [projectsData, categoriesData] = await Promise.all([
         portfolioService.getPublishedProjects(),
         portfolioService.getAvailableCategories()
@@ -64,11 +75,30 @@ function App() {
       console.log(`📊 Loaded ${projectsData?.length || 0} published projects`);
       console.log(`📁 Loaded ${(categoriesData?.length || 1) - 1} categories`); // -1 for 'All'
       
+      // Stagger section loading completion for smooth transitions
+      setSectionsLoading(prev => ({ ...prev, hero: false, projects: false }));
+      
+      // Load technologies after a short delay
+      setTimeout(() => {
+        setSectionsLoading(prev => ({ ...prev, technologies: false }));
+      }, 300);
+      
+      // Load niches after another delay
+      setTimeout(() => {
+        setSectionsLoading(prev => ({ ...prev, niches: false }));
+      }, 600);
+      
     } catch (error) {
       console.error('Error loading portfolio data:', error);
-      // Only use fallback on connection errors, not empty data
       setProjects([]);
       setFilters(['All']);
+      // Complete all loading states on error
+      setSectionsLoading({
+        hero: false,
+        projects: false,
+        technologies: false,
+        niches: false
+      });
     } finally {
       setLoading(false);
     }

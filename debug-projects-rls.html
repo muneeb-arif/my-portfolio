@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Projects RLS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Debug Projects RLS Issue</h1>
+    <div id="results"></div>
+
+    <script>
+        // Initialize Supabase
+        const supabaseUrl = 'https://bpniquvjzwxjimeczjuf.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbmlxdXZqend4amltZWN6anVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NjY5NzgsImV4cCI6MjA2NTI0Mjk3OH0.b9zch2Wndt0yHGmeXPczfvHJeQxYobEL3CkrZRmHxFE';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const targetEmail = 'muneebarif11@gmail.com';
+
+        async function debugProjectsRLS() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Debugging Projects RLS for: ' + targetEmail + '</h2>';
+
+            try {
+                // 1. Check portfolio_config
+                results.innerHTML += '<h3>1. Portfolio Configuration</h3>';
+                const { data: portfolioConfigs } = await supabase
+                    .from('portfolio_config')
+                    .select('*');
+
+                results.innerHTML += '<p>All portfolio configs:</p>';
+                portfolioConfigs.forEach(config => {
+                    const isTarget = config.owner_email === targetEmail ? ' ← TARGET' : '';
+                    results.innerHTML += `<p>- ${config.owner_email} (User: ${config.owner_user_id}, Active: ${config.is_active})${isTarget}</p>`;
+                });
+
+                // 2. Test RLS functions
+                results.innerHTML += '<h3>2. RLS Function Tests</h3>';
+                
+                const { data: currentOwner } = await supabase.rpc('get_portfolio_owner_id');
+                results.innerHTML += `<p>get_portfolio_owner_id() returns: ${currentOwner}</p>`;
+
+                const targetUserId = portfolioConfigs.find(c => c.owner_email === targetEmail)?.owner_user_id;
+                results.innerHTML += `<p>Target user ID for ${targetEmail}: ${targetUserId}</p>`;
+
+                if (targetUserId) {
+                    const { data: isOwner } = await supabase.rpc('is_portfolio_owner', { check_user_id: targetUserId });
+                    results.innerHTML += `<p>is_portfolio_owner(${targetUserId}) returns: ${isOwner}</p>`;
+                }
+
+                // Test with other user IDs
+                const otherUserIds = portfolioConfigs.filter(c => c.owner_email !== targetEmail).map(c => c.owner_user_id);
+                for (const otherUserId of otherUserIds) {
+                    const { data: isOtherOwner } = await supabase.rpc('is_portfolio_owner', { check_user_id: otherUserId });
+                    results.innerHTML += `<p>is_portfolio_owner(${otherUserId}) returns: ${isOtherOwner}</p>`;
+                }
+
+                // 3. Check all projects (what RLS allows)
+                results.innerHTML += '<h3>3. Projects Visible Through RLS</h3>';
+                
+                const { data: visibleProjects } = await supabase
+                    .from('projects')
+                    .select('id, title, user_id, status, created_at');
+
+                results.innerHTML += `<p>Total projects visible through RLS: ${visibleProjects.length}</p>`;
+                visibleProjects.forEach(project => {
+                    const ownerConfig = portfolioConfigs.find(c => c.owner_user_id === project.user_id);
+                    const ownerEmail = ownerConfig ? ownerConfig.owner_email : 'Unknown';
+                    results.innerHTML += `<p>- "${project.title}" (ID: ${project.id}, Owner: ${ownerEmail}, Status: ${project.status})</p>`;
+                });
+
+                // 4. Check published projects specifically
+                results.innerHTML += '<h3>4. Published Projects Only</h3>';
+                
+                const { data: publishedProjects } = await supabase
+                    .from('projects')
+                    .select('id, title, user_id, status, created_at')
+                    .eq('status', 'published');
+
+                results.innerHTML += `<p>Published projects visible through RLS: ${publishedProjects.length}</p>`;
+                publishedProjects.forEach(project => {
+                    const ownerConfig = portfolioConfigs.find(c => c.owner_user_id === project.user_id);
+                    const ownerEmail = ownerConfig ? ownerConfig.owner_email : 'Unknown';
+                    results.innerHTML += `<p>- "${project.title}" (ID: ${project.id}, Owner: ${ownerEmail})</p>`;
+                });
+
+                // 5. Manual check: what should be visible
+                results.innerHTML += '<h3>5. Expected vs Actual</h3>';
+                const expectedUserId = portfolioConfigs.find(c => c.owner_email === targetEmail)?.owner_user_id;
+                const expectedProjects = visibleProjects.filter(p => p.user_id === expectedUserId);
+                
+                results.innerHTML += `<p style="color: green;">✅ Expected: Only projects from ${targetEmail} (User ID: ${expectedUserId})</p>`;
+                results.innerHTML += `<p style="color: green;">✅ Expected project count: ${expectedProjects.length}</p>`;
+                results.innerHTML += `<p style="color: ${visibleProjects.length === expectedProjects.length ? 'green' : 'red'};">
+                    ${visibleProjects.length === expectedProjects.length ? '✅' : '❌'} 
+                    Actual: ${visibleProjects.length} projects visible</p>`;
+
+                if (visibleProjects.length !== expectedProjects.length) {
+                    results.innerHTML += '<p style="color: red; font-weight: bold;">🚨 RLS POLICY BUG: Extra projects are visible!</p>';
+                    
+                    const extraProjects = visibleProjects.filter(p => p.user_id !== expectedUserId);
+                    results.innerHTML += '<p>Extra projects that should NOT be visible:</p>';
+                    extraProjects.forEach(project => {
+                        const ownerConfig = portfolioConfigs.find(c => c.owner_user_id === project.user_id);
+                        const ownerEmail = ownerConfig ? ownerConfig.owner_email : 'Unknown';
+                        results.innerHTML += `<p style="color: red;">- "${project.title}" from ${ownerEmail}</p>`;
+                    });
+                }
+
+                // 6. Check the current RLS policy logic
+                results.innerHTML += '<h3>6. RLS Policy Analysis</h3>';
+                results.innerHTML += `<p>Current portfolio owner ID: ${currentOwner}</p>`;
+                results.innerHTML += `<p>Target user ID: ${targetUserId}</p>`;
+                results.innerHTML += `<p>Match: ${currentOwner === targetUserId ? '✅' : '❌'}</p>`;
+
+                if (currentOwner !== targetUserId) {
+                    results.innerHTML += '<p style="color: red;">🚨 PROBLEM: get_portfolio_owner_id() is not returning the correct user!</p>';
+                    results.innerHTML += '<p>This means the RLS policy allows wrong user\'s data.</p>';
+                }
+
+            } catch (error) {
+                results.innerHTML += '<p style="color: red;">Error: ' + error.message + '</p>';
+                console.error('Debug error:', error);
+            }
+        }
+
+        // Run the debug when page loads
+        window.addEventListener('load', debugProjectsRLS);
+    </script>
+</body>
+</html> 
