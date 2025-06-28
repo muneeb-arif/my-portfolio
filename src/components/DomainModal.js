@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ContactForm from './ContactForm';
+import { useSettings } from '../services/settingsContext';
 
 const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigateRight }) => {
+  const { getSetting } = useSettings();
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
@@ -47,10 +49,14 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
   const getPrefillData = () => {
     if (!domain) return {};
     
+    // Get dynamic name from settings
+    const bannerName = getSetting('banner_name') || 'Muneeb Arif';
+    const firstName = bannerName.split(' ')[0];
+    
     return {
       inquiryType: 'General Inquiry',
       subject: `Quote Request - ${domain.title}`,
-      message: `Hi Muneeb,
+      message: `Hi ${firstName},
 
 I'm interested in getting a quote for ${domain.title} development services.
 

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Mail, User, Building, Phone, MessageSquare, Tag, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { useSettings } from '../services/settingsContext';
 
 const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
+  const { getSetting } = useSettings();
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -165,14 +168,16 @@ const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validate form before submission
+    // Get dynamic values from settings
+    const bannerName = getSetting('banner_name') || 'Muneeb Arif';
+    const socialEmail = getSetting('social_email') || 'muneeb@example.com';
+    
     if (!validateForm()) {
       Swal.fire({
-        title: 'Validation Error',
-        text: 'Please fix the errors in the form before submitting.',
+        title: 'Form Validation Error',
+        text: 'Please fill in all required fields correctly.',
         icon: 'error',
         confirmButtonColor: '#B8936A',
-        confirmButtonText: 'Fix Errors',
         customClass: {
           popup: 'rounded-3xl',
           confirmButton: 'rounded-full px-6 py-3 font-semibold'
@@ -181,10 +186,10 @@ const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
       return;
     }
     
-    // Create email content
+    // Create email content with dynamic name
     const emailSubject = formData.subject || `${formData.inquiryType} - ${formData.name}`;
     const emailBody = `
-Hi Muneeb,
+Hi ${bannerName.split(' ')[0]},
 
 I'm interested in discussing a project with you.
 
@@ -209,8 +214,8 @@ Best regards,
 ${formData.name}
     `.trim();
 
-    // Open email client with pre-filled content
-    const mailtoLink = `mailto:muneebarif11@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    // Open email client with pre-filled content using dynamic email
+    const mailtoLink = `mailto:${socialEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
     window.location.href = mailtoLink;
 
     // Show SweetAlert2 success notification

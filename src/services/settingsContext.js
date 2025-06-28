@@ -3,6 +3,7 @@ import { settingsService } from './supabaseService';
 import portfolioService from './portfolioService';
 import { portfolioConfig } from '../config/portfolio';
 import { loadThemeFromPublicSettings, loadThemeFromSettings } from '../utils/themeUtils';
+import { updateManifest } from '../utils/manifestUtils';
 
 const SettingsContext = createContext();
 
@@ -101,6 +102,9 @@ export const SettingsProvider = ({ children }) => {
           setSettings(mergedSettings);
           setInitialized(true); // Mark as initialized to prevent re-loading
           
+          // Update dynamic manifest with new settings
+          updateManifest(mergedSettings);
+          
           // Load and apply theme from settings
           console.log('🎨 Loading theme from settings...');
           if (isDashboard) {
@@ -130,6 +134,9 @@ export const SettingsProvider = ({ children }) => {
         if (isMounted) {
           setSettings(defaultSettings);
           setInitialized(true); // Mark as initialized even on error
+          
+          // Update manifest with default settings
+          updateManifest(defaultSettings);
           
           // Apply default theme on error
           console.log('🎨 Applying default theme on error');
@@ -177,6 +184,9 @@ export const SettingsProvider = ({ children }) => {
       const mergedSettings = { ...defaultSettings, ...userSettings };
       console.log('🔧 SettingsContext: Manual reload - Merged settings:', mergedSettings);
       setSettings(mergedSettings);
+      
+      // Update dynamic manifest with reloaded settings
+      updateManifest(mergedSettings);
       
       // Load and apply theme from settings
       console.log('🎨 Loading theme from settings...');
