@@ -797,9 +797,8 @@ const MediaSection = () => (
 );
 
 const AppearanceSection = () => {
-  const { getSetting, refreshSettings } = useSettings();
-  const [settings, setSettings] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { settings, loading, updateSettings, refreshSettings } = useSettings();
+  const [localSettings, setLocalSettings] = useState({});
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [logoType, setLogoType] = useState('initials');
@@ -827,68 +826,91 @@ const AppearanceSection = () => {
     theme_name: 'sand'
   }), []);
 
-  const loadSettings = useCallback(async () => {
+  // Load settings from global context (NO DATABASE CALLS)
+  const loadLocalSettings = useCallback(() => {
     try {
-      setLoading(true);
-      // console.log('🎨 AppearanceSection: Loading settings...');
+      console.log('🎨 Dashboard: Loading settings from global context...');
       
-      // Get settings from context instead of loading separately
-      const contextSettings = {};
+      // Get settings from global context (already loaded)
+      const contextSettings = { ...defaultSettings };
       Object.keys(defaultSettings).forEach(key => {
-        contextSettings[key] = getSetting(key);
+        if (settings[key] !== undefined) {
+          contextSettings[key] = settings[key];
+        }
       });
       
-      // console.log('🎨 AppearanceSection: Context settings loaded:', contextSettings);
-      setSettings(contextSettings);
+      console.log('🎨 Dashboard: Settings loaded from context:', {
+        settingsCount: Object.keys(contextSettings).length,
+        hasTheme: !!contextSettings.theme_name,
+        hasBannerName: !!contextSettings.banner_name
+      });
+      
+      setLocalSettings(contextSettings);
       setLogoType(contextSettings.logo_type || 'initials');
+      setCurrentTheme(contextSettings.theme_name || 'sand');
       
-      // Load current theme from settings
-      const themeFromSettings = contextSettings.theme_name || 'sand';
-      setCurrentTheme(themeFromSettings);
-      
-      // console.log('🎨 AppearanceSection: Settings applied successfully');
+      console.log('✅ Dashboard: Local settings applied successfully');
     } catch (error) {
-      // console.error('❌ AppearanceSection: Error loading settings:', error);
-      // console.log('🔄 AppearanceSection: Using default settings');
-      setSettings(defaultSettings);
+      console.error('❌ Dashboard: Error loading local settings:', error);
+      setLocalSettings(defaultSettings);
       setLogoType('initials');
       setCurrentTheme('sand');
-    } finally {
-      // console.log('✅ AppearanceSection: Loading complete');
-      setLoading(false);
     }
-  }, [defaultSettings, getSetting]);
+  }, [settings, defaultSettings]);
 
+  // Load settings when global settings change
   useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+    if (!loading && Object.keys(settings).length > 0) {
+      loadLocalSettings();
+    }
+  }, [loading, settings, loadLocalSettings]);
+
+  const handleInputChange = (key, value) => {
+    setLocalSettings(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleThemeChange = async (themeName) => {
     try {
+      console.log('🎨 Dashboard: Changing theme to:', themeName);
+      
       // Apply theme immediately for instant feedback
       applyTheme(themeName);
       setCurrentTheme(themeName);
       
-      // Save to database
-      const saved = await saveThemeToSettings(themeName, settingsService);
+      // Update through global settings context (no direct database calls)
+      const success = await updateSettings({ theme_name: themeName });
       
-      if (saved) {
-        setMessage(`✅ Theme saved to database: ${themeName.charAt(0).toUpperCase() + themeName.slice(1)}!`);
-        
-        // Update local settings state
-        setSettings(prev => ({ ...prev, theme_name: themeName }));
-        
-        // Refresh settings context to sync with other components
-        await refreshSettings();
+      if (success) {
+        setMessage(`✅ Theme saved: ${themeName.charAt(0).toUpperCase() + themeName.slice(1)}!`);
+        // Local settings will update automatically via useEffect when global settings change
       } else {
-        setMessage(`⚠️ Theme applied locally: ${themeName.charAt(0).toUpperCase() + themeName.slice(1)} (database save failed)`);
+        setMessage(`⚠️ Theme applied locally: ${themeName.charAt(0).toUpperCase() + themeName.slice(1)} (save failed)`);
       }
       
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      // console.error('Error changing theme:', error);
+      console.error('❌ Dashboard: Error changing theme:', error);
       setMessage(`❌ Error changing theme: ${error.message}`);
       setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  const uploadFile = async (file, folder) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from(folder)
+        .upload(`${Date.now()}-${file.name}`, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(folder)
+        .getPublicUrl(data.path);
+
+      return publicUrl;
+    } catch (error) {
+      // console.error('Error uploading file:', error);
+      throw error;
     }
   };
 
@@ -898,7 +920,7 @@ const AppearanceSection = () => {
       setMessage('Saving settings...');
 
       // Handle file uploads first
-      const updatedSettings = { ...settings };
+      const updatedSettings = { ...localSettings };
 
       if (logoFile && logoType === 'image') {
         const logoUrl = await uploadFile(logoFile, 'images');
@@ -923,76 +945,61 @@ const AppearanceSection = () => {
       // Include current theme in settings save
       updatedSettings.theme_name = currentTheme;
 
-      // Update settings in database
-      await settingsService.updateMultipleSettings(updatedSettings);
+      console.log('💾 Dashboard: Saving settings via global context...', Object.keys(updatedSettings));
+
+      // Update settings through global context (NO DIRECT DATABASE CALLS)
+      const success = await updateSettings(updatedSettings);
       
-      setSettings(updatedSettings);
-      setMessage('✅ Settings saved successfully!');
-      
-      // Clear file inputs
-      setLogoFile(null);
-      setHeroFile(null);
-      setAvatarFile(null);
-      setResumeFile(null);
-      
-      // Refresh settings in the context
-      await refreshSettings();
+      if (success) {
+        setMessage('✅ Settings saved successfully!');
+        // Clear file inputs
+        setLogoFile(null);
+        setHeroFile(null);
+        setAvatarFile(null);
+        setResumeFile(null);
+        
+        console.log('✅ Dashboard: Settings saved successfully');
+      } else {
+        setMessage('❌ Error saving settings. Please try again.');
+        console.error('❌ Dashboard: Failed to save settings');
+      }
       
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      // console.error('Error saving settings:', error);
+      console.error('❌ Dashboard: Error saving settings:', error);
       setMessage('❌ Error saving settings: ' + error.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const uploadFile = async (file, bucket) => {
+  const testGlobalSettings = () => {
+    console.log('🧪 Dashboard: Testing global settings...');
+    console.log('  - Global settings object:', settings);
+    console.log('  - Loading state:', loading);
+    console.log('  - Settings count:', Object.keys(settings).length);
+    console.log('  - Has banner_name:', !!settings.banner_name);
+    console.log('  - Has theme_name:', !!settings.theme_name);
+    setMessage(`🧪 Global settings test: ${Object.keys(settings).length} settings loaded`);
+    setTimeout(() => setMessage(''), 3000);
+  };
+
+  const initializeDefaults = async () => {
     try {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(`${Date.now()}-${file.name}`, file);
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
-
-      return publicUrl;
+      console.log('🚀 Dashboard: Initializing default settings...');
+      const success = await updateSettings(defaultSettings);
+      if (success) {
+        setMessage('✅ Default settings initialized!');
+        console.log('✅ Dashboard: Default settings initialized');
+      } else {
+        setMessage('❌ Error initializing defaults');
+        console.error('❌ Dashboard: Failed to initialize defaults');
+      }
     } catch (error) {
-      // console.error('Error uploading file:', error);
-      throw error;
+      console.error('❌ Dashboard: Error initializing defaults:', error);
+      setMessage('❌ Error initializing defaults: ' + error.message);
     }
   };
-
-  const handleInputChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
-
-  if (loading) {
-    return (
-      <div className="dashboard-section">
-        <div className="section-header">
-          <h2>🎨 Appearance Settings</h2>
-        </div>
-        <div className="loading-spinner">
-          <p>Loading settings...</p>
-          <button 
-            className="btn-secondary mt-4"
-            onClick={() => {
-      // console.log('🔄 Manual fallback triggered');
-              setLoading(false);
-              setSettings(defaultSettings);
-              setLogoType('initials');
-            }}
-          >
-            🔄 Use Default Settings
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="dashboard-section">
@@ -1001,38 +1008,20 @@ const AppearanceSection = () => {
         <div className="flex gap-2">
           <button 
             className="btn-secondary" 
-            onClick={async () => {
-              try {
-      // console.log('🧪 Testing settings service...');
-                const testSettings = await settingsService.getSettings();
-      // console.log('🧪 Test result:', testSettings);
-                setMessage(`🧪 Settings test: ${Object.keys(testSettings).length} settings found`);
-              } catch (error) {
-      // console.error('🧪 Test error:', error);
-                setMessage(`🧪 Test error: ${error.message}`);
-              }
-            }}
+            onClick={testGlobalSettings}
           >
-            🧪 Test Settings
+            🧪 Test Global Settings
           </button>
           <button 
             className="btn-secondary" 
-            onClick={async () => {
-              try {
-                await settingsService.updateMultipleSettings(defaultSettings);
-                setMessage('✅ Default settings initialized!');
-                loadSettings();
-              } catch (error) {
-                setMessage('❌ Error initializing defaults: ' + error.message);
-              }
-            }}
+            onClick={initializeDefaults}
           >
             🚀 Initialize Defaults
           </button>
           <button 
             className="btn-primary" 
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || loading}
           >
             {saving ? '💾 Saving...' : '💾 Save Changes'}
           </button>
@@ -1045,216 +1034,151 @@ const AppearanceSection = () => {
         </div>
       )}
 
-      <div className="appearance-settings">
-        {/* Theme Section */}
-        <div className="settings-group">
-          <h3>🎨 Color Theme</h3>
-          <div className="form-group">
-            <label>Select Theme</label>
-            <select 
-              value={currentTheme} 
-              onChange={(e) => handleThemeChange(e.target.value)}
-              className="theme-selector"
-            >
-              {Object.entries(themes).map(([key, theme]) => (
-                <option key={key} value={key}>
-                  {key.charAt(0).toUpperCase() + key.slice(1)} - {theme.name}
-                </option>
-              ))}
-            </select>
-            <small className="form-hint">
-              Change the color scheme of your portfolio instantly. 
-              Current theme: <strong>{currentTheme.charAt(0).toUpperCase() + currentTheme.slice(1)}</strong>
-            </small>
-          </div>
+      {loading ? (
+        <div className="loading-state">
+          <p>Loading settings from global context...</p>
         </div>
-
-        {/* Logo Section */}
-        <div className="settings-group">
-          <h3>🏷️ Logo</h3>
-          <div className="form-group">
-            <label>Logo Type</label>
-            <select 
-              value={logoType} 
-              onChange={(e) => {
-                setLogoType(e.target.value);
-                handleInputChange('logo_type', e.target.value);
-              }}
-            >
-              <option value="initials">Text Initials</option>
-              <option value="image">Logo Image</option>
-            </select>
+      ) : (
+        <div className="settings-form">
+          {/* Theme Selection */}
+          <div className="settings-group">
+            <h3>🎨 Theme</h3>
+            <div className="theme-grid">
+              {Object.entries(themes).map(([key, theme]) => (
+                <div
+                  key={key}
+                  className={`theme-option ${currentTheme === key ? 'active' : ''}`}
+                  onClick={() => handleThemeChange(key)}
+                  style={{
+                    backgroundColor: theme['--color-primary'],
+                    border: `2px solid ${currentTheme === key ? theme['--color-secondary'] : 'transparent'}`
+                  }}
+                >
+                  <span>{theme.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {logoType === 'initials' ? (
+          {/* Logo Section */}
+          <div className="settings-group">
+            <h3>🏷️ Logo</h3>
             <div className="form-group">
-              <label>Logo Initials</label>
+              <label>Logo Type</label>
+              <select 
+                value={logoType} 
+                onChange={(e) => {
+                  setLogoType(e.target.value);
+                  handleInputChange('logo_type', e.target.value);
+                }}
+              >
+                <option value="initials">Text Initials</option>
+                <option value="image">Logo Image</option>
+              </select>
+            </div>
+
+            {logoType === 'initials' ? (
+              <div className="form-group">
+                <label>Logo Initials</label>
+                <input
+                  type="text"
+                  value={localSettings.logo_initials || 'MA'}
+                  onChange={(e) => handleInputChange('logo_initials', e.target.value)}
+                  placeholder="MA"
+                  maxLength={4}
+                />
+              </div>
+            ) : (
+              <div className="form-group">
+                <label>Logo Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setLogoFile(e.target.files[0])}
+                />
+                {localSettings.logo_image && (
+                  <div className="current-file">
+                    <p>Current: {localSettings.logo_image.split('/').pop()}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Banner Content Section */}
+          <div className="settings-group">
+            <h3>📝 Banner Content</h3>
+            <div className="form-group">
+              <label>Name</label>
               <input
                 type="text"
-                value={settings.logo_initials || 'MA'}
-                onChange={(e) => handleInputChange('logo_initials', e.target.value)}
-                placeholder="MA"
-                maxLength={4}
+                value={localSettings.banner_name || ''}
+                onChange={(e) => handleInputChange('banner_name', e.target.value)}
+                placeholder="Your Name"
               />
             </div>
-          ) : (
             <div className="form-group">
-              <label>Logo Image</label>
+              <label>Title</label>
               <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setLogoFile(e.target.files[0])}
+                type="text"
+                value={localSettings.banner_title || ''}
+                onChange={(e) => handleInputChange('banner_title', e.target.value)}
+                placeholder="Your Professional Title"
               />
-              {settings.logo_image && (
-                <div className="current-file">
-                  <p>Current: {settings.logo_image.split('/').pop()}</p>
-                </div>
-              )}
             </div>
-          )}
-        </div>
+            <div className="form-group">
+              <label>Tagline</label>
+              <textarea
+                value={localSettings.banner_tagline || ''}
+                onChange={(e) => handleInputChange('banner_tagline', e.target.value)}
+                placeholder="Your tagline or description"
+                rows={3}
+              />
+            </div>
+          </div>
 
-        {/* Hero Banner Section */}
-        <div className="settings-group">
-          <h3>🖼️ Hero Banner</h3>
-          <div className="form-group">
-            <label>Banner Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setHeroFile(e.target.files[0])}
-            />
-            {settings.hero_banner_image && (
-              <div className="current-file">
-                <p>Current: {settings.hero_banner_image.split('/').pop()}</p>
-              </div>
-            )}
+          {/* Social Links Section */}
+          <div className="settings-group">
+            <h3>🔗 Social Links</h3>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={localSettings.social_email || ''}
+                onChange={(e) => handleInputChange('social_email', e.target.value)}
+                placeholder="your@email.com"
+              />
+            </div>
+            <div className="form-group">
+              <label>GitHub URL</label>
+              <input
+                type="url"
+                value={localSettings.social_github || ''}
+                onChange={(e) => handleInputChange('social_github', e.target.value)}
+                placeholder="https://github.com/username"
+              />
+            </div>
+            <div className="form-group">
+              <label>Instagram URL</label>
+              <input
+                type="url"
+                value={localSettings.social_instagram || ''}
+                onChange={(e) => handleInputChange('social_instagram', e.target.value)}
+                placeholder="https://instagram.com/username"
+              />
+            </div>
+            <div className="form-group">
+              <label>Facebook URL</label>
+              <input
+                type="url"
+                value={localSettings.social_facebook || ''}
+                onChange={(e) => handleInputChange('social_facebook', e.target.value)}
+                placeholder="https://facebook.com/username"
+              />
+            </div>
           </div>
         </div>
-
-        {/* Avatar Section */}
-        <div className="settings-group">
-          <h3>👤 Avatar</h3>
-          <div className="form-group">
-            <label>Profile Picture</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setAvatarFile(e.target.files[0])}
-            />
-            {settings.avatar_image && (
-              <div className="current-file">
-                <p>Current: {settings.avatar_image.split('/').pop()}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Banner Content Section */}
-        <div className="settings-group">
-          <h3>📝 Banner Content</h3>
-          <div className="form-group">
-            <label>Name</label>
-            <input
-              type="text"
-              value={settings.banner_name || ''}
-              onChange={(e) => handleInputChange('banner_name', e.target.value)}
-              placeholder="Muneeb Arif"
-            />
-          </div>
-          <div className="form-group">
-            <label>Title</label>
-            <input
-              type="text"
-              value={settings.banner_title || ''}
-              onChange={(e) => handleInputChange('banner_title', e.target.value)}
-              placeholder="Principal Software Engineer"
-            />
-          </div>
-          <div className="form-group">
-            <label>Tagline</label>
-            <textarea
-              value={settings.banner_tagline || ''}
-              onChange={(e) => handleInputChange('banner_tagline', e.target.value)}
-              placeholder="I craft dreams, not projects."
-              rows={3}
-            />
-          </div>
-        </div>
-
-        {/* Resume Section */}
-        <div className="settings-group">
-          <h3>📄 Resume</h3>
-          <div className="form-group">
-            <label>Resume PDF</label>
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={(e) => setResumeFile(e.target.files[0])}
-            />
-            {settings.resume_file && (
-              <div className="current-file">
-                <p>Current: {settings.resume_file.split('/').pop()}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Social Media Section */}
-        <div className="settings-group">
-          <h3>🌐 Social Media</h3>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={settings.social_email || ''}
-              onChange={(e) => handleInputChange('social_email', e.target.value)}
-              placeholder="muneeb@example.com"
-            />
-          </div>
-          <div className="form-group">
-            <label>GitHub</label>
-            <input
-              type="url"
-              value={settings.social_github || ''}
-              onChange={(e) => handleInputChange('social_github', e.target.value)}
-              placeholder="https://github.com/muneebarif"
-            />
-          </div>
-          <div className="form-group">
-            <label>Instagram</label>
-            <input
-              type="url"
-              value={settings.social_instagram || ''}
-              onChange={(e) => handleInputChange('social_instagram', e.target.value)}
-              placeholder="https://instagram.com/username"
-            />
-          </div>
-          <div className="form-group">
-            <label>Facebook</label>
-            <input
-              type="url"
-              value={settings.social_facebook || ''}
-              onChange={(e) => handleInputChange('social_facebook', e.target.value)}
-              placeholder="https://facebook.com/username"
-            />
-          </div>
-        </div>
-
-        {/* Footer Section */}
-        <div className="settings-group">
-          <h3>📄 Footer</h3>
-          <div className="form-group">
-            <label>Copyright Text</label>
-            <input
-              type="text"
-              value={settings.copyright_text || ''}
-              onChange={(e) => handleInputChange('copyright_text', e.target.value)}
-              placeholder="© 2024 Muneeb Arif. All rights reserved."
-            />
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

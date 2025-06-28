@@ -504,9 +504,55 @@ export const loadSavedTheme = () => {
 };
 
 /**
- * Load theme from settings service (database)
+ * Load theme from global settings (NO DATABASE CALLS)
+ * This function should only be used for initial theme loading
+ * All theme changes should go through the global settings context
+ */
+export const loadThemeFromGlobalSettings = (settings) => {
+  try {
+    const savedTheme = settings?.theme_name;
+    
+    if (savedTheme && themes[savedTheme]) {
+      applyTheme(savedTheme);
+      return savedTheme;
+    }
+    
+    // Fallback to localStorage if no global theme
+    loadSavedTheme();
+    return getCurrentTheme();
+  } catch (error) {
+    // console.error('Error loading theme from global settings:', error);
+    // Fallback to localStorage
+    loadSavedTheme();
+    return getCurrentTheme();
+  }
+};
+
+/**
+ * Apply theme immediately (used by global settings context)
+ * This is for immediate theme application without database calls
+ */
+export const applyThemeFromSettings = (themeName) => {
+  try {
+    if (themeName && themes[themeName]) {
+      applyTheme(themeName);
+      // Also update localStorage for persistence
+      localStorage.setItem('selectedTheme', themeName);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    // console.error('Error applying theme:', error);
+    return false;
+  }
+};
+
+/**
+ * DEPRECATED: Use global settings context instead
+ * Legacy function kept for backwards compatibility
  */
 export const loadThemeFromSettings = async (settingsService) => {
+  console.warn('⚠️ loadThemeFromSettings is deprecated. Use global settings context instead.');
   try {
     if (!settingsService) return false;
     
@@ -529,9 +575,11 @@ export const loadThemeFromSettings = async (settingsService) => {
 };
 
 /**
- * Save theme to settings service (database)
+ * DEPRECATED: Use global settings context updateSettings instead
+ * Legacy function kept for backwards compatibility
  */
 export const saveThemeToSettings = async (themeName, settingsService) => {
+  console.warn('⚠️ saveThemeToSettings is deprecated. Use global settings context updateSettings instead.');
   try {
     if (!settingsService) {
       // Fallback to localStorage only

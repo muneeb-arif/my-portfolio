@@ -1,18 +1,49 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useSettings } from '../services/settingsContext';
 
 const DynamicHead = () => {
-  const { getSetting, loading } = useSettings();
+  const { settings, loading } = useSettings();
+  const lastAppliedValues = useRef({});
+
+  // Memoize all the settings values to prevent unnecessary re-calculations
+  const settingsValues = useMemo(() => ({
+    bannerName: settings.banner_name || '',
+    bannerTitle: settings.banner_title || '',
+    bannerTagline: settings.banner_tagline || '',
+    avatarImage: settings.avatar_image || '',
+    siteName: settings.site_name || 'Portfolio',
+    themeColor: settings.theme_color || '#E9CBA7',
+    currentUrl: typeof window !== 'undefined' ? window.location.href : ''
+  }), [
+    settings.banner_name,
+    settings.banner_title, 
+    settings.banner_tagline,
+    settings.avatar_image,
+    settings.site_name,
+    settings.theme_color
+  ]);
 
   useEffect(() => {
     if (loading) return;
 
-    const bannerName = getSetting('banner_name');
-    const bannerTitle = getSetting('banner_title');
-    const bannerTagline = getSetting('banner_tagline');
-    const avatarImage = getSetting('avatar_image');
-    const siteName = getSetting('site_name') || 'Portfolio';
-    const themeColor = getSetting('theme_color') || '#E9CBA7';
+    const {
+      bannerName,
+      bannerTitle,
+      bannerTagline,
+      avatarImage,
+      siteName,
+      themeColor,
+      currentUrl
+    } = settingsValues;
+
+    // Create a hash of current values to check if anything changed
+    const currentHash = JSON.stringify(settingsValues);
+    if (lastAppliedValues.current.hash === currentHash) {
+      // console.log('🔄 DynamicHead: No changes detected, skipping update');
+      return;
+    }
+
+    // console.log('🌐 DynamicHead: Updating meta tags...', settingsValues);
 
     // Update document title
     const newTitle = bannerName && bannerTitle 
@@ -142,8 +173,7 @@ const DynamicHead = () => {
       }
     }
 
-    // Update URL meta tags with current page URL
-    const currentUrl = window.location.href;
+    // Update URL meta tags with current page URL (currentUrl is from settingsValues)
     
     // Update Open Graph URL
     const ogUrl = document.querySelector('meta[property="og:url"]');
@@ -191,9 +221,12 @@ const DynamicHead = () => {
       document.head.appendChild(newCanonical);
     }
 
+    // Mark this set of values as applied to prevent unnecessary updates
+    lastAppliedValues.current = { hash: currentHash, ...settingsValues };
+
       // console.log('🌐 Updated document head:', { newTitle, bannerTagline, avatarImage, currentUrl });
 
-  }, [loading]);
+  }, [loading, settingsValues]);
 
   // This component doesn't render anything visible
   return null;

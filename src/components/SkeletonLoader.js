@@ -45,6 +45,23 @@ const SkeletonLoader = ({ type = 'project', count = 1 }) => {
           </div>
         </div>
       )}
+
+      case 'settings':
+        return (
+          <div className="settings-skeleton">
+            {[...Array(3)].map((_, groupIndex) => (
+              <div key={groupIndex} className="settings-group-skeleton">
+                <div className="skeleton-title h-6 w-32 mb-4"></div>
+                {[...Array(2)].map((_, fieldIndex) => (
+                  <div key={fieldIndex} className="field-skeleton mb-4">
+                    <div className="skeleton-label h-4 w-20 mb-2"></div>
+                    <div className="skeleton-input h-10 w-full"></div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        );
     </div>
   ));
 

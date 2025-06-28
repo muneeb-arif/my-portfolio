@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { settingsService } from './supabaseService';
 import portfolioService from './portfolioService';
 import { portfolioConfig } from '../config/portfolio';
-import { loadThemeFromPublicSettings, loadThemeFromSettings } from '../utils/themeUtils';
+import { loadThemeFromPublicSettings, applyTheme } from '../utils/themeUtils';
 import { updateManifest } from '../utils/manifestUtils';
 
 const SettingsContext = createContext();
@@ -15,254 +15,219 @@ export const useSettings = () => {
   return context;
 };
 
+// Enhanced Settings Provider with single global loading
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Check if we're in dashboard mode (memoized to prevent re-calculations)
   const isDashboard = useMemo(() => window.location.pathname === '/dashboard', []);
 
-  // Make defaultSettings completely stable to prevent infinite loops
+  // Enhanced default settings - single source of truth
   const defaultSettings = useMemo(() => ({
+    // Core Identity
+    banner_name: 'Muneeb Arif',
+    banner_title: 'Principal Software Engineer',
+    banner_tagline: 'I craft dreams, not projects.',
+    site_name: 'Portfolio',
+    
+    // Visual Assets
     logo_type: 'initials',
     logo_initials: 'MA',
     logo_image: '',
     hero_banner_image: '/images/hero-bg.png',
     avatar_image: '/images/profile/avatar.jpeg',
-    banner_name: 'Muneeb Arif',
-    banner_title: 'Principal Software Engineer',
-    banner_tagline: 'I craft dreams, not projects.',
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
+    
+    // Social & Contact
     social_email: 'muneeb@example.com',
     social_github: 'https://github.com/muneebarif',
     social_instagram: '',
     social_facebook: '',
+    
+    // Styling & Theme
+    theme_name: 'sand',
+    theme_color: '#E9CBA7',
+    
+    // Legal
     copyright_text: '© 2024 Muneeb Arif. All rights reserved.',
-    theme_name: 'sand', // Add default theme
-  }), []); // STABLE - no external dependencies
+  }), []);
 
-  // Load settings once on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    // Prevent loading if already initialized
-    if (initialized) {
+  // Enhanced settings loading with retry mechanism
+  const loadSettingsGlobally = useCallback(async (force = false) => {
+    // Prevent multiple simultaneous loads unless forced
+    if (initialized && !force) {
       console.log('⏭️ Settings already initialized, skipping load');
-      return;
+      return settings;
     }
 
-    let isMounted = true;
-    
-    const loadSettingsOnce = async () => {
-      try {
-        setLoading(true);
-        console.log('🔄 SettingsContext: Loading settings ONCE...', isDashboard ? '(Dashboard mode)' : '(Public mode)');
-        
-        // ===== DEBUG INFO (only once) =====
-        console.log('🌐 Environment Variables:');
-        console.log('  - REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
-        console.log('  - REACT_APP_SUPABASE_URL:', process.env.REACT_APP_SUPABASE_URL ? 'SET' : 'NOT SET');
-        console.log('  - REACT_APP_SUPABASE_ANON_KEY:', process.env.REACT_APP_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
-        
-        console.log('📋 Portfolio Config:');
-        console.log('  - ownerEmail:', portfolioConfig.ownerEmail);
-        console.log('  - defaultSettings:', portfolioConfig.defaultSettings);
-        
-        console.log('🎯 Mode:', isDashboard ? 'Dashboard (authenticated)' : 'Public (non-authenticated)');
-        
-        // Add timeout to prevent infinite loading
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Settings loading timeout')), 10000)
-        );
-        
-        let settingsPromise;
-        if (isDashboard) {
-          // Dashboard mode: use authenticated settings service
-          console.log('🔐 Dashboard mode: Using settingsService.getSettings()');
-          settingsPromise = settingsService.getSettings();
-        } else {
-          // Public mode: use public settings service
-          console.log('🌐 Public mode: Using portfolioService.getPublicSettings()');
-          settingsPromise = portfolioService.getPublicSettings();
-        }
-        
-        const userSettings = await Promise.race([settingsPromise, timeoutPromise]);
-        
-        if (isMounted) {
-          console.log('📥 Raw user settings loaded:');
-          console.log('  - Settings object:', userSettings);
-          console.log('  - theme_name:', userSettings.theme_name);
-          console.log('  - banner_name:', userSettings.banner_name);
-          console.log('  - banner_title:', userSettings.banner_title);
-          console.log('  - Total settings keys:', Object.keys(userSettings || {}).length);
-          
-          const mergedSettings = { ...defaultSettings, ...userSettings };
-          console.log('🔧 Merged settings:');
-          console.log('  - Final theme_name:', mergedSettings.theme_name);
-          console.log('  - Final banner_name:', mergedSettings.banner_name);
-          console.log('  - Final banner_title:', mergedSettings.banner_title);
-          
-          setSettings(mergedSettings);
-          setInitialized(true); // Mark as initialized to prevent re-loading
-          
-          // Update dynamic manifest with new settings
-          updateManifest(mergedSettings);
-          
-          // Load and apply theme from settings
-          console.log('🎨 Loading theme from settings...');
-          if (isDashboard) {
-            // Dashboard mode: load theme from authenticated settings
-            console.log('🔐 Dashboard mode: Loading theme from authenticated settings');
-            try {
-              const appliedTheme = await loadThemeFromSettings(settingsService);
-              console.log('✅ Theme loaded from authenticated settings:', appliedTheme);
-            } catch (error) {
-              console.error('❌ Error loading theme from authenticated settings:', error);
-            }
-          } else {
-            // Public mode: load theme from public settings
-            console.log('🌐 Public mode: Loading theme from public settings');
-            console.log('  - userSettings for theme loading:', userSettings);
-            const appliedTheme = loadThemeFromPublicSettings(userSettings);
-            console.log('✅ Theme loaded from public settings:', appliedTheme);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error loading settings:', error);
-        console.log('🔄 SettingsContext: Falling back to default settings');
-        console.log('  - Default banner_name:', defaultSettings.banner_name);
-        console.log('  - Default banner_title:', defaultSettings.banner_title);
-        console.log('  - Default banner_tagline:', defaultSettings.banner_tagline);
-        
-        if (isMounted) {
-          setSettings(defaultSettings);
-          setInitialized(true); // Mark as initialized even on error
-          
-          // Update manifest with default settings
-          updateManifest(defaultSettings);
-          
-          // Apply default theme on error
-          console.log('🎨 Applying default theme on error');
-          loadThemeFromPublicSettings(defaultSettings);
-        }
-      } finally {
-        if (isMounted) {
-          console.log('✅ SettingsContext: Settings loading complete');
-          setLoading(false);
-        }
-      }
-    };
-
-    loadSettingsOnce();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []); // EMPTY - all dependencies are now stable
-
-  const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      // Get current mode
-      const currentIsDashboard = window.location.pathname === '/dashboard';
-      console.log('🔄 SettingsContext: Manual reload - Loading settings...', currentIsDashboard ? '(Dashboard mode)' : '(Public mode)');
+      setError(null);
+      console.log('🌍 GLOBAL SETTINGS LOAD: Starting...', isDashboard ? '(Dashboard mode)' : '(Public mode)');
       
       // Add timeout to prevent infinite loading
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Settings loading timeout')), 10000)
+        setTimeout(() => reject(new Error('Settings loading timeout after 10s')), 10000)
       );
       
       let settingsPromise;
-      if (currentIsDashboard) {
+      if (isDashboard) {
         // Dashboard mode: use authenticated settings service
+        console.log('🔐 GLOBAL LOAD: Dashboard mode - Using authenticated settings');
         settingsPromise = settingsService.getSettings();
       } else {
         // Public mode: use public settings service
+        console.log('🌐 GLOBAL LOAD: Public mode - Using public settings');
         settingsPromise = portfolioService.getPublicSettings();
       }
       
       const userSettings = await Promise.race([settingsPromise, timeoutPromise]);
       
-      console.log('📥 SettingsContext: Manual reload - User settings loaded:', userSettings);
-      const mergedSettings = { ...defaultSettings, ...userSettings };
-      console.log('🔧 SettingsContext: Manual reload - Merged settings:', mergedSettings);
-      setSettings(mergedSettings);
+      console.log('📥 GLOBAL LOAD: Raw settings loaded:', {
+        settingsCount: Object.keys(userSettings || {}).length,
+        hasTheme: !!userSettings.theme_name,
+        hasBannerName: !!userSettings.banner_name,
+        hasAvatar: !!userSettings.avatar_image
+      });
       
-      // Update dynamic manifest with reloaded settings
+      const mergedSettings = { ...defaultSettings, ...userSettings };
+      
+      // Apply theme immediately from loaded settings
+      const themeName = mergedSettings.theme_name || 'sand';
+      console.log('🎨 GLOBAL LOAD: Applying theme:', themeName);
+      applyTheme(themeName);
+      
+      // Update dynamic manifest
       updateManifest(mergedSettings);
       
-      // Load and apply theme from settings
-      console.log('🎨 Loading theme from settings...');
-      if (currentIsDashboard) {
-        // Dashboard mode: load theme from authenticated settings
-        console.log('🔐 Dashboard mode: Loading theme from authenticated settings');
-        try {
-          const appliedTheme = await loadThemeFromSettings(settingsService);
-          console.log('✅ Theme loaded from authenticated settings:', appliedTheme);
-        } catch (error) {
-          console.error('❌ Error loading theme from authenticated settings:', error);
-        }
-      } else {
-        // Public mode: load theme from public settings
-        console.log('🌐 Public mode: Loading theme from public settings');
-        console.log('  - userSettings for theme loading:', userSettings);
-        const appliedTheme = loadThemeFromPublicSettings(userSettings);
-        console.log('✅ Theme loaded from public settings:', appliedTheme);
-      }
-    } catch (error) {
-      console.error('❌ SettingsContext: Manual reload - Error loading settings:', error);
-      console.log('🔄 SettingsContext: Manual reload - Falling back to default settings');
-      setSettings(defaultSettings);
+      // Set state
+      setSettings(mergedSettings);
+      setInitialized(true);
+      setRetryCount(0); // Reset retry count on success
       
-      // Apply default theme on error
-      console.log('🎨 Applying default theme on error');
-      loadThemeFromPublicSettings(defaultSettings);
+      console.log('✅ GLOBAL SETTINGS LOAD: Complete!', {
+        finalTheme: mergedSettings.theme_name,
+        finalBannerName: mergedSettings.banner_name,
+        totalSettings: Object.keys(mergedSettings).length
+      });
+      
+      return mergedSettings;
+      
+    } catch (error) {
+      console.error('❌ GLOBAL SETTINGS LOAD: Error:', error);
+      setError(error.message);
+      
+      // Retry logic for network errors
+      if (retryCount < 3 && error.message.includes('timeout')) {
+        console.log(`🔄 GLOBAL LOAD: Retrying... (${retryCount + 1}/3)`);
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => loadSettingsGlobally(true), 2000 * (retryCount + 1)); // Exponential backoff
+        return;
+      }
+      
+      // Fallback to defaults on final failure
+      console.log('🔄 GLOBAL LOAD: Using fallback settings');
+      const fallbackSettings = defaultSettings;
+      
+      // Apply default theme
+      applyTheme(fallbackSettings.theme_name);
+      updateManifest(fallbackSettings);
+      
+      setSettings(fallbackSettings);
+      setInitialized(true);
+      
+      return fallbackSettings;
+      
     } finally {
-      console.log('✅ SettingsContext: Manual reload - Settings loading complete');
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // STABLE - no dependencies needed since defaultSettings is stable
+  }, [isDashboard, defaultSettings, initialized, settings, retryCount]);
 
+  // Initialize settings once on mount
+  useEffect(() => {
+    if (!initialized) {
+      loadSettingsGlobally();
+    }
+  }, [loadSettingsGlobally, initialized]);
+
+  // Update settings (Dashboard only)
   const updateSettings = useCallback(async (newSettings) => {
-    // Only allow updates in dashboard mode
-    const currentIsDashboard = window.location.pathname === '/dashboard';
-    if (!currentIsDashboard) {
-      console.warn('Settings updates are only allowed in dashboard mode');
+    if (!isDashboard) {
+      console.warn('Settings updates only allowed in dashboard mode');
       return false;
     }
     
     try {
+      console.log('🔄 GLOBAL UPDATE: Updating settings...', Object.keys(newSettings));
+      
+      // Update database
       await settingsService.updateMultipleSettings(newSettings);
-      setSettings(prev => ({ ...prev, ...newSettings }));
+      
+      // Update local state immediately
+      const updatedSettings = { ...settings, ...newSettings };
+      setSettings(updatedSettings);
+      
+      // Apply theme if it changed
+      if (newSettings.theme_name && newSettings.theme_name !== settings.theme_name) {
+        console.log('🎨 GLOBAL UPDATE: Theme changed to:', newSettings.theme_name);
+        applyTheme(newSettings.theme_name);
+      }
+      
+      // Update manifest if relevant settings changed
+      const manifestKeys = ['banner_name', 'banner_title', 'avatar_image'];
+      if (manifestKeys.some(key => newSettings[key])) {
+        updateManifest(updatedSettings);
+      }
+      
+      console.log('✅ GLOBAL UPDATE: Settings updated successfully');
       return true;
+      
     } catch (error) {
-      console.error('Error updating settings:', error);
+      console.error('❌ GLOBAL UPDATE: Error updating settings:', error);
+      setError(error.message);
       return false;
     }
-  }, []); // Remove dependencies to prevent re-creation
+  }, [isDashboard, settings]);
 
+  // Refresh settings (force reload)
   const refreshSettings = useCallback(async () => {
-    await loadSettings();
-  }, [loadSettings]);
+    console.log('🔄 GLOBAL REFRESH: Force refreshing settings...');
+    return await loadSettingsGlobally(true);
+  }, [loadSettingsGlobally]);
 
+  // Get individual setting (from loaded state, not database)
   const getSetting = useCallback((key) => {
     const value = settings[key] || defaultSettings[key] || '';
     return value;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings]); // Only depend on settings - defaultSettings is stable, loading not needed for logic
+  }, [settings, defaultSettings]);
 
-  const value = useMemo(() => ({
+  // Enhanced context value with more utilities
+  const contextValue = useMemo(() => ({
+    // State
     settings,
     loading,
-    updateSettings,
+    initialized,
+    error,
+    
+    // Methods
     getSetting,
-    reloadSettings: loadSettings,
-    refreshSettings
-  }), [settings, loading, updateSettings, getSetting, loadSettings, refreshSettings]);
+    updateSettings,
+    refreshSettings,
+    
+    // Utilities
+    isDashboard,
+    retryCount,
+    
+    // Legacy aliases (for backwards compatibility)
+    reloadSettings: refreshSettings,
+  }), [settings, loading, initialized, error, getSetting, updateSettings, refreshSettings, isDashboard, retryCount]);
 
   return (
-    <SettingsContext.Provider value={value}>
+    <SettingsContext.Provider value={contextValue}>
       {children}
     </SettingsContext.Provider>
   );
