@@ -72,6 +72,11 @@ const Technologies = () => {
     );
   }
 
+  // Hide the entire section if no technologies data
+  if (!loading && technologiesData.length === 0) {
+    return null;
+  }
+
   return (
     <section id="technologies" className="bg-sand-light py-20 relative overflow-hidden">
       {/* Background Pattern */}

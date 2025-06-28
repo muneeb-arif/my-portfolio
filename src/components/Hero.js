@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, Play } from 'lucide-react';
+import ClientOnboardingForm from './ClientOnboardingForm';
 import { useSettings } from '../services/settingsContext';
 import SkeletonLoader from './SkeletonLoader';
-import FadeInContent from './FadeInContent';
 import portfolioService from '../services/portfolioService';
 
 const Hero = ({ isLoading = false }) => {
@@ -135,35 +136,38 @@ const Hero = ({ isLoading = false }) => {
         <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
           {/* Left Content */}
           <div className="flex-1 text-center lg:text-left space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-gray-800 leading-tight">
-                {settings.banner_name || 'Developer'}
-              </h1>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-700">
-                {settings.banner_title || 'Full Stack Developer'}
-              </h2>
-              <p className="text-lg md:text-xl text-gray-600 max-w-lg leading-relaxed">
-                {settings.banner_tagline || 'Creating amazing digital experiences with modern technologies'}
-              </p>
-            </div>
+            {/* iOS-styled backdrop blur container - compact around content only */}
+            <div className="inline-block backdrop-blur-md bg-white/10 rounded-2xl p-6 sm:p-8 md:p-10 lg:p-12 border border-white/20 shadow-2xl max-w-full w-full sm:w-auto">
+              <div className="space-y-4">
+                <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight drop-shadow-lg">
+                  {settings.banner_name || 'Developer'}
+                </h1>
+                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-white/90 drop-shadow-lg">
+                  {settings.banner_title || 'Full Stack Developer'}
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-lg leading-relaxed drop-shadow-lg">
+                  {settings.banner_tagline || 'Creating amazing digital experiences with modern technologies'}
+                </p>
+              </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <button
-                onClick={scrollToPortfolio}
-                className="px-8 py-4 bg-sand-dark text-white font-semibold rounded-full hover:bg-gray-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                View My Work
-              </button>
-              <button
-                onClick={handleResumeDownload}
-                className="px-8 py-4 border-2 border-sand-dark text-white font-semibold rounded-full hover:bg-sand-dark hover:text-white transform hover:scale-105 transition-all duration-300 flex items-center gap-2 justify-center"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Resume
-              </button>
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-6">
+                <button
+                  onClick={scrollToPortfolio}
+                  className="px-6 sm:px-8 py-3 sm:py-4 bg-white/20 backdrop-blur-sm text-white font-semibold rounded-full hover:bg-white/30 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30 whitespace-nowrap text-sm sm:text-base"
+                >
+                  View My Work
+                </button>
+                <button
+                  onClick={handleResumeDownload}
+                  className="px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/40 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-full hover:bg-white/20 hover:border-white/60 transform hover:scale-105 transition-all duration-300 flex items-center gap-2 justify-center shadow-lg hover:shadow-xl whitespace-nowrap text-sm sm:text-base"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Resume
+                </button>
+              </div>
             </div>
           </div>
 
@@ -207,8 +211,8 @@ const Hero = ({ isLoading = false }) => {
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-sand-dark rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-sand-dark rounded-full mt-2 animate-pulse"></div>
+        <div className="w-6 h-10 border-2 border-white/60 rounded-full flex justify-center backdrop-blur-sm bg-white/10">
+          <div className="w-1 h-3 bg-white/80 rounded-full mt-2 animate-pulse"></div>
         </div>
       </div>
     </section>

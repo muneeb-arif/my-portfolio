@@ -1,10 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, Code, Globe, CheckCircle, Mail } from 'lucide-react';
 import ContactForm from './ContactForm';
+import portfolioService from '../services/portfolioService';
 
 const MobileBottomNav = () => {
-  const [activeSection, setActiveSection] = useState('');
+  const [activeSection, setActiveSection] = useState('hero');
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
+  
+  // Track which sections have data
+  const [sectionsData, setSectionsData] = useState({
+    hasProjects: false,
+    hasTechnologies: false,
+    hasDomains: false,
+    loading: true
+  });
+
+  // Check data availability for each section
+  useEffect(() => {
+    const checkSectionsData = async () => {
+      try {
+        const [projects, technologies, domains] = await Promise.all([
+          portfolioService.getPublishedProjects(),
+          portfolioService.getDomainsTechnologies(),
+          portfolioService.getNiches()
+        ]);
+
+        setSectionsData({
+          hasProjects: projects && projects.length > 0,
+          hasTechnologies: technologies && technologies.length > 0,
+          hasDomains: domains && domains.length > 0,
+          loading: false
+        });
+      } catch (error) {
+        // console.error('Error checking sections data:', error);
+        setSectionsData({
+          hasProjects: false,
+          hasTechnologies: false,
+          hasDomains: false,
+          loading: false
+        });
+      }
+    };
+
+    checkSectionsData();
+  }, []);
 
   // Track which section is currently in view
   useEffect(() => {
@@ -52,7 +91,7 @@ const MobileBottomNav = () => {
   };
 
   const navItems = [
-    {
+    ...(sectionsData.hasProjects ? [{
       id: 'portfolio',
       icon: Briefcase,
       label: 'Portfolio',
@@ -60,8 +99,8 @@ const MobileBottomNav = () => {
         setActiveSection('portfolio');
         scrollToSection('portfolio');
       }
-    },
-    {
+    }] : []),
+    ...(sectionsData.hasTechnologies ? [{
       id: 'technologies',
       icon: Code,
       label: 'Tech',
@@ -69,8 +108,8 @@ const MobileBottomNav = () => {
         setActiveSection('technologies');
         scrollToSection('technologies');
       }
-    },
-    {
+    }] : []),
+    ...(sectionsData.hasDomains ? [{
       id: 'domains',
       icon: Globe,
       label: 'Domains',
@@ -78,7 +117,7 @@ const MobileBottomNav = () => {
         setActiveSection('domains');
         scrollToSection('domains');
       }
-    },
+    }] : []),
     {
       id: 'process',
       icon: CheckCircle,

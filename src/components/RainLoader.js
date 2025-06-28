@@ -356,7 +356,7 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
           animation: fall4 0.8s -0.2s ease-in infinite;
         }
 
-        /* Bicycle loader styles */
+        /* Bicycle loader styles - Simplified and reliable centering */
         .bicycle-center {
           position: fixed;
           top: 50%;
@@ -366,71 +366,29 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
           display: flex;
           align-items: center;
           justify-content: center;
+          width: auto;
+          height: auto;
         }
 
-        /* Mobile centering fixes */
+        /* Ensure centering works on all devices */
         @media (max-width: 768px) {
           .bicycle-center {
             position: fixed;
-            top: 50vh;
-            left: 50vw;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
-            width: 100px;
-            height: 100px;
+            z-index: 10;
             display: flex;
             align-items: center;
             justify-content: center;
           }
         }
 
-        @media (max-width: 480px) {
+        /* Use modern viewport units for better mobile support */
+        @supports (height: 100dvh) {
           .bicycle-center {
-            position: fixed;
-            top: calc(50vh - env(safe-area-inset-top) / 2);
-            left: 50vw;
-            transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-        }
-
-        /* iPhone specific fixes */
-        @media (max-width: 430px) and (max-height: 932px) {
-          .bicycle-center {
-            position: fixed;
-            top: 50dvh; /* Dynamic viewport height for modern browsers */
+            top: 50dvh;
             left: 50dvw;
-            transform: translate(-50%, -50%);
-            width: 70px;
-            height: 70px;
-          }
-        }
-
-        /* Additional mobile centering fallback */
-        @supports not (height: 100dvh) {
-          @media (max-width: 768px) {
-            .bicycle-center {
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              margin: 0;
-            }
-          }
-        }
-
-        /* Ultra-specific iPhone 14 Pro Max fix */
-        @media (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-          .bicycle-center {
-            position: fixed;
-            top: 466px; /* Exact center of iPhone 14 Pro Max */
-            left: 215px;
-            transform: translate(-50%, -50%);
-            width: 70px;
-            height: 70px;
           }
         }
 
@@ -439,9 +397,10 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
           width: 12em;
           height: auto;
           color: white;
+          flex-shrink: 0; /* Prevent the bike from shrinking */
         }
 
-        /* Mobile responsive bicycle */
+        /* Mobile responsive bicycle - Better sizing */
         @media (max-width: 768px) {
           .bike {
             width: 10em;
@@ -454,9 +413,21 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
           }
         }
 
-        @media (max-width: 320px) {
+        @media (max-width: 414px) {
+          .bike {
+            width: 7em;
+          }
+        }
+
+        @media (max-width: 375px) {
           .bike {
             width: 6em;
+          }
+        }
+
+        @media (max-width: 320px) {
+          .bike {
+            width: 5em;
           }
         }
 

@@ -135,6 +135,11 @@ const DomainsNiche = () => {
     );
   }
 
+  // Hide the entire section if no niches data
+  if (!loading && nichesData.length === 0) {
+    return null;
+  }
+
   return (
     <section id="domains" className="bg-[#F5F1EB] py-20 relative overflow-hidden">
       {/* Background Pattern */}
