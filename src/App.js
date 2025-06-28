@@ -73,7 +73,7 @@ function App() {
       // Add a minimum loading time for smooth UX
       setTimeout(() => {
         setLoading(false);
-      }, 1000);
+      }, 2000);
     }
   };
 

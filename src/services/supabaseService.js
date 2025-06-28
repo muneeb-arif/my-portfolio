@@ -470,12 +470,16 @@ export const settingsService = {
 // ================ CATEGORIES & TECHNOLOGIES ================
 
 export const metaService = {
-  // Get categories (global categories, no user filtering)
+  // Get categories for authenticated user (dashboard mode)
   async getCategories() {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from(TABLES.CATEGORIES)
         .select('*')
+        .eq('user_id', user.id)  // Filter by authenticated user
         .order('name');
 
       if (error) throw error;
@@ -489,7 +493,7 @@ export const metaService = {
     }
   },
 
-  // Add category (global category, no user association)
+  // Add category for authenticated user
   async addCategory(category) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -497,7 +501,10 @@ export const metaService = {
 
       const { data, error } = await supabase
         .from(TABLES.CATEGORIES)
-        .insert(category) // Don't add user_id
+        .insert({
+          ...category,
+          user_id: user.id  // Add user_id to associate with current user
+        })
         .select()
         .single();
 
@@ -608,15 +615,19 @@ export const metaService = {
 // ================ DOMAINS & TECHNOLOGIES OPERATIONS ================
 
 export const domainsTechnologiesService = {
-  // Get all domains and technologies
+  // Get all domains and technologies for authenticated user
   async getDomainsTechnologies() {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('domains_technologies')
         .select(`
           *,
           tech_skills (*)
         `)
+        .eq('user_id', user.id)  // Filter by authenticated user
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
@@ -630,15 +641,19 @@ export const domainsTechnologiesService = {
     }
   },
 
-  // Get domains only
+  // Get domains only for authenticated user
   async getDomains() {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('domains_technologies')
         .select(`
           *,
           tech_skills (*)
         `)
+        .eq('user_id', user.id)  // Filter by authenticated user
         .eq('type', 'domain')
         .order('sort_order', { ascending: true });
 
@@ -653,15 +668,19 @@ export const domainsTechnologiesService = {
     }
   },
 
-  // Get technologies only
+  // Get technologies only for authenticated user
   async getTechnologies() {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('domains_technologies')
         .select(`
           *,
           tech_skills (*)
         `)
+        .eq('user_id', user.id)  // Filter by authenticated user
         .eq('type', 'technology')
         .order('sort_order', { ascending: true });
 
@@ -898,12 +917,16 @@ export const bulkService = {
 // ================ NICHE OPERATIONS ================
 
 export const nicheService = {
-  // Get all niches
+  // Get all niches for authenticated user (dashboard mode)
   async getNiches() {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('niche')
         .select('*')
+        .eq('user_id', user.id)  // Filter by authenticated user
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
@@ -934,12 +957,18 @@ export const nicheService = {
     }
   },
 
-  // Create new niche
+  // Create new niche for authenticated user
   async createNiche(nicheData) {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('niche')
-        .insert(nicheData)
+        .insert({
+          ...nicheData,
+          user_id: user.id  // Add user_id to associate with current user
+        })
         .select()
         .single();
 
@@ -1351,9 +1380,21 @@ export const publicPortfolioService = {
   // Get categories for public display
   async getCategories() {
     try {
+      // Initialize only once
+      await this.initialize();
+      
+      // Get the user ID for the .env email
+      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+      
+      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+        // console.log('⚠️ No portfolio config found, using fallback data');
+        return fallbackDataService.getCategories();
+      }
+
       const { data, error } = await supabase
         .from(TABLES.CATEGORIES)
         .select('*')
+        .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
         .order('name');
 
       if (error) throw error;
@@ -1404,9 +1445,21 @@ export const publicPortfolioService = {
   // Get niches for public display
   async getNiches() {
     try {
+      // Initialize only once
+      await this.initialize();
+      
+      // Get the user ID for the .env email
+      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+      
+      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+        // console.log('⚠️ No portfolio config found, using fallback data');
+        return fallbackDataService.getNiches();
+      }
+
       const { data, error } = await supabase
         .from('niche')
         .select('*')
+        .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
         .order('sort_order', { ascending: true });
 
       if (error) throw error;

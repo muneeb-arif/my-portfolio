@@ -71,7 +71,7 @@ const IOSLoader = ({ isLoading, message = "Loading..." }) => {
       <div className="relative z-10 flex items-center justify-center">
         {/* Bike Loader */}
         <div className="relative">
-          <div className="w-16 h-10">
+          <div className="">
             <svg class="bike" viewBox="0 0 48 30" width="48px" height="30px">
               <g
                 fill="none"

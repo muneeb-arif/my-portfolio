@@ -598,7 +598,7 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
       )}
 
       {/* Database Status Overview */}
-      {!isDatabaseEmpty && (
+      {/* {!isDatabaseEmpty && (
         <div className="database-status-overview">
           <h3>📊 Database Status</h3>
           <div className="status-grid">
@@ -624,10 +624,10 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Stats Cards */}
-      <div className="stats-grid">
+      {/* <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-icon">💼</div>
           <div className="stat-content">
@@ -656,7 +656,7 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
             <p>Total Views</p>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Recent Projects */}
       <div className="recent-projects">
@@ -709,10 +709,10 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
             </button>
 
             <button 
-              className={`btn-reset ${isResetting ? 'resetting' : ''}`}
+              className={`btn-reset px-4 ${isResetting ? 'resetting' : ''}`}
               onClick={onResetData}
               disabled={isResetting}
-              style={{ backgroundColor: '#dc3545', color: 'white' }}
+              style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: '8px' }}
             >
               {isResetting ? '🗑️ Resetting...' : '🗑️ Reset All Data'}
             </button>
