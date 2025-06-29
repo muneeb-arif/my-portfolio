@@ -809,18 +809,375 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
 
 // Placeholder components for other sections
 
-const MediaSection = () => (
-  <div className="dashboard-section">
-    <div className="section-header">
-      <h2>🖼️ Media Library</h2>
-      <button className="btn-primary">+ Upload Images</button>
+const MediaSection = () => {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [error, setError] = useState('');
+
+  // Load all images from storage
+  const loadImages = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      // List all files from the images bucket
+      const { data: files, error } = await supabase.storage
+        .from('images')
+        .list('', {
+          limit: 1000,
+          sortBy: { column: 'created_at', order: 'desc' }
+        });
+
+      if (error) throw error;
+
+      // Filter only image files and get public URLs
+      const imageFiles = files.filter(file => 
+        file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
+        !file.name.startsWith('.')
+      );
+
+      const imagesWithUrls = imageFiles.map(file => {
+        const { data: { publicUrl } } = supabase.storage
+          .from('images')
+          .getPublicUrl(file.name);
+        
+        return {
+          name: file.name,
+          url: publicUrl,
+          size: file.metadata?.size || 0,
+          created_at: file.created_at,
+          updated_at: file.updated_at
+        };
+      });
+
+      setImages(imagesWithUrls);
+    } catch (error) {
+      console.error('Error loading images:', error);
+      setError('Failed to load images: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Upload new image
+  const handleImageUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    try {
+      setUploading(true);
+      setError('');
+
+      for (const file of files) {
+        // Generate unique filename
+        const fileName = `${Date.now()}-${file.name}`;
+        
+        const { data, error } = await supabase.storage
+          .from('images')
+          .upload(fileName, file);
+
+        if (error) throw error;
+      }
+
+      // Reload images after upload
+      await loadImages();
+      
+      // Clear the input
+      event.target.value = '';
+      
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      setError('Failed to upload images: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Open fullscreen view
+  const openFullscreen = (image, index) => {
+    setFullscreenImage(image);
+    setCurrentImageIndex(index);
+  };
+
+  // Close fullscreen view
+  const closeFullscreen = () => {
+    setFullscreenImage(null);
+    setCurrentImageIndex(0);
+  };
+
+  // Navigate in fullscreen
+  const navigateFullscreen = (direction) => {
+    const newIndex = direction === 'next' 
+      ? (currentImageIndex + 1) % images.length
+      : (currentImageIndex - 1 + images.length) % images.length;
+    
+    setCurrentImageIndex(newIndex);
+    setFullscreenImage(images[newIndex]);
+  };
+
+  // Download image
+  const downloadImage = async (image) => {
+    try {
+      const response = await fetch(image.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = image.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      setError('Failed to download image');
+    }
+  };
+
+  // Delete image
+  const deleteImage = async (image) => {
+    if (!window.confirm(`Are you sure you want to delete ${image.name}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.storage
+        .from('images')
+        .remove([image.name]);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setImages(images.filter(img => img.name !== image.name));
+      
+      // Close fullscreen if this image was open
+      if (fullscreenImage && fullscreenImage.name === image.name) {
+        closeFullscreen();
+      }
+
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      setError('Failed to delete image: ' + error.message);
+    }
+  };
+
+  // Format file size
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return 'Unknown size';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Load images on component mount
+  useEffect(() => {
+    loadImages();
+  }, []);
+
+  // Keyboard navigation for fullscreen
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (!fullscreenImage) return;
+
+      switch (event.key) {
+        case 'Escape':
+          closeFullscreen();
+          break;
+        case 'ArrowLeft':
+          navigateFullscreen('prev');
+          break;
+        case 'ArrowRight':
+          navigateFullscreen('next');
+          break;
+        case 'd':
+        case 'D':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            downloadImage(fullscreenImage);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fullscreenImage, currentImageIndex, images]);
+
+  return (
+    <div className="dashboard-section">
+      <div className="section-header">
+        <h2>🖼️ Media Library</h2>
+        <div className="flex gap-2">
+          <button 
+            className="btn-secondary" 
+            onClick={loadImages}
+            disabled={loading}
+          >
+            🔄 Refresh
+          </button>
+          <label className="btn-primary">
+            {uploading ? '⏳ Uploading...' : '+ Upload Images'}
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+              disabled={uploading}
+            />
+          </label>
+        </div>
+      </div>
+
+      {error && (
+        <div className="error-message" style={{ 
+          color: '#dc2626', 
+          background: '#fef2f2', 
+          padding: '12px', 
+          borderRadius: '8px', 
+          margin: '16px 0',
+          border: '1px solid #fecaca'
+        }}>
+          {error}
+        </div>
+      )}
+
+      <div className="media-stats">
+        <p>{images.length} images • Total size: {formatFileSize(images.reduce((total, img) => total + img.size, 0))}</p>
+      </div>
+
+      {loading ? (
+        <div className="loading-state">
+          <div className="media-grid">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="media-item skeleton">
+                <div className="media-thumbnail skeleton-box"></div>
+                <div className="media-info">
+                  <div className="skeleton-text"></div>
+                  <div className="skeleton-text short"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="media-grid">
+          {images.map((image, index) => (
+            <div key={image.name} className="media-item">
+              <div 
+                className="media-thumbnail"
+                onClick={() => openFullscreen(image, index)}
+              >
+                <img 
+                  src={image.url} 
+                  alt={image.name}
+                  loading="lazy"
+                />
+                <div className="media-overlay">
+                  <button className="overlay-btn">🔍 View</button>
+                </div>
+              </div>
+              <div className="media-info">
+                <h4>{image.name}</h4>
+                <p>{formatFileSize(image.size)}</p>
+                <div className="media-actions">
+                  <button 
+                    onClick={() => downloadImage(image)}
+                    className="action-btn download"
+                    title="Download"
+                  >
+                    📥
+                  </button>
+                  <button 
+                    onClick={() => deleteImage(image)}
+                    className="action-btn delete"
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {images.length === 0 && !loading && (
+        <div className="empty-state">
+          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📷</div>
+            <h3>No images found</h3>
+            <p>Upload some images to get started with your media library</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Modal */}
+      {fullscreenImage && (
+        <div className="fullscreen-modal" onClick={closeFullscreen}>
+          <div className="fullscreen-content" onClick={e => e.stopPropagation()}>
+            <div className="fullscreen-header">
+              <div className="image-info">
+                <h3>{fullscreenImage.name}</h3>
+                <p>{currentImageIndex + 1} of {images.length} • {formatFileSize(fullscreenImage.size)}</p>
+              </div>
+              <div className="fullscreen-actions">
+                <button 
+                  onClick={() => downloadImage(fullscreenImage)}
+                  className="fullscreen-btn download"
+                  title="Download (Ctrl+D)"
+                >
+                  📥 Download
+                </button>
+                <button 
+                  onClick={closeFullscreen}
+                  className="fullscreen-btn close"
+                  title="Close (Esc)"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <div className="fullscreen-image-container">
+              <button 
+                className="nav-btn prev"
+                onClick={() => navigateFullscreen('prev')}
+                disabled={images.length <= 1}
+                title="Previous (←)"
+              >
+                ‹
+              </button>
+              
+              <img 
+                src={fullscreenImage.url} 
+                alt={fullscreenImage.name}
+                className="fullscreen-image"
+              />
+              
+              <button 
+                className="nav-btn next"
+                onClick={() => navigateFullscreen('next')}
+                disabled={images.length <= 1}
+                title="Next (→)"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-    <div className="content-placeholder">
-      <p>Media library interface will be implemented here</p>
-      <p>Features: Upload, organize, and manage all portfolio images</p>
-    </div>
-  </div>
-);
+  );
+};
 
 const AppearanceSection = () => {
   const { settings, loading, updateSettings, refreshSettings } = useSettings();
@@ -832,6 +1189,7 @@ const AppearanceSection = () => {
   const [heroFile, setHeroFile] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
+  const [whatsappFile, setWhatsappFile] = useState(null);
   const [currentTheme, setCurrentTheme] = useState('sand');
 
   const defaultSettings = useMemo(() => ({
@@ -842,6 +1200,7 @@ const AppearanceSection = () => {
     hero_banner_zoom: 100,
     avatar_image: '/images/profile/avatar.jpeg',
     avatar_zoom: 100,
+    whatsapp_preview_image: '',
     banner_name: 'Muneeb Arif',
     banner_title: 'Principal Software Engineer',
     banner_tagline: 'I craft dreams, not projects.',
@@ -971,6 +1330,11 @@ const AppearanceSection = () => {
         updatedSettings.resume_file = resumeUrl;
       }
 
+      if (whatsappFile) {
+        const whatsappUrl = await uploadFile(whatsappFile, 'images');
+        updatedSettings.whatsapp_preview_image = whatsappUrl;
+      }
+
       // Include current theme in settings save
       updatedSettings.theme_name = currentTheme;
 
@@ -986,6 +1350,7 @@ const AppearanceSection = () => {
         setHeroFile(null);
         setAvatarFile(null);
         setResumeFile(null);
+        setWhatsappFile(null);
         
         console.log('✅ Dashboard: Settings saved successfully');
       } else {
@@ -1029,6 +1394,8 @@ const AppearanceSection = () => {
       setMessage('❌ Error initializing defaults: ' + error.message);
     }
   };
+
+
 
   return (
     <div className="dashboard-section">
@@ -1223,6 +1590,46 @@ const AppearanceSection = () => {
                      <span>200%</span>
                    </div>
                    <small className="form-help">Adjust image zoom level for better positioning</small>
+                 </div>
+                 
+                 {/* WhatsApp Preview Image Upload */}
+                 <div className="form-group whatsapp-upload-section">
+                   <label>📱 WhatsApp Preview Image</label>
+                   <div className="whatsapp-requirements">
+                     <div className="requirements-header">
+                       <h4>📋 Image Requirements:</h4>
+                     </div>
+                     <ul className="requirements-list">
+                       <li><strong>Dimensions:</strong> 1200x630 pixels (optimal for link previews)</li>
+                       <li><strong>File Size:</strong> Must be under 600KB</li>
+                       <li><strong>Format:</strong> JPG, PNG, or WebP</li>
+                       <li><strong>Aspect Ratio:</strong> 1.91:1 (landscape orientation)</li>
+                     </ul>
+                     <div className="requirements-note">
+                       <p>💡 <strong>Tip:</strong> Use tools like TinyPNG or Squoosh.app to compress your image while maintaining quality.</p>
+                     </div>
+                   </div>
+                   
+                   <input
+                     type="file"
+                     accept="image/*"
+                     onChange={(e) => setWhatsappFile(e.target.files[0])}
+                     className="whatsapp-file-input"
+                   />
+                   
+                   {localSettings.whatsapp_preview_image && (
+                     <div className="current-whatsapp-image">
+                       <img 
+                         src={localSettings.whatsapp_preview_image} 
+                         alt="WhatsApp Preview" 
+                         className="whatsapp-preview-thumb"
+                       />
+                       <div className="whatsapp-image-info">
+                         <p>✅ Current WhatsApp preview image</p>
+                         <small>This image will appear when your portfolio is shared on WhatsApp, Slack, and other social platforms</small>
+                       </div>
+                     </div>
+                   )}
                  </div>
                </div>
              </div>

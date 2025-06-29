@@ -10,7 +10,8 @@ const DynamicHead = () => {
     bannerName: settings.banner_name || '',
     bannerTitle: settings.banner_title || '',
     bannerTagline: settings.banner_tagline || '',
-    avatarImage: settings.avatar_image || '',
+    // Prioritize WhatsApp-optimized image for social sharing
+    avatarImage: settings.whatsapp_preview_image || settings.avatar_image || '',
     siteName: settings.site_name || 'Portfolio',
     themeColor: settings.theme_color || '#E9CBA7',
     currentUrl: typeof window !== 'undefined' ? window.location.href : ''
@@ -18,6 +19,7 @@ const DynamicHead = () => {
     settings.banner_name,
     settings.banner_title, 
     settings.banner_tagline,
+    settings.whatsapp_preview_image,
     settings.avatar_image,
     settings.site_name,
     settings.theme_color

@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const https = require('https');
+const http = require('http');
 require('dotenv').config();
 
 // Supabase setup
@@ -18,6 +20,67 @@ if (!supabaseUrl || !supabaseAnonKey || !portfolioOwnerEmail) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Function to check image file size for WhatsApp compliance
+async function checkImageSize(imageUrl) {
+  return new Promise((resolve) => {
+    try {
+      const protocol = imageUrl.startsWith('https:') ? https : http;
+      const req = protocol.request(imageUrl, { method: 'HEAD' }, (res) => {
+        const contentLength = parseInt(res.headers['content-length'] || '0');
+        const contentType = res.headers['content-type'] || '';
+        
+        resolve({
+          size: contentLength,
+          sizeFormatted: formatBytes(contentLength),
+          contentType,
+          isValidForWhatsApp: contentLength <= 600000, // 600KB limit
+          statusCode: res.statusCode
+        });
+      });
+      
+      req.on('error', () => {
+        resolve({
+          size: 0,
+          sizeFormatted: 'Unknown',
+          contentType: 'unknown',
+          isValidForWhatsApp: false,
+          statusCode: 0
+        });
+      });
+      
+      req.setTimeout(10000, () => {
+        req.destroy();
+        resolve({
+          size: 0,
+          sizeFormatted: 'Timeout',
+          contentType: 'unknown',
+          isValidForWhatsApp: false,
+          statusCode: 0
+        });
+      });
+      
+      req.end();
+    } catch (error) {
+      resolve({
+        size: 0,
+        sizeFormatted: 'Error',
+        contentType: 'unknown',
+        isValidForWhatsApp: false,
+        statusCode: 0
+      });
+    }
+  });
+}
+
+// Function to format bytes to human readable format
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 async function updateMetaTags() {
   try {
@@ -64,7 +127,9 @@ async function updateMetaTags() {
     const bannerName = settings.banner_name || 'Portfolio Owner';
     const bannerTitle = settings.banner_title || 'Professional Portfolio';
     const bannerTagline = settings.banner_tagline || 'Welcome to my professional portfolio';
-    const avatarImage = settings.avatar_image || '/images/profile/avatar.jpeg';
+    
+    // Prioritize WhatsApp-optimized image, fallback to avatar
+    const avatarImage = settings.whatsapp_preview_image || settings.avatar_image || '/images/profile/avatar.jpeg';
     const currentDomain = settings.site_url || 'https://farid.theexpertways.com';
 
     // Create meta tag values
@@ -91,6 +156,33 @@ async function updateMetaTags() {
     console.log(`   Title: ${pageTitle}`);
     console.log(`   Description: ${pageDescription}`);
     console.log(`   Image: ${imageUrl}`);
+
+    // Check image compliance for WhatsApp
+    console.log('\n🔍 Checking WhatsApp image compliance...');
+    const imageCheck = await checkImageSize(imageUrl);
+    console.log(`   Image Size: ${imageCheck.sizeFormatted}`);
+    console.log(`   Content Type: ${imageCheck.contentType}`);
+    console.log(`   WhatsApp Compatible: ${imageCheck.isValidForWhatsApp ? '✅ Yes' : '❌ No'}`);
+    
+    if (!imageCheck.isValidForWhatsApp) {
+      console.log('\n⚠️  WARNING: Image does not meet WhatsApp requirements!');
+      console.log('   WhatsApp requires images to be under 600KB');
+      console.log('   Current image size:', imageCheck.sizeFormatted);
+      console.log('   Recommended actions:');
+      console.log('   1. Compress the image using tools like TinyPNG');
+      console.log('   2. Resize the image to 1200x630px or smaller');
+      console.log('   3. Use JPEG format for better compression');
+      console.log('   4. Upload a new optimized image via dashboard');
+      console.log('\n   Image will show on Slack/other platforms but NOT on WhatsApp\n');
+    } else {
+      console.log('   ✅ Image meets WhatsApp requirements!\n');
+    }
+
+    // Get image dimensions for proper meta tags
+    const imageWidth = 400; // Default fallback
+    const imageHeight = 400; // Default fallback
+    
+    // For WhatsApp compliance, we'll use standard dimensions
 
     // Update document title
     html = html.replace(

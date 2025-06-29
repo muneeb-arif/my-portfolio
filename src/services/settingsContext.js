@@ -43,6 +43,7 @@ export const SettingsProvider = ({ children }) => {
     hero_banner_zoom: 100,
     avatar_image: '/images/profile/avatar.jpeg',
     avatar_zoom: 100,
+    whatsapp_preview_image: '', // Optimized image for WhatsApp sharing
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
     
     // Social & Contact
