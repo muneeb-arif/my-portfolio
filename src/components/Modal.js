@@ -76,13 +76,9 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
     window.history.pushState({ modalOpen: 'project-modal' }, '', window.location.href);
     
     // Listen for back button press
-    const handlePopState = (event) => {
-      if (event.state && event.state.modalOpen === 'project-modal') {
-        // If we're still in the modal state, user pressed back, so close modal
-        handleClose();
-        // Remove the modal state from history
-        window.history.back();
-      }
+    const handlePopState = () => {
+      // Simply close the modal when back button is pressed
+      onClose();
     };
     
     window.addEventListener('popstate', handlePopState);
@@ -90,7 +86,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
     // Handle keyboard navigation
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        handleClose();
+        onClose();
       } else if (event.key === 'ArrowLeft' && canNavigateLeft) {
         onNavigate('prev');
       } else if (event.key === 'ArrowRight' && canNavigateRight) {
@@ -107,18 +103,9 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
     };
   }, [onClose, onNavigate, canNavigateLeft, canNavigateRight]);
 
-  const handleClose = () => {
-    // Handle history state cleanup
-    if (window.history.state && window.history.state.modalOpen === 'project-modal') {
-      window.history.back();
-    } else {
-      onClose();
-    }
-  };
-
   const handleBackdropClick = (event) => {
     if (event.target === event.currentTarget) {
-      handleClose();
+      onClose();
     }
   };
 
@@ -199,7 +186,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
               )}
             </div>
             <button
-              onClick={handleClose}
+              onClick={onClose}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               aria-label="Close modal"
             >

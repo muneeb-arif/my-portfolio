@@ -356,7 +356,7 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
           animation: fall4 0.8s -0.2s ease-in infinite;
         }
 
-        /* Bicycle loader styles - Simplified and reliable centering */
+        /* Bicycle loader styles - Reliable centering for all devices */
         .bicycle-center {
           position: fixed;
           top: 50%;
@@ -368,12 +368,16 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
           justify-content: center;
           width: auto;
           height: auto;
+          /* Force centering calculation */
+          margin: 0;
+          padding: 0;
         }
 
-        /* Ensure centering works on all devices */
+        /* Enhanced mobile centering - Remove problematic viewport units */
         @media (max-width: 768px) {
           .bicycle-center {
-            position: fixed;
+            /* Use absolute positioning within the fixed container for better mobile support */
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -381,14 +385,30 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
             display: flex;
             align-items: center;
             justify-content: center;
+            /* Ensure it doesn't get affected by other elements */
+            margin: 0;
+            padding: 0;
+            /* Force hardware acceleration for smoother animation */
+            will-change: transform;
+            backface-visibility: hidden;
           }
         }
 
-        /* Use modern viewport units for better mobile support */
-        @supports (height: 100dvh) {
+        /* Extra safe centering for very small screens */
+        @media (max-width: 480px) {
           .bicycle-center {
-            top: 50dvh;
-            left: 50dvw;
+            /* Double-ensure centering with flexbox backup */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            margin: 0;
+            padding: 0;
           }
         }
 

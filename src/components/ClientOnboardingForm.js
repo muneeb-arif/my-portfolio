@@ -40,20 +40,16 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
       window.history.pushState({ modalOpen: 'onboarding-form' }, '', window.location.href);
       
       // Listen for back button press
-      const handlePopState = (event) => {
-        if (event.state && event.state.modalOpen === 'onboarding-form') {
-          // If we're still in the modal state, user pressed back, so close modal
-          handleClose();
-          // Remove the modal state from history
-          window.history.back();
-        }
+      const handlePopState = () => {
+        // Simply close the modal when back button is pressed
+        onClose();
       };
       
       window.addEventListener('popstate', handlePopState);
 
       const handleEscape = (event) => {
         if (event.key === 'Escape') {
-          handleClose();
+          onClose();
         }
       };
 
@@ -238,7 +234,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
       `
     }).then((result) => {
       if (result.isConfirmed) {
-        handleClose(); // Close the main form
+        onClose(); // Close the main form
       }
       // If cancelled, keep the form open for another submission
     });
@@ -273,18 +269,9 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
     setTouched({});
   };
 
-  const handleClose = () => {
-    // Handle history state cleanup
-    if (window.history.state && window.history.state.modalOpen === 'onboarding-form') {
-      window.history.back();
-    } else {
-      onClose();
-    }
-  };
-
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
-      handleClose();
+      onClose();
     }
   };
 
@@ -323,7 +310,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-800">Client Onboarding Questionnaire</h2>
             <button
-              onClick={handleClose}
+              onClick={onClose}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               aria-label="Close form"
             >

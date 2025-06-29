@@ -21,13 +21,9 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
       window.history.pushState({ modalOpen: 'domain-modal' }, '', window.location.href);
       
       // Listen for back button press
-      const handlePopState = (event) => {
-        if (event.state && event.state.modalOpen === 'domain-modal') {
-          // If we're still in the modal state, user pressed back, so close modal
-          handleClose();
-          // Remove the modal state from history
-          window.history.back();
-        }
+      const handlePopState = () => {
+        // Simply close the modal when back button is pressed
+        onClose();
       };
       
       window.addEventListener('popstate', handlePopState);
@@ -35,7 +31,7 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
       // Handle keyboard navigation
       const handleKeyDown = (event) => {
         if (event.key === 'Escape') {
-          handleClose();
+          onClose();
         } else if (event.key === 'ArrowLeft' && canNavigateLeft) {
           onNavigate('prev');
         } else if (event.key === 'ArrowRight' && canNavigateRight) {
@@ -61,14 +57,7 @@ const DomainModal = ({ domain, onClose, onNavigate, canNavigateLeft, canNavigate
     setIsContactFormOpen(false);
   };
 
-  const handleClose = () => {
-    // Handle history state cleanup
-    if (window.history.state && window.history.state.modalOpen === 'domain-modal') {
-      window.history.back();
-    } else {
-      onClose();
-    }
-  };
+
 
   // Prepare pre-filled data for contact form
   const getPrefillData = () => {
@@ -125,7 +114,7 @@ Looking forward to hearing from you!`
 
   const handleBackdropClick = (event) => {
     if (event.target === event.currentTarget) {
-      handleClose();
+      onClose();
     }
   };
 
@@ -226,7 +215,7 @@ Looking forward to hearing from you!`
               )}
             </div>
             <button
-              onClick={handleClose}
+              onClick={onClose}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               aria-label="Close modal"
             >
@@ -322,7 +311,7 @@ Looking forward to hearing from you!`
         <div className="flex-shrink-0 p-6 bg-white border-t border-gray-200">
           <div className="flex flex-col sm:flex-row gap-4">
             <button
-              onClick={handleClose}
+              onClick={onClose}
               className="flex-1 px-6 py-3 bg-sand-dark text-white font-semibold rounded-full text-center hover:bg-gray-700 transform hover:scale-105 transition-all duration-300"
             >
               Close Details
