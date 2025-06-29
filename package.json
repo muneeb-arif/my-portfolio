@@ -16,7 +16,8 @@
   "scripts": {
     "start": "react-scripts start",
     "only-build": "react-scripts build",
-    "build": "react-scripts build && cp public/.htaccess build/.htaccess && zip -r build.zip build/",
+    "update-meta": "node scripts/update-meta-tags.js",
+    "build": "npm run update-meta && react-scripts build && cp public/.htaccess build/.htaccess && zip -r build.zip build/",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve-build": "serve -s build -l 3000",

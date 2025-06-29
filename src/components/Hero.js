@@ -70,6 +70,8 @@ const Hero = ({ isLoading = false }) => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('${heroBannerImage}')`,
+          transform: `scale(${(settings.hero_banner_zoom || 100) / 100})`,
+          transformOrigin: 'center center',
         }}
       />
       
@@ -185,8 +187,8 @@ const Hero = ({ isLoading = false }) => {
                 className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-8 border-white shadow-2xl relative z-10"
                 style={{
                   backgroundImage: `url('${avatarUrl}')`,
-                  backgroundSize: '100%',
-                  backgroundPosition: 'center top',
+                  backgroundSize: `${settings.avatar_zoom || 100}%`,
+                  backgroundPosition: 'center center',
                   backgroundRepeat: 'no-repeat'
                 }}
                 role="img"

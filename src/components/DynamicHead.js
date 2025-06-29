@@ -113,6 +113,53 @@ const DynamicHead = () => {
         document.head.appendChild(newOgImage);
       }
 
+      // Add required Open Graph image properties for WhatsApp
+      // og:image:width
+      let ogImageWidth = document.querySelector('meta[property="og:image:width"]');
+      if (ogImageWidth) {
+        ogImageWidth.setAttribute('content', '400');
+      } else {
+        ogImageWidth = document.createElement('meta');
+        ogImageWidth.setAttribute('property', 'og:image:width');
+        ogImageWidth.setAttribute('content', '400');
+        document.head.appendChild(ogImageWidth);
+      }
+
+      // og:image:height
+      let ogImageHeight = document.querySelector('meta[property="og:image:height"]');
+      if (ogImageHeight) {
+        ogImageHeight.setAttribute('content', '400');
+      } else {
+        ogImageHeight = document.createElement('meta');
+        ogImageHeight.setAttribute('property', 'og:image:height');
+        ogImageHeight.setAttribute('content', '400');
+        document.head.appendChild(ogImageHeight);
+      }
+
+      // og:image:type
+      let ogImageType = document.querySelector('meta[property="og:image:type"]');
+      if (ogImageType) {
+        ogImageType.setAttribute('content', 'image/jpeg');
+      } else {
+        ogImageType = document.createElement('meta');
+        ogImageType.setAttribute('property', 'og:image:type');
+        ogImageType.setAttribute('content', 'image/jpeg');
+        document.head.appendChild(ogImageType);
+      }
+
+      // og:image:secure_url (if HTTPS)
+      if (avatarImage.startsWith('https')) {
+        let ogImageSecureUrl = document.querySelector('meta[property="og:image:secure_url"]');
+        if (ogImageSecureUrl) {
+          ogImageSecureUrl.setAttribute('content', avatarImage);
+        } else {
+          ogImageSecureUrl = document.createElement('meta');
+          ogImageSecureUrl.setAttribute('property', 'og:image:secure_url');
+          ogImageSecureUrl.setAttribute('content', avatarImage);
+          document.head.appendChild(ogImageSecureUrl);
+        }
+      }
+
       // Add og:image:alt for accessibility
       const ogImageAlt = document.querySelector('meta[property="og:image:alt"]');
       if (ogImageAlt) {

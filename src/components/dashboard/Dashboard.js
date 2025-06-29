@@ -9,10 +9,23 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Check if user is already logged in
   useEffect(() => {
     checkAuthState();
+    
+    // Check for verification or reset success in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('verified') === 'true') {
+      setSuccessMessage('✅ Email verified successfully! Welcome to your dashboard.');
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('reset') === 'true') {
+      setSuccessMessage('✅ Password reset successful! You can now access your dashboard.');
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const checkAuthState = async () => {
@@ -48,6 +61,7 @@ const Dashboard = () => {
   const handleAuthChange = (newUser) => {
     setUser(newUser);
     setError('');
+    setSuccessMessage('');
   };
 
   const handleSignOut = async () => {
@@ -103,7 +117,9 @@ const Dashboard = () => {
     <SettingsProvider>
       <DashboardLayout 
         user={user} 
-        onSignOut={handleSignOut} 
+        onSignOut={handleSignOut}
+        successMessage={successMessage}
+        onClearSuccess={() => setSuccessMessage('')}
       />
     </SettingsProvider>
   );

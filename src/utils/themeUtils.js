@@ -404,6 +404,456 @@ export const themes = {
     '--color-error': '#DC143C',
     '--color-info': '#4169E1'
   },
+  hyperpop: {
+    name: 'Hyperpop Dream',
+    // Primary brand colors - Bright neon with pastels
+    '--color-primary': '#FF69B4',
+    '--color-primary-light': '#FFB6DA',
+    '--color-primary-dark': '#E1559E',
+    '--color-primary-subtle': '#FFF0F8',
+    
+    // Secondary colors - Electric green and purple
+    '--color-secondary': '#00FF7F',
+    '--color-secondary-light': '#7FFF9F',
+    '--color-secondary-dark': '#00CC65',
+    
+    // Header and Footer - Neon pink
+    '--color-header-bg': '#FF1493',
+    '--color-header-text': '#FFFFFF',
+    '--color-footer-bg': '#FF1493',
+    '--color-footer-text': '#FFFFFF',
+    
+    // Buttons - Hyperpop vibes
+    '--color-button-primary': '#FF69B4',
+    '--color-button-primary-hover': '#00FF7F',
+    '--color-button-primary-text': '#FFFFFF',
+    '--color-button-secondary': '#00FF7F',
+    '--color-button-secondary-hover': '#FF69B4',
+    '--color-button-secondary-text': '#FFFFFF',
+    
+    // Backgrounds - Clean and bright
+    '--color-background': '#FEFEFE',
+    '--color-surface': '#FFFFFF',
+    '--color-section-bg': '#F8F0FF',
+    '--color-card-bg': '#FFFFFF',
+    
+    // Text colors - High contrast
+    '--color-text': '#1A1A1A',
+    '--color-text-light': '#2D2D2D',
+    '--color-text-muted': '#666666',
+    '--color-text-inverse': '#FFFFFF',
+    
+    // Navigation - Neon accents
+    '--color-nav-active': '#FF69B4',
+    '--color-nav-hover': '#FFB6DA',
+    '--color-nav-text': '#2D2D2D',
+    
+    // Status colors - Hyperpop themed
+    '--color-success': '#00FF7F',
+    '--color-warning': '#FFFF00',
+    '--color-error': '#FF1493',
+    '--color-info': '#00BFFF'
+  },
+  celestial: {
+    name: 'Celestial Gold',
+    // Primary brand colors - Golden yellow inspired
+    '--color-primary': '#EDEAB1',
+    '--color-primary-light': '#F5F2D0',
+    '--color-primary-dark': '#D4CE7F',
+    '--color-primary-subtle': '#FFFEF5',
+    
+    // Secondary colors - Warm golds and amber
+    '--color-secondary': '#FFD700',
+    '--color-secondary-light': '#FFED4E',
+    '--color-secondary-dark': '#DAA520',
+    
+    // Header and Footer - Deep gold
+    '--color-header-bg': '#B8860B',
+    '--color-header-text': '#FFFFFF',
+    '--color-footer-bg': '#B8860B',
+    '--color-footer-text': '#FFFFFF',
+    
+    // Buttons - Golden shine
+    '--color-button-primary': '#EDEAB1',
+    '--color-button-primary-hover': '#FFD700',
+    '--color-button-primary-text': '#2D2D2D',
+    '--color-button-secondary': '#FFD700',
+    '--color-button-secondary-hover': '#EDEAB1',
+    '--color-button-secondary-text': '#2D2D2D',
+    
+    // Backgrounds - Warm celestial
+    '--color-background': '#FFFEF7',
+    '--color-surface': '#FFFFFF',
+    '--color-section-bg': '#FFF9E6',
+    '--color-card-bg': '#FFFFFF',
+    
+    // Text colors - Rich contrast
+    '--color-text': '#2D2D2D',
+    '--color-text-light': '#4A4A4A',
+    '--color-text-muted': '#777777',
+    '--color-text-inverse': '#FFFFFF',
+    
+    // Navigation - Golden accents
+    '--color-nav-active': '#EDEAB1',
+    '--color-nav-hover': '#F5F2D0',
+    '--color-nav-text': '#4A4A4A',
+    
+    // Status colors - Celestial themed
+    '--color-success': '#32CD32',
+    '--color-warning': '#FF8C00',
+    '--color-error': '#DC143C',
+    '--color-info': '#4169E1'
+  },
+  retroblue: {
+    name: 'Retro Blue',
+    // Primary brand colors - Classic retro blue
+    '--color-primary': '#71ADBA',
+    '--color-primary-light': '#A3C9D3',
+    '--color-primary-dark': '#5A8A95',
+    '--color-primary-subtle': '#E8F4F6',
+    
+    // Secondary colors - Vintage orange and cream
+    '--color-secondary': '#FF8C42',
+    '--color-secondary-light': '#FFB380',
+    '--color-secondary-dark': '#E07A3B',
+    
+    // Header and Footer - Deep retro blue
+    '--color-header-bg': '#2E5C6E',
+    '--color-header-text': '#FFFFFF',
+    '--color-footer-bg': '#2E5C6E',
+    '--color-footer-text': '#FFFFFF',
+    
+    // Buttons - Retro vibes
+    '--color-button-primary': '#71ADBA',
+    '--color-button-primary-hover': '#FF8C42',
+    '--color-button-primary-text': '#FFFFFF',
+    '--color-button-secondary': '#FF8C42',
+    '--color-button-secondary-hover': '#71ADBA',
+    '--color-button-secondary-text': '#FFFFFF',
+    
+    // Backgrounds - Vintage warmth
+    '--color-background': '#FEFEFE',
+    '--color-surface': '#FFFFFF',
+    '--color-section-bg': '#F7F9FA',
+    '--color-card-bg': '#FFFFFF',
+    
+    // Text colors - Retro readability
+    '--color-text': '#2D3748',
+    '--color-text-light': '#4A5568',
+    '--color-text-muted': '#718096',
+    '--color-text-inverse': '#FFFFFF',
+    
+    // Navigation - Retro accents
+    '--color-nav-active': '#71ADBA',
+    '--color-nav-hover': '#A3C9D3',
+    '--color-nav-text': '#4A5568',
+    
+    // Status colors - Retro themed
+    '--color-success': '#38A169',
+    '--color-warning': '#DD6B20',
+    '--color-error': '#E53E3E',
+    '--color-info': '#3182CE'
+  },
+  flamingo: {
+    name: 'Electric Flamingo',
+    // Primary brand colors - Hot pink and electric yellow
+    '--color-primary': '#FF654F',
+    '--color-primary-light': '#FF8A75',
+    '--color-primary-dark': '#E55347',
+    '--color-primary-subtle': '#FFF0EE',
+    
+    // Secondary colors - Bright yellow and magenta
+    '--color-secondary': '#FFFF00',
+    '--color-secondary-light': '#FFFF66',
+    '--color-secondary-dark': '#CCCC00',
+    
+    // Header and Footer - Electric pink
+    '--color-header-bg': '#FF1493',
+    '--color-header-text': '#FFFFFF',
+    '--color-footer-bg': '#FF1493',
+    '--color-footer-text': '#FFFFFF',
+    
+    // Buttons - Electric energy
+    '--color-button-primary': '#FF654F',
+    '--color-button-primary-hover': '#FFFF00',
+    '--color-button-primary-text': '#000000',
+    '--color-button-secondary': '#FFFF00',
+    '--color-button-secondary-hover': '#FF654F',
+    '--color-button-secondary-text': '#000000',
+    
+    // Backgrounds - Clean electric
+    '--color-background': '#FEFEFE',
+    '--color-surface': '#FFFFFF',
+    '--color-section-bg': '#FFFACD',
+    '--color-card-bg': '#FFFFFF',
+    
+    // Text colors - High contrast
+    '--color-text': '#1A1A1A',
+    '--color-text-light': '#2D2D2D',
+    '--color-text-muted': '#666666',
+    '--color-text-inverse': '#FFFFFF',
+    
+    // Navigation - Electric accents
+    '--color-nav-active': '#FF654F',
+    '--color-nav-hover': '#FFFF66',
+    '--color-nav-text': '#2D2D2D',
+    
+    // Status colors - Electric themed
+    '--color-success': '#00FF00',
+    '--color-warning': '#FF8C00',
+    '--color-error': '#FF1493',
+    '--color-info': '#00BFFF'
+  },
+  riverbed: {
+    name: 'Two-Tone Riverbed',
+    // Primary brand colors - Aquatic blue and coffee brown
+    '--color-primary': '#4682B4',
+    '--color-primary-light': '#87CEEB',
+    '--color-primary-dark': '#2F4F4F',
+    '--color-primary-subtle': '#E0F6FF',
+    
+    // Secondary colors - Coffee and earth tones
+    '--color-secondary': '#8B4513',
+    '--color-secondary-light': '#CD853F',
+    '--color-secondary-dark': '#654321',
+    
+    // Header and Footer - Deep water
+    '--color-header-bg': '#2F4F4F',
+    '--color-header-text': '#E0F6FF',
+    '--color-footer-bg': '#2F4F4F',
+    '--color-footer-text': '#E0F6FF',
+    
+    // Buttons - Natural flow
+    '--color-button-primary': '#4682B4',
+    '--color-button-primary-hover': '#8B4513',
+    '--color-button-primary-text': '#FFFFFF',
+    '--color-button-secondary': '#8B4513',
+    '--color-button-secondary-hover': '#4682B4',
+    '--color-button-secondary-text': '#FFFFFF',
+    
+    // Backgrounds - River stones
+    '--color-background': '#F8F8FF',
+    '--color-surface': '#FFFFFF',
+    '--color-section-bg': '#F0F8FF',
+    '--color-card-bg': '#FFFFFF',
+    
+    // Text colors - Natural contrast
+    '--color-text': '#2F4F4F',
+    '--color-text-light': '#4682B4',
+    '--color-text-muted': '#708090',
+    '--color-text-inverse': '#FFFFFF',
+    
+    // Navigation - River flow
+    '--color-nav-active': '#4682B4',
+    '--color-nav-hover': '#87CEEB',
+    '--color-nav-text': '#4682B4',
+    
+    // Status colors - Natural themed
+    '--color-success': '#228B22',
+    '--color-warning': '#DAA520',
+    '--color-error': '#B22222',
+    '--color-info': '#4682B4'
+  },
+  mocha: {
+    name: 'Mocha Elegance',
+    // Primary brand colors - Rich coffee and cream
+    '--color-primary': '#8B4513',
+    '--color-primary-light': '#D2B48C',
+    '--color-primary-dark': '#654321',
+    '--color-primary-subtle': '#FFF8DC',
+    
+    // Secondary colors - Warm earth tones
+    '--color-secondary': '#DEB887',
+    '--color-secondary-light': '#F5DEB3',
+    '--color-secondary-dark': '#BC9A6A',
+    
+    // Header and Footer - Rich mocha
+    '--color-header-bg': '#654321',
+    '--color-header-text': '#FFF8DC',
+    '--color-footer-bg': '#654321',
+    '--color-footer-text': '#FFF8DC',
+    
+    // Buttons - Coffee warmth
+    '--color-button-primary': '#8B4513',
+    '--color-button-primary-hover': '#654321',
+    '--color-button-primary-text': '#FFFFFF',
+    '--color-button-secondary': '#DEB887',
+    '--color-button-secondary-hover': '#BC9A6A',
+    '--color-button-secondary-text': '#654321',
+    
+    // Backgrounds - Cream and warmth
+    '--color-background': '#FFFEF7',
+    '--color-surface': '#FFFFFF',
+    '--color-section-bg': '#FFF8DC',
+    '--color-card-bg': '#FFFFFF',
+    
+    // Text colors - Coffee contrast
+    '--color-text': '#3D2914',
+    '--color-text-light': '#654321',
+    '--color-text-muted': '#8B7355',
+    '--color-text-inverse': '#FFFFFF',
+    
+    // Navigation - Mocha accents
+    '--color-nav-active': '#8B4513',
+    '--color-nav-hover': '#D2B48C',
+    '--color-nav-text': '#654321',
+    
+    // Status colors - Warm themed
+    '--color-success': '#9ACD32',
+    '--color-warning': '#FF8C00',
+    '--color-error': '#CD5C5C',
+    '--color-info': '#4682B4'
+  },
+  citrus: {
+    name: 'Citrus Burst',
+    // Primary brand colors - Orange zest and lime
+    '--color-primary': '#FF8C00',
+    '--color-primary-light': '#FFB347',
+    '--color-primary-dark': '#FF7F00',
+    '--color-primary-subtle': '#FFF8E1',
+    
+    // Secondary colors - Lime green and grapefruit
+    '--color-secondary': '#32CD32',
+    '--color-secondary-light': '#90EE90',
+    '--color-secondary-dark': '#228B22',
+    
+    // Header and Footer - Orange zest
+    '--color-header-bg': '#FF7F00',
+    '--color-header-text': '#FFFFFF',
+    '--color-footer-bg': '#FF7F00',
+    '--color-footer-text': '#FFFFFF',
+    
+    // Buttons - Citrus energy
+    '--color-button-primary': '#FF8C00',
+    '--color-button-primary-hover': '#32CD32',
+    '--color-button-primary-text': '#FFFFFF',
+    '--color-button-secondary': '#32CD32',
+    '--color-button-secondary-hover': '#FF8C00',
+    '--color-button-secondary-text': '#FFFFFF',
+    
+    // Backgrounds - Fresh and bright
+    '--color-background': '#FFFEF7',
+    '--color-surface': '#FFFFFF',
+    '--color-section-bg': '#F0FFF0',
+    '--color-card-bg': '#FFFFFF',
+    
+    // Text colors - Fresh contrast
+    '--color-text': '#2D4A2D',
+    '--color-text-light': '#4A6B4A',
+    '--color-text-muted': '#6B8E6B',
+    '--color-text-inverse': '#FFFFFF',
+    
+    // Navigation - Citrus fresh
+    '--color-nav-active': '#FF8C00',
+    '--color-nav-hover': '#90EE90',
+    '--color-nav-text': '#4A6B4A',
+    
+    // Status colors - Fresh themed
+    '--color-success': '#32CD32',
+    '--color-warning': '#FF8C00',
+    '--color-error': '#FF6347',
+    '--color-info': '#00BFFF'
+  },
+  midnight: {
+    name: 'Midnight Luxury',
+    // Primary brand colors - Luxury dark with gold accents
+    '--color-primary': '#1C1C1C',
+    '--color-primary-light': '#4A4A4A',
+    '--color-primary-dark': '#0A0A0A',
+    '--color-primary-subtle': '#F5F5F5',
+    
+    // Secondary colors - Gold and bronze
+    '--color-secondary': '#FFD700',
+    '--color-secondary-light': '#FFED4E',
+    '--color-secondary-dark': '#DAA520',
+    
+    // Header and Footer - Pure black luxury
+    '--color-header-bg': '#000000',
+    '--color-header-text': '#FFD700',
+    '--color-footer-bg': '#000000',
+    '--color-footer-text': '#FFD700',
+    
+    // Buttons - Luxury gold
+    '--color-button-primary': '#FFD700',
+    '--color-button-primary-hover': '#FFA500',
+    '--color-button-primary-text': '#000000',
+    '--color-button-secondary': '#1C1C1C',
+    '--color-button-secondary-hover': '#4A4A4A',
+    '--color-button-secondary-text': '#FFD700',
+    
+    // Backgrounds - Midnight elegance
+    '--color-background': '#0A0A0A',
+    '--color-surface': '#1C1C1C',
+    '--color-section-bg': '#2A2A2A',
+    '--color-card-bg': '#1C1C1C',
+    
+    // Text colors - Luxury contrast
+    '--color-text': '#FFFFFF',
+    '--color-text-light': '#E0E0E0',
+    '--color-text-muted': '#B0B0B0',
+    '--color-text-inverse': '#000000',
+    
+    // Navigation - Gold luxury
+    '--color-nav-active': '#FFD700',
+    '--color-nav-hover': '#FFED4E',
+    '--color-nav-text': '#E0E0E0',
+    
+    // Status colors - Luxury themed
+    '--color-success': '#50C878',
+    '--color-warning': '#FFD700',
+    '--color-error': '#FF6B6B',
+    '--color-info': '#87CEEB'
+  },
+  forest: {
+    name: 'Dark Forest',
+    // Primary brand colors - Deep forest greens
+    '--color-primary': '#2F4F2F',
+    '--color-primary-light': '#8FBC8F',
+    '--color-primary-dark': '#1C3A1C',
+    '--color-primary-subtle': '#F0FFF0',
+    
+    // Secondary colors - Mossy and earthy
+    '--color-secondary': '#6B8E23',
+    '--color-secondary-light': '#9ACD32',
+    '--color-secondary-dark': '#556B2F',
+    
+    // Header and Footer - Deep forest
+    '--color-header-bg': '#1C3A1C',
+    '--color-header-text': '#F0FFF0',
+    '--color-footer-bg': '#1C3A1C',
+    '--color-footer-text': '#F0FFF0',
+    
+    // Buttons - Forest growth
+    '--color-button-primary': '#2F4F2F',
+    '--color-button-primary-hover': '#6B8E23',
+    '--color-button-primary-text': '#FFFFFF',
+    '--color-button-secondary': '#6B8E23',
+    '--color-button-secondary-hover': '#2F4F2F',
+    '--color-button-secondary-text': '#FFFFFF',
+    
+    // Backgrounds - Natural earth
+    '--color-background': '#FAFFF0',
+    '--color-surface': '#FFFFFF',
+    '--color-section-bg': '#F0FFF0',
+    '--color-card-bg': '#FFFFFF',
+    
+    // Text colors - Forest contrast
+    '--color-text': '#1C3A1C',
+    '--color-text-light': '#2F4F2F',
+    '--color-text-muted': '#556B2F',
+    '--color-text-inverse': '#FFFFFF',
+    
+    // Navigation - Forest path
+    '--color-nav-active': '#2F4F2F',
+    '--color-nav-hover': '#8FBC8F',
+    '--color-nav-text': '#2F4F2F',
+    
+    // Status colors - Nature themed
+    '--color-success': '#32CD32',
+    '--color-warning': '#DAA520',
+    '--color-error': '#B22222',
+    '--color-info': '#4682B4'
+  },
   tropical: {
     name: 'Tropical Vibes',
     // Primary brand colors - Coral and turquoise
@@ -443,7 +893,7 @@ export const themes = {
     '--color-text-muted': '#708090',
     '--color-text-inverse': '#FFFFFF',
     
-    // Navigation - Tropical accents
+        // Navigation - Tropical accents
     '--color-nav-active': '#FF6F61',
     '--color-nav-hover': '#7FFFD4',
     '--color-nav-text': '#556B5B',

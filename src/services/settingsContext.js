@@ -33,13 +33,16 @@ export const SettingsProvider = ({ children }) => {
     banner_title: 'Principal Software Engineer',
     banner_tagline: 'I craft dreams, not projects.',
     site_name: 'Portfolio',
+    site_url: 'https://your-domain.com',
     
     // Visual Assets
     logo_type: 'initials',
     logo_initials: 'MA',
     logo_image: '',
     hero_banner_image: '/images/hero-bg.png',
+    hero_banner_zoom: 100,
     avatar_image: '/images/profile/avatar.jpeg',
+    avatar_zoom: 100,
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
     
     // Social & Contact

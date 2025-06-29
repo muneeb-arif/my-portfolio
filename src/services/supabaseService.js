@@ -4,19 +4,106 @@ import { fallbackUtils } from '../utils/fallbackUtils';
 
 // ================ AUTH OPERATIONS ================
 
+// Helper function to get site URL from database settings
+const getSiteUrlFromSettings = async () => {
+  try {
+    // First try to get the portfolio owner from environment config
+    const envEmail = process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
+    let portfolioConfig = null;
+
+    if (envEmail) {
+      // Try to get the specific owner from env email first
+      const { data, error } = await supabase
+        .from('portfolio_config')
+        .select('owner_user_id')
+        .eq('owner_email', envEmail)
+        .eq('is_active', true)
+        .single();
+      
+      if (!error && data) {
+        portfolioConfig = data;
+      }
+    }
+
+    // If no env email config found, get any active portfolio config
+    if (!portfolioConfig) {
+      const { data, error } = await supabase
+        .from('portfolio_config')
+        .select('owner_user_id')
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+      
+      if (error || !data) {
+        return window.location.origin;
+      }
+      portfolioConfig = data;
+    }
+
+    // Get site_url from settings
+    const { data: settingsData, error: settingsError } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('user_id', portfolioConfig.owner_user_id)
+      .eq('key', 'site_url')
+      .single();
+
+    if (settingsError || !settingsData?.value) {
+      // Fallback to window location if no site_url setting found
+      return window.location.origin;
+    }
+
+    return settingsData.value;
+  } catch (error) {
+    console.warn('⚠️ Could not fetch site URL from settings, using fallback:', error);
+    return window.location.origin;
+  }
+};
+
 export const authService = {
   // Sign up new user
   async signUp(email, password, userData = {}) {
     try {
+      // Get the site URL from database settings
+      const siteUrl = await getSiteUrlFromSettings();
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData // Additional user metadata
+          data: userData, // Additional user metadata
+          emailRedirectTo: `${siteUrl}/dashboard?verified=true`
         }
       });
       
       if (error) throw error;
+      
+      // Auto-insert new user into portfolio_config table with active state
+      if (data.user && data.user.id) {
+        try {
+          console.log('🔄 Auto-configuring portfolio for new user:', email);
+          const { error: configError } = await supabase
+            .from('portfolio_config')
+            .insert({
+              owner_email: email,
+              owner_user_id: data.user.id,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          
+          if (configError) {
+            console.warn('⚠️ Failed to auto-configure portfolio:', configError.message);
+            // Don't fail the signup if portfolio config fails
+          } else {
+            console.log('✅ Portfolio automatically configured for new user');
+          }
+        } catch (configError) {
+          console.warn('⚠️ Error during portfolio auto-configuration:', configError);
+          // Continue with successful signup even if portfolio config fails
+        }
+      }
+      
       return { success: true, user: data.user };
     } catch (error) {
       // console.error('Sign up error:', error);
@@ -67,7 +154,12 @@ export const authService = {
   // Reset password
   async resetPassword(email) {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      // Get the site URL from database settings
+      const siteUrl = await getSiteUrlFromSettings();
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${siteUrl}/dashboard?reset=true`
+      });
       if (error) throw error;
       return { success: true };
     } catch (error) {

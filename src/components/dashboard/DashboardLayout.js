@@ -16,7 +16,7 @@ import './CategoriesManager.css';
 import './DomainsTechnologiesManager.css';
 import './NicheManager.css';
 
-const DashboardLayout = ({ user, onSignOut }) => {
+const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) => {
   const [activeSection, setActiveSection] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projects, setProjects] = useState([]);
@@ -51,6 +51,16 @@ const DashboardLayout = ({ user, onSignOut }) => {
     messages: [],
     isComplete: false
   });
+
+  // Auto-clear success message after 5 seconds
+  useEffect(() => {
+    if (successMessage && onClearSuccess) {
+      const timer = setTimeout(() => {
+        onClearSuccess();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, onClearSuccess]);
 
   // Navigation items
   const navItems = [
@@ -501,6 +511,22 @@ const DashboardLayout = ({ user, onSignOut }) => {
         </button>
       </header>
 
+      {/* Success Message */}
+      {successMessage && (
+        <div className="success-banner">
+          <div className="success-content">
+            <span className="success-text">{successMessage}</span>
+            <button 
+              className="success-close"
+              onClick={onClearSuccess}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
@@ -813,10 +839,13 @@ const AppearanceSection = () => {
     logo_initials: 'MA',
     logo_image: '',
     hero_banner_image: '/images/hero-bg.png',
+    hero_banner_zoom: 100,
     avatar_image: '/images/profile/avatar.jpeg',
+    avatar_zoom: 100,
     banner_name: 'Muneeb Arif',
     banner_title: 'Principal Software Engineer',
     banner_tagline: 'I craft dreams, not projects.',
+    site_url: 'https://your-domain.com',
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
     social_email: 'muneeb@example.com',
     social_github: 'https://github.com/muneebarif',
@@ -1150,6 +1179,16 @@ const AppearanceSection = () => {
                      rows={3}
                    />
                  </div>
+                 <div className="form-group">
+                   <label>Site URL</label>
+                   <input
+                     type="url"
+                     value={localSettings.site_url || ''}
+                     onChange={(e) => handleInputChange('site_url', e.target.value)}
+                     placeholder="https://your-domain.com"
+                   />
+                   <small className="form-help">Used for social media meta tags and SEO</small>
+                 </div>
                </div>
 
                {/* Hero Banner Section */}
@@ -1167,6 +1206,23 @@ const AppearanceSection = () => {
                        <p>Current: {localSettings.hero_banner_image.split('/').pop()}</p>
                      </div>
                    )}
+                 </div>
+                 <div className="form-group">
+                   <label>Banner Zoom ({localSettings.hero_banner_zoom || 100}%)</label>
+                   <input
+                     type="range"
+                     min="50"
+                     max="200"
+                     value={localSettings.hero_banner_zoom || 100}
+                     onChange={(e) => handleInputChange('hero_banner_zoom', parseInt(e.target.value))}
+                     className="zoom-slider"
+                   />
+                   <div className="zoom-labels">
+                     <span>50%</span>
+                     <span>100%</span>
+                     <span>200%</span>
+                   </div>
+                   <small className="form-help">Adjust image zoom level for better positioning</small>
                  </div>
                </div>
              </div>
@@ -1188,6 +1244,23 @@ const AppearanceSection = () => {
                        <p>Current: {localSettings.avatar_image.split('/').pop()}</p>
                      </div>
                    )}
+                 </div>
+                 <div className="form-group">
+                   <label>Avatar Zoom ({localSettings.avatar_zoom || 100}%)</label>
+                   <input
+                     type="range"
+                     min="50"
+                     max="200"
+                     value={localSettings.avatar_zoom || 100}
+                     onChange={(e) => handleInputChange('avatar_zoom', parseInt(e.target.value))}
+                     className="zoom-slider"
+                   />
+                   <div className="zoom-labels">
+                     <span>50%</span>
+                     <span>100%</span>
+                     <span>200%</span>
+                   </div>
+                   <small className="form-help">Adjust avatar zoom level for better cropping</small>
                  </div>
                </div>
 
