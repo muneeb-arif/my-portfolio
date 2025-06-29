@@ -9,6 +9,7 @@ import DomainsNiche from './components/DomainsNiche';
 import ProjectLifeCycle from './components/ProjectLifeCycle';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
+import ScrollToTop from './components/ScrollToTop';
 import Dashboard from './components/dashboard/Dashboard';
 import DynamicHead from './components/DynamicHead';
 import Toast from './components/Toast';
@@ -409,6 +410,9 @@ function App() {
 
         {/* Mobile Bottom Navigation */}
         <MobileBottomNav />
+
+        {/* Scroll to Top Button */}
+        <ScrollToTop />
 
         {selectedProject && (
           <Modal

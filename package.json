@@ -15,7 +15,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && cp .htaccess build/.htaccess",
+    "only-build": "react-scripts build",
+    "build": "react-scripts build && cp public/.htaccess build/.htaccess && zip -r build.zip build/",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve-build": "serve -s build -l 3000",

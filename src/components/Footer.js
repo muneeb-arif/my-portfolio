@@ -38,7 +38,7 @@ const Footer = () => {
 
   return (
     <>
-      <footer className="py-12 pb-24 lg:pb-12 relative overflow-hidden theme-footer">
+      <footer className="pt-12 pb-24 lg:pb-12 relative overflow-hidden theme-footer">
         {/* Background Pattern - Behind content */}
         <div className="absolute inset-0 opacity-5 z-0 pointer-events-none">
           <div className="absolute inset-0" 

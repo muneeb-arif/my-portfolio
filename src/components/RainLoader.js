@@ -373,11 +373,11 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
           padding: 0;
         }
 
-        /* Enhanced mobile centering - Remove problematic viewport units */
+        /* Enhanced mobile centering - Keep consistent fixed positioning */
         @media (max-width: 768px) {
           .bicycle-center {
-            /* Use absolute positioning within the fixed container for better mobile support */
-            position: absolute;
+            /* Keep fixed positioning for reliable centering */
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -391,24 +391,6 @@ const RainLoader = ({ isLoading, message = "Loading..." }) => {
             /* Force hardware acceleration for smoother animation */
             will-change: transform;
             backface-visibility: hidden;
-          }
-        }
-
-        /* Extra safe centering for very small screens */
-        @media (max-width: 480px) {
-          .bicycle-center {
-            /* Double-ensure centering with flexbox backup */
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            margin: 0;
-            padding: 0;
           }
         }
 
