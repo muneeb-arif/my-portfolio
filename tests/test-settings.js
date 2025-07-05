@@ -1,5 +1,6 @@
 // Test script for settings functionality
 const { createClient } = require('@supabase/supabase-js');
+const { getCurrentUser } = require('../src/services/authUtils');
 
 // You'll need to add your Supabase credentials here for testing
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
@@ -17,12 +18,7 @@ async function testSettings() {
       // console.log('🧪 Testing Supabase connection...');
     
     // Test authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError) {
-      // console.log('❌ Auth error:', authError.message);
-      return;
-    }
-    
+    const user = await getCurrentUser();
     if (!user) {
       // console.log('❌ No authenticated user found');
       return;

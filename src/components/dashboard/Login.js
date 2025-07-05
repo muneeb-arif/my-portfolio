@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { authService } from '../../services/supabaseService';
+import React, { useState } from 'react';
+import { useAuth } from '../../services/authContext';
 import './Login.css';
 
-const Login = ({ onAuthChange }) => {
+const Login = () => {
+  const { signIn, signUp, resetPassword } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -69,16 +70,16 @@ const Login = ({ onAuthChange }) => {
     try {
       if (isLogin) {
         // Sign in
-        const result = await authService.signIn(formData.email, formData.password);
+        const result = await signIn(formData.email, formData.password);
         if (result.success) {
           setSuccess('Welcome back!');
-          onAuthChange?.(result.user);
+          // No need to call onAuthChange - the context will handle state updates
         } else {
           setError(result.error || 'Failed to sign in');
         }
       } else {
         // Sign up
-        const result = await authService.signUp(
+        const result = await signUp(
           formData.email, 
           formData.password,
           { full_name: formData.fullName }
@@ -110,7 +111,7 @@ const Login = ({ onAuthChange }) => {
     setError('');
 
     try {
-      const result = await authService.resetPassword(formData.email);
+      const result = await resetPassword(formData.email);
       if (result.success) {
         setSuccess('Password reset email sent! Check your inbox.');
         setShowResetForm(false);
@@ -142,18 +143,7 @@ const Login = ({ onAuthChange }) => {
     setFormData({ email: '', password: '', confirmPassword: '', fullName: '' });
   };
 
-  // Listen for auth changes
-  useEffect(() => {
-    const { data: authListener } = authService.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        onAuthChange?.(session.user);
-      }
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
-  }, [onAuthChange]);
+  // Auth state changes are now handled by the centralized AuthContext
 
   if (showResetForm) {
     return (

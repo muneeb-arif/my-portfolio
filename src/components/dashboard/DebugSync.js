@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../config/supabase';
+import { getCurrentUser } from '../../services/authUtils';
 
 const DebugSync = () => {
   const [logs, setLogs] = useState([]);
@@ -64,11 +65,9 @@ const DebugSync = () => {
       
       // Test 4: Check authentication
       addLog('🔐 Test 4: Checking authentication...', 'info');
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       
-      if (authError) {
-        addLog(`❌ Auth error: ${authError.message}`, 'error');
-      } else if (user) {
+      if (user) {
         addLog(`✅ Authenticated as: ${user.email}`, 'success');
       } else {
         addLog('⚠️ Not authenticated', 'warning');

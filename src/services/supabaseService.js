@@ -1,6 +1,7 @@
 import { supabase, TABLES, BUCKETS } from '../config/supabase';
 import { fallbackDataService } from './fallbackDataService';
 import { fallbackUtils } from '../utils/fallbackUtils';
+import { getCurrentUser } from './authUtils';
 
 // ================ AUTH OPERATIONS ================
 
@@ -140,8 +141,9 @@ export const authService = {
   },
 
   // Get current user
-  getCurrentUser() {
-    return supabase.auth.getUser();
+  async getCurrentUser() {
+    const user = await getCurrentUser();
+    return { data: { user }, error: null };
   },
 
   // Listen to auth changes
@@ -175,7 +177,7 @@ export const projectService = {
   // Get all projects for current user
   async getProjects() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -221,7 +223,7 @@ export const projectService = {
   // Create new project
   async createProject(projectData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -297,7 +299,7 @@ export const imageService = {
   // Upload single image
   async uploadImage(file, bucket = BUCKETS.IMAGES) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       // Generate unique filename
@@ -363,7 +365,7 @@ export const imageService = {
   // Save image metadata to database
   async saveImageMetadata(projectId, imageData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -417,7 +419,7 @@ export const settingsService = {
   async getSettings() {
     try {
       // console.log('🔍 Getting user from auth...');
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) {
       // console.log('❌ No authenticated user found');
         throw new Error('Not authenticated');
@@ -454,7 +456,7 @@ export const settingsService = {
   // Get a specific setting
   async getSetting(key) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -475,7 +477,7 @@ export const settingsService = {
   // Update or create a setting
   async updateSetting(key, value) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
@@ -497,7 +499,7 @@ export const settingsService = {
   // Update multiple settings at once
   async updateMultipleSettings(settings) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const settingsData = Object.entries(settings).map(([key, value]) => ({
@@ -521,7 +523,7 @@ export const settingsService = {
   // Delete a setting
   async deleteSetting(key) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
@@ -565,7 +567,7 @@ export const metaService = {
   // Get categories for authenticated user (dashboard mode)
   async getCategories() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -588,7 +590,7 @@ export const metaService = {
   // Add category for authenticated user
   async addCategory(category) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -611,7 +613,7 @@ export const metaService = {
   // Update category
   async updateCategory(id, updates) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -632,7 +634,7 @@ export const metaService = {
   // Delete category
   async deleteCategory(id) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       // First check if any projects use this category
@@ -663,7 +665,7 @@ export const metaService = {
   // Get technologies
   async getTechnologies() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -683,7 +685,7 @@ export const metaService = {
   // Add technology
   async addTechnology(technology) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -710,7 +712,7 @@ export const domainsTechnologiesService = {
   // Get all domains and technologies for authenticated user
   async getDomainsTechnologies() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -736,7 +738,7 @@ export const domainsTechnologiesService = {
   // Get domains only for authenticated user
   async getDomains() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -763,7 +765,7 @@ export const domainsTechnologiesService = {
   // Get technologies only for authenticated user
   async getTechnologies() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -790,7 +792,7 @@ export const domainsTechnologiesService = {
   // Create new domain or technology
   async createDomainTechnology(itemData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -847,7 +849,7 @@ export const domainsTechnologiesService = {
   // Add skill to technology
   async addSkill(techId, skillData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -1012,7 +1014,7 @@ export const nicheService = {
   // Get all niches for authenticated user (dashboard mode)
   async getNiches() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -1052,7 +1054,7 @@ export const nicheService = {
   // Create new niche for authenticated user
   async createNiche(nicheData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -1362,8 +1364,8 @@ export const userResolutionService = {
   // Get current authenticated user info
   async getCurrentUserInfo() {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) return null;
+      const user = await getCurrentUser();
+      if (!user) return null;
       
       return {
         id: user.id,
@@ -1634,21 +1636,6 @@ export const publicPortfolioService = {
   }
 };
 
-// ================ GLOBAL AUTH STATE LISTENER ================
-// Clear cache when auth state changes to ensure correct data loading
-
-// Set up global auth state listener
-supabase.auth.onAuthStateChange((event, session) => {
-      // console.log('🔄 Auth state changed:', event);
-  
-  // Clear caches when auth state changes
-  publicPortfolioService.clearCache();
-  portfolioConfigService.clearCache();
-  
-  // Additional cleanup based on event type
-  if (event === 'SIGNED_OUT') {
-      // console.log('👋 User signed out - cache cleared for public mode');
-  } else if (event === 'SIGNED_IN') {
-      // console.log('👋 User signed in - cache cleared for dashboard mode');
-  }
-}); 
+// ================ CACHE MANAGEMENT ================
+// Cache clearing is now handled by the centralized AuthContext
+// No need for additional auth state listeners here 

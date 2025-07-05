@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase';
 import { fallbackDataService } from './fallbackDataService';
+import { getCurrentUser } from './authUtils';
 
 export const syncService = {
   // Reset/Clear ALL user data
@@ -16,8 +17,8 @@ export const syncService = {
       
       logProgress('🔍 Authenticating user...', 'info');
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
+      const user = await getCurrentUser();
+      if (!user) {
         throw new Error('User not authenticated');
       }
 
@@ -137,8 +138,8 @@ export const syncService = {
 
       logProgress('🔍 Authenticating user...', 'info');
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
+      const user = await getCurrentUser();
+      if (!user) {
         throw new Error('User not authenticated');
       }
 
@@ -590,8 +591,8 @@ export const syncService = {
       
       logProgress('🔍 Authenticating user...', 'info');
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
+      const user = await getCurrentUser();
+      if (!user) {
         throw new Error('User not authenticated');
       }
 
@@ -739,8 +740,8 @@ export const syncService = {
 
       logProgress('🔍 Authenticating user...', 'info');
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
+      const user = await getCurrentUser();
+      if (!user) {
         throw new Error('User not authenticated');
       }
 

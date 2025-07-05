@@ -16,6 +16,7 @@ import Toast from './components/Toast';
 import RainLoader from './components/RainLoader';
 import portfolioService from './services/portfolioService';
 import { SettingsProvider } from './services/settingsContext';
+import { AuthProvider } from './services/authContext';
 import { checkEnvMissing } from './config/supabase';
 
 function App() {
@@ -231,9 +232,10 @@ function App() {
   }
 
   return (
-    <SettingsProvider>
-      <DynamicHead />
-      <div className="App">
+    <AuthProvider>
+      <SettingsProvider>
+        <DynamicHead />
+        <div className="App">
         {/* iOS-style Full Screen Loading */}
         <RainLoader isLoading={loading} message="Loading your portfolio..." />
 
@@ -424,6 +426,7 @@ function App() {
         )}
       </div>
     </SettingsProvider>
+    </AuthProvider>
   );
 }
 
