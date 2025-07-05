@@ -2,23 +2,27 @@ import React, { useState, useEffect } from 'react';
 import TechnologyCard from './TechnologyCard';
 import portfolioService from '../services/portfolioService';
 
-const Technologies = () => {
-  const [technologiesData, setTechnologiesData] = useState([]);
+const Technologies = ({ additionalDataLoading }) => {
+  const [technologies, setTechnologies] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadTechnologies();
-  }, []);
+    // Only load technologies after additional data loading is complete
+    if (!additionalDataLoading) {
+      loadTechnologies();
+    }
+  }, [additionalDataLoading]);
 
   const loadTechnologies = async () => {
     try {
+      console.log('📊 Technologies: Loading technologies data...');
       setLoading(true);
       const data = await portfolioService.getDomainsTechnologies();
-      setTechnologiesData(data);
+      setTechnologies(data);
+      console.log('📊 Technologies: Loaded', data?.length || 0, 'technologies');
     } catch (error) {
-      // console.error('Error loading technologies:', error);
-      // Fallback to empty array if there's an error
-      setTechnologiesData([]);
+      console.error('Error loading technologies:', error);
+      setTechnologies([]);
     } finally {
       setLoading(false);
     }
@@ -73,7 +77,7 @@ const Technologies = () => {
   }
 
   // Hide the entire section if no technologies data
-  if (!loading && technologiesData.length === 0) {
+  if (!loading && technologies.length === 0) {
     return null;
   }
 
@@ -102,9 +106,9 @@ const Technologies = () => {
         </div>
 
         {/* Technologies Grid - 4x2 layout */}
-        {technologiesData.length > 0 ? (
+        {technologies.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {technologiesData.map((tech, index) => {
+            {technologies.map((tech, index) => {
               // Use predefined background images or gradients instead of random Unsplash URLs
               const backgroundImages = [
                 `/images/domains/web-development.jpeg`,

@@ -5,8 +5,8 @@ import { FileText, Mail } from 'lucide-react';
 import { useSettings } from '../services/settingsContext';
 import portfolioService from '../services/portfolioService';
 
-const Header = () => {
-  const { getSetting } = useSettings();
+const Header = ({ additionalDataLoading }) => {
+  const { getSetting, loading: settingsLoading, initialized: settingsInitialized } = useSettings();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -16,7 +16,7 @@ const Header = () => {
     hasProjects: false,
     hasTechnologies: false,
     hasDomains: false,
-    loading: true
+    loading: false
   });
 
   // Handle scroll effect for header background
@@ -29,35 +29,46 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check data availability for each section
+  // Wait for settings to load, then check data availability for each section
   useEffect(() => {
-    const checkSectionsData = async () => {
-      try {
-        const [projects, technologies, domains] = await Promise.all([
-          portfolioService.getPublishedProjects(),
-          portfolioService.getDomainsTechnologies(),
-          portfolioService.getNiches()
-        ]);
+    if (!settingsLoading && settingsInitialized && !additionalDataLoading) {
+      checkSectionsData();
+    }
+  }, [settingsLoading, settingsInitialized, additionalDataLoading]);
 
-        setSectionsData({
-          hasProjects: projects && projects.length > 0,
-          hasTechnologies: technologies && technologies.length > 0,
-          hasDomains: domains && domains.length > 0,
-          loading: false
-        });
-      } catch (error) {
-        // console.error('Error checking sections data:', error);
-        setSectionsData({
-          hasProjects: false,
-          hasTechnologies: false,
-          hasDomains: false,
-          loading: false
-        });
-      }
-    };
+  const checkSectionsData = async () => {
+    try {
+      console.log('📊 Header: Checking sections data after settings and portfolio data are ready...');
+      setSectionsData(prev => ({ ...prev, loading: true }));
+      
+      const [projects, technologies, domains] = await Promise.all([
+        portfolioService.getPublishedProjects(),
+        portfolioService.getDomainsTechnologies(),
+        portfolioService.getNiches()
+      ]);
 
-    checkSectionsData();
-  }, []);
+      setSectionsData({
+        hasProjects: projects && projects.length > 0,
+        hasTechnologies: technologies && technologies.length > 0,
+        hasDomains: domains && domains.length > 0,
+        loading: false
+      });
+      
+      console.log('📊 Header: Sections data loaded:', {
+        hasProjects: projects && projects.length > 0,
+        hasTechnologies: technologies && technologies.length > 0,
+        hasDomains: domains && domains.length > 0,
+      });
+    } catch (error) {
+      console.error('Error checking sections data:', error);
+      setSectionsData({
+        hasProjects: false,
+        hasTechnologies: false,
+        hasDomains: false,
+        loading: false
+      });
+    }
+  };
 
   const openForm = () => {
     setIsFormOpen(true);
@@ -75,144 +86,114 @@ const Header = () => {
     setIsContactFormOpen(false);
   };
 
-  // Smooth scroll to section function
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
+      element.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const logoType = getSetting('logo_type');
-  const logoInitials = getSetting('logo_initials');
-  const logoImage = getSetting('logo_image');
+  // Don't render navigation until we know what sections have data
+  const showNavigation = !settingsLoading && settingsInitialized && !sectionsData.loading;
 
   return (
     <>
-      <header 
-        className={`
-          fixed top-0 left-0 right-0 z-50 transition-all duration-300 theme-header
-          ${isScrolled 
-            ? 'shadow-lg border-b border-gray-600/30' 
-            : ''
-          }
-        `}
-      >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 lg:h-20">
-            
-            {/* Logo/Brand */}
-            <div className="flex items-center">
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="relative transition-all duration-500 cursor-pointer magnetic group"
-                style={{ 
-                  fontFamily: 'Playfair Display, serif',
-                  letterSpacing: '0.15em',
-                  color: '#F5E6D3',
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4)) drop-shadow(0 0 12px rgba(245, 230, 211, 0.5))',
-                  transform: 'perspective(1000px) rotateY(-5deg)',
-                  textShadow: '2px 2px 0px rgba(240, 217, 184, 0.4)'
-                }}
-              >
-                {logoType === 'image' && logoImage ? (
-                  <img 
-                    src={logoImage} 
-                    alt="Logo" 
-                    className="h-12 lg:h-16 w-auto group-hover:scale-110 transition-transform duration-300"
-                  />
-                ) : (
-                  <>
-                    <span className="relative inline-block group-hover:scale-110 transition-transform duration-300 text-4xl lg:text-5xl font-bold">
-                      {logoInitials.charAt(0)}
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full opacity-70 animate-pulse"></span>
-                    </span>
-                    <span className="relative inline-block group-hover:scale-110 transition-transform duration-300 delay-75 text-4xl lg:text-5xl font-bold">
-                      {logoInitials.charAt(1)}
-                      <span className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-gradient-to-br from-amber-300 to-amber-500 rounded-full opacity-60 animate-pulse delay-500"></span>
-                    </span>
-                    
-                    {/* Decorative underline */}
-                    <div className="absolute -bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-desert-sand to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </>
-                )}
-              </button>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? 'bg-sand-light/95 backdrop-blur-sm shadow-lg' : 'bg-transparent'
+      }`}>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-sand-dark rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">
+                  {getSetting('logo_initials') || 'MA'}
+                </span>
+              </div>
+              <span className="text-sand-dark font-semibold text-lg">
+                {getSetting('banner_name') || 'Portfolio'}
+              </span>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
-              {sectionsData.hasProjects && (
-                <button
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#hero" className="text-sand-dark hover:text-sand-darker transition-colors">
+                Home
+              </a>
+              
+              {showNavigation && sectionsData.hasProjects && (
+                <button 
                   onClick={() => scrollToSection('portfolio')}
-                  className="text-sm font-medium transition-all duration-300 hover:scale-105 transform text-white/90 hover:text-white"
+                  className="text-sand-dark hover:text-sand-darker transition-colors"
                 >
                   Portfolio
                 </button>
               )}
-              {sectionsData.hasTechnologies && (
-                <button
+              
+              {showNavigation && sectionsData.hasTechnologies && (
+                <button 
                   onClick={() => scrollToSection('technologies')}
-                  className="text-sm font-medium transition-all duration-300 hover:scale-105 transform text-white/90 hover:text-white"
+                  className="text-sand-dark hover:text-sand-darker transition-colors"
                 >
                   Technologies
                 </button>
               )}
-              {sectionsData.hasDomains && (
-                <button
+              
+              {showNavigation && sectionsData.hasDomains && (
+                <button 
                   onClick={() => scrollToSection('domains')}
-                  className="text-sm font-medium transition-all duration-300 hover:scale-105 transform text-white/90 hover:text-white"
+                  className="text-sand-dark hover:text-sand-darker transition-colors"
                 >
                   Domains
                 </button>
               )}
-              <button
-                onClick={() => scrollToSection('process')}
-                className="text-sm font-medium transition-all duration-300 hover:scale-105 transform text-white/90 hover:text-white"
+              
+              <button 
+                onClick={() => scrollToSection('lifecycle')}
+                className="text-sand-dark hover:text-sand-darker transition-colors"
               >
                 Process
               </button>
+              
+              <button 
+                onClick={openContactForm}
+                className="text-sand-dark hover:text-sand-darker transition-colors flex items-center space-x-1"
+              >
+                <Mail size={16} />
+                <span>Contact</span>
+              </button>
             </nav>
 
-            {/* CTA Buttons - Desktop */}
-            <div className="hidden lg:flex items-center space-x-4">
-              <button
-                onClick={openContactForm}
-                className="p-2 rounded-lg transition-all duration-300 hover:scale-110 transform text-white/90 hover:text-white hover:bg-white/10"
-                title="Contact Me"
-              >
-                <Mail className="w-5 h-5" />
-              </button>
+            {/* CTA Buttons */}
+            <div className="flex items-center space-x-4">
               <button
                 onClick={openForm}
-                className="px-6 py-2 rounded-full font-medium text-sm transition-all duration-300 hover:scale-105 transform flex items-center gap-2 bg-sand-dark text-white hover:bg-gray-600 shadow-lg hover:shadow-xl"
+                className="bg-sand-dark text-white px-4 py-2 rounded-lg hover:bg-sand-darker transition-colors flex items-center space-x-2"
               >
-                <FileText className="w-4 h-4" />
-                Start Project
+                <FileText size={16} />
+                <span className="hidden sm:inline">Get Started</span>
+              </button>
+              
+              <button
+                onClick={openContactForm}
+                className="md:hidden bg-sand-dark text-white px-4 py-2 rounded-lg hover:bg-sand-darker transition-colors"
+              >
+                <Mail size={16} />
               </button>
             </div>
-
-            {/* Mobile Start Project Button */}
-            <button
-              onClick={openForm}
-              className="lg:hidden px-4 py-2 rounded-full font-medium text-xs transition-all duration-300 hover:scale-105 transform flex items-center gap-2 bg-sand-dark text-white hover:bg-gray-600 shadow-lg"
-            >
-              <FileText className="w-3 h-3" />
-              Start Project
-            </button>
           </div>
         </div>
-
-
       </header>
 
-      {/* Contact Form Modal */}
-      <ContactForm isOpen={isContactFormOpen} onClose={closeContactForm} />
+      {/* Client Onboarding Form */}
+      {isFormOpen && (
+        <ClientOnboardingForm onClose={closeForm} />
+      )}
 
-      {/* Client Onboarding Form Modal */}
-      <ClientOnboardingForm isOpen={isFormOpen} onClose={closeForm} />
+      {/* Contact Form */}
+      {isContactFormOpen && (
+        <ContactForm onClose={closeContactForm} />
+      )}
     </>
   );
 };

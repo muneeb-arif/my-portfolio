@@ -3,22 +3,27 @@ import DomainCard from './DomainCard';
 import DomainModal from './DomainModal';
 import portfolioService from '../services/portfolioService';
 
-const DomainsNiche = () => {
+const DomainsNiche = ({ additionalDataLoading }) => {
   const [selectedNiche, setSelectedNiche] = useState(null);
   const [nichesData, setNichesData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadNiches();
-  }, []);
+    // Only load niches after additional data loading is complete
+    if (!additionalDataLoading) {
+      loadNiches();
+    }
+  }, [additionalDataLoading]);
 
   const loadNiches = async () => {
     try {
+      console.log('📊 DomainsNiche: Loading niches data...');
       setLoading(true);
       const data = await portfolioService.getNiches();
       setNichesData(data);
+      console.log('📊 DomainsNiche: Loaded', data?.length || 0, 'niches');
     } catch (error) {
-      // console.error('Error loading niches:', error);
+      console.error('Error loading niches:', error);
       // Fallback to empty array if there's an error
       setNichesData([]);
     } finally {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
@@ -15,7 +15,7 @@ import DynamicHead from './components/DynamicHead';
 import Toast from './components/Toast';
 import RainLoader from './components/RainLoader';
 import portfolioService from './services/portfolioService';
-import { SettingsProvider } from './services/settingsContext';
+import { SettingsProvider, useSettings } from './services/settingsContext';
 import { AuthProvider } from './services/authContext';
 import { checkEnvMissing } from './config/supabase';
 
@@ -29,6 +29,7 @@ function App() {
   const [projects, setProjects] = useState([]);
   const [filters, setFilters] = useState(['All']);
   const [loading, setLoading] = useState(true);
+  const [additionalDataLoading, setAdditionalDataLoading] = useState(false);
   const [showEnvToast, setShowEnvToast] = useState(false);
 
   // Check for missing environment variables on app load
@@ -43,16 +44,56 @@ function App() {
     }
   }, []);
 
-  // Load projects and categories on component mount
-  useEffect(() => {
-    if (!isDashboard) {
-      loadPortfolioData();
-    }
-  }, [isDashboard]);
+  // If dashboard route, show dashboard wrapped in AuthProvider
+  if (isDashboard) {
+    return (
+      <AuthProvider>
+        <Dashboard />
+      </AuthProvider>
+    );
+  }
 
-  const loadPortfolioData = async () => {
+  // For public pages, wrap in both AuthProvider and SettingsProvider, and use AppContent
+  return (
+    <AuthProvider>
+      <SettingsProvider>
+        <AppContent 
+          activeFilter={activeFilter}
+          setActiveFilter={setActiveFilter}
+          selectedProject={selectedProject}
+          setSelectedProject={setSelectedProject}
+          particles={particles}
+          setParticles={setParticles}
+          projects={projects}
+          setProjects={setProjects}
+          filters={filters}
+          setFilters={setFilters}
+          loading={loading}
+          setLoading={setLoading}
+          additionalDataLoading={additionalDataLoading}
+          setAdditionalDataLoading={setAdditionalDataLoading}
+          showEnvToast={showEnvToast}
+          setShowEnvToast={setShowEnvToast}
+        />
+      </SettingsProvider>
+    </AuthProvider>
+  );
+}
+
+// Separate component that can use useSettings hook
+function AppContent({ 
+  activeFilter, setActiveFilter, selectedProject, setSelectedProject, 
+  particles, setParticles, projects, setProjects, filters, setFilters, 
+  loading, setLoading, additionalDataLoading, setAdditionalDataLoading,
+  showEnvToast, setShowEnvToast 
+}) {
+  const { loading: settingsLoading, initialized: settingsInitialized } = useSettings();
+
+  // Define loadPortfolioData function first
+  const loadPortfolioData = useCallback(async () => {
     try {
-      setLoading(true);
+      console.log('📊 Loading portfolio data after settings are ready...');
+      setAdditionalDataLoading(true);
       
       // Load different sections with staggered timing for better UX
       const [projectsData, categoriesData] = await Promise.all([
@@ -64,42 +105,50 @@ function App() {
       setProjects(projectsData || []);
       setFilters(categoriesData || ['All']);
 
-      // console.log(`📊 Loaded ${projectsData?.length || 0} published projects`);
-      // console.log(`📁 Loaded ${(categoriesData?.length || 1) - 1} categories`); // -1 for 'All'
+      console.log(`📊 Loaded ${projectsData?.length || 0} published projects`);
+      console.log(`📁 Loaded ${(categoriesData?.length || 1) - 1} categories`); // -1 for 'All'
       
     } catch (error) {
-      // console.error('Error loading portfolio data:', error);
+      console.error('Error loading portfolio data:', error);
       setProjects([]);
       setFilters(['All']);
     } finally {
-      // Add a minimum loading time for smooth UX
-      setTimeout(() => {
-        setLoading(false);
-      }, 2000);
+      setAdditionalDataLoading(false);
     }
-  };
+  }, [setAdditionalDataLoading, setProjects, setFilters]);
 
-  // Note: Removed fallback projects - now shows true empty state when no data exists
+  // Hide the main loader as soon as settings are loaded
+  useEffect(() => {
+    setLoading(settingsLoading);
+  }, [settingsLoading, setLoading]);
+
+  // Wait for settings to load, then load portfolio data
+  useEffect(() => {
+    if (!settingsLoading && settingsInitialized) {
+      // Settings are loaded, now load portfolio data in background
+      loadPortfolioData();
+    }
+  }, [settingsLoading, settingsInitialized, loadPortfolioData]);
 
   // Handle filter changes
   const handleFilterChange = async (newFilter) => {
     setActiveFilter(newFilter);
     
-    if (!isDashboard) {
-      try {
-        const filteredProjects = await portfolioService.getPublishedProjectsByCategory(newFilter);
-        setProjects(filteredProjects);
-      } catch (error) {
-      // console.error('Error filtering projects:', error);
-        // Fallback to client-side filtering
-        const allProjects = await portfolioService.getPublishedProjects();
-        const filtered = newFilter === 'All' 
-          ? allProjects 
-          : allProjects.filter(project => project.category === newFilter);
-        setProjects(filtered);
-      }
+    try {
+      const filteredProjects = await portfolioService.getPublishedProjectsByCategory(newFilter);
+      setProjects(filteredProjects);
+    } catch (error) {
+      console.error('Error filtering projects:', error);
+      // Fallback to client-side filtering
+      const allProjects = await portfolioService.getPublishedProjects();
+      const filtered = newFilter === 'All' 
+        ? allProjects 
+        : allProjects.filter(project => project.category === newFilter);
+      setProjects(filtered);
     }
   };
+
+  // Note: Removed fallback projects - now shows true empty state when no data exists
 
   // Initialize floating sand particles
   // useEffect(() => {
@@ -197,22 +246,15 @@ function App() {
     };
   };
 
-  // If dashboard route, show dashboard wrapped in AuthProvider
-  if (isDashboard) {
-    return (
-      <AuthProvider>
-        <Dashboard />
-      </AuthProvider>
-    );
-  }
-
   return (
-    <AuthProvider>
-      <SettingsProvider>
-        <DynamicHead />
-        <div className="App">
-        {/* iOS-style Full Screen Loading */}
-        <RainLoader isLoading={loading} message="Loading your portfolio..." />
+    <>
+      <DynamicHead />
+      <div className="App">
+        {/* iOS-style Full Screen Loading - Hide as soon as settings load */}
+        <RainLoader 
+          isLoading={loading} 
+          message="Loading settings..." 
+        />
 
         {/* Environment Variables Missing Toast */}
         {showEnvToast && (
@@ -225,7 +267,7 @@ function App() {
         )}
 
         {/* Header */}
-        <Header />
+        <Header additionalDataLoading={additionalDataLoading} />
 
         {/* Floating Sand Particles - Back Layer */}
         <div className="fixed inset-0 pointer-events-none z-10">
@@ -242,14 +284,49 @@ function App() {
                 opacity: particle.opacity * 0.7,
                 transform: `rotate(${particle.rotation}deg)`,
                 transition: 'none',
-                filter: 'blur(0.5px)'
               }}
             />
           ))}
         </div>
 
+        {/* Hero Section */}
+        <Hero />
+
+        {/* Filter Menu */}
+        <FilterMenu
+          filters={filters}
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
+        />
+
+        {/* Portfolio Grid */}
+        <PortfolioGrid
+          projects={filteredProjects}
+          onProjectClick={handleProjectClick}
+          activeFilter={activeFilter}
+          loading={additionalDataLoading}
+        />
+
+        {/* Technologies Section */}
+        <Technologies additionalDataLoading={additionalDataLoading} />
+
+        {/* Domains & Niche Section */}
+        <DomainsNiche additionalDataLoading={additionalDataLoading} />
+
+        {/* Project Life Cycle */}
+        <ProjectLifeCycle />
+
+        {/* Footer */}
+        <Footer />
+
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav additionalDataLoading={additionalDataLoading} />
+
+        {/* Scroll to Top Button */}
+        <ScrollToTop />
+
         {/* Floating Sand Particles - Front Layer */}
-        <div className="fixed inset-0 pointer-events-none z-40">
+        <div className="fixed inset-0 pointer-events-none z-30">
           {particles.filter(p => p.layer === 'front').map(particle => (
             <div
               key={`front-${particle.id}`}
@@ -260,148 +337,25 @@ function App() {
                 width: `${particle.size}px`,
                 height: `${particle.size}px`,
                 backgroundColor: particle.color,
-                opacity: particle.opacity,
+                opacity: particle.opacity * 0.9,
                 transform: `rotate(${particle.rotation}deg)`,
                 transition: 'none',
-                boxShadow: `0 0 ${particle.size}px ${particle.color}40`
               }}
             />
           ))}
         </div>
 
-        <Hero />
-        
-        {/* Portfolio Section with Textural Background - Only show if there are projects or still loading */}
-        {(loading || filteredProjects.length > 0) && (
-          <div className="relative overflow-hidden">
-            {/* Textural Background Elements */}
-            <div className="absolute inset-0">
-              {/* Subtle Sand Dune Pattern */}
-              <div className="absolute inset-0 opacity-30">
-                <svg width="100%" height="100%" viewBox="0 0 1000 800" className="absolute inset-0">
-                  <defs>
-                    <pattern id="sandTexture" patternUnits="userSpaceOnUse" width="100" height="100">
-                      <rect width="100" height="100" fill="#F5E6D3"/>
-                      <circle cx="20" cy="20" r="1" fill="#C9A77D" opacity="0.6"/>
-                      <circle cx="80" cy="40" r="0.5" fill="#B8936A" opacity="0.7"/>
-                      <circle cx="40" cy="70" r="1.5" fill="#C9A77D" opacity="0.5"/>
-                      <circle cx="70" cy="10" r="0.8" fill="#B8936A" opacity="0.6"/>
-                      <circle cx="10" cy="60" r="1.2" fill="#E9CBA7" opacity="0.8"/>
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#sandTexture)"/>
-                </svg>
-              </div>
-
-              {/* Geometric Sand Patterns */}
-              <div className="absolute inset-0 opacity-20">
-                <svg width="100%" height="100%" viewBox="0 0 400 400" className="absolute inset-0">
-                  <defs>
-                    <pattern id="hexPattern" patternUnits="userSpaceOnUse" width="60" height="52">
-                      <polygon points="30,5 50,20 50,35 30,50 10,35 10,20" 
-                               fill="none" stroke="#C9A77D" strokeWidth="1" opacity="0.8"/>
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#hexPattern)"/>
-                </svg>
-              </div>
-
-              {/* Flowing Sand Waves */}
-              <div className="absolute inset-0 opacity-25">
-                <svg width="100%" height="100%" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
-                  <path d="M0,200 Q300,150 600,200 T1200,200 L1200,300 Q900,250 600,300 T0,300 Z" 
-                        fill="rgba(201, 167, 125, 0.3)"/>
-                  <path d="M0,400 Q400,350 800,400 T1200,400 L1200,500 Q800,450 400,500 T0,500 Z" 
-                        fill="rgba(233, 203, 167, 0.2)"/>
-                  <path d="M0,600 Q200,550 600,600 T1200,600 L1200,700 Q600,650 200,700 T0,700 Z" 
-                        fill="rgba(184, 147, 106, 0.4)"/>
-                </svg>
-              </div>
-
-              {/* Scattered Dots for Texture */}
-              <div className="absolute inset-0 opacity-40">
-                {[...Array(50)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute rounded-full bg-wet-sand"
-                    style={{
-                      width: Math.random() * 4 + 2 + 'px',
-                      height: Math.random() * 4 + 2 + 'px',
-                      left: Math.random() * 100 + '%',
-                      top: Math.random() * 100 + '%',
-                      opacity: Math.random() * 0.6 + 0.3
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Additional Visible Sand Grains */}
-              <div className="absolute inset-0 opacity-35">
-                {[...Array(30)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute rounded-full"
-                    style={{
-                      width: Math.random() * 6 + 3 + 'px',
-                      height: Math.random() * 6 + 3 + 'px',
-                      backgroundColor: `rgba(${184 + Math.random() * 40}, ${147 + Math.random() * 40}, ${106 + Math.random() * 40}, ${0.3 + Math.random() * 0.4})`,
-                      left: Math.random() * 100 + '%',
-                      top: Math.random() * 100 + '%',
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Gradient Overlay for Depth */}
-              <div className="absolute inset-0 bg-gradient-to-b from-sand-light/30 via-transparent to-sand-light/20"></div>
-            </div>
-
-            {/* Portfolio Content */}
-            <div className="relative z-10 container mx-auto px-4 py-16">
-              <FilterMenu 
-                filters={filters} 
-                activeFilter={activeFilter} 
-                onFilterChange={handleFilterChange}
-              />
-              
-              <PortfolioGrid 
-                projects={filteredProjects}
-                onProjectClick={handleProjectClick}
-                isLoading={loading}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Technologies Section */}
-        <Technologies />
-
-        {/* Domains / Niche Section */}
-        <DomainsNiche />
-
-        {/* Project Delivery Life Cycle Section */}
-        <ProjectLifeCycle />
-
-        {/* Footer */}
-        <Footer />
-
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav />
-
-        {/* Scroll to Top Button */}
-        <ScrollToTop />
-
+        {/* Project Modal */}
         {selectedProject && (
           <Modal
             project={selectedProject}
             onClose={closeModal}
             onNavigate={handleProjectNavigation}
-            {...getNavigationState()}
+            navigationState={getNavigationState()}
           />
         )}
       </div>
-    </SettingsProvider>
-    </AuthProvider>
+    </>
   );
 }
 
