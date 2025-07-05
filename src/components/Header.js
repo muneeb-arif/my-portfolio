@@ -3,21 +3,22 @@ import ClientOnboardingForm from './ClientOnboardingForm';
 import ContactForm from './ContactForm';
 import { FileText, Mail } from 'lucide-react';
 import { useSettings } from '../services/settingsContext';
-import portfolioService from '../services/portfolioService';
+import { usePortfolioData } from '../services/portfolioDataContext';
 
 const Header = () => {
   const { getSetting } = useSettings();
+  const { projects, technologies, niches, loading: portfolioLoading } = usePortfolioData();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   
-  // Track which sections have data
-  const [sectionsData, setSectionsData] = useState({
-    hasProjects: false,
-    hasTechnologies: false,
-    hasDomains: false,
-    loading: true
-  });
+  // Track which sections have data (now from context)
+  const sectionsData = {
+    hasProjects: projects && projects.length > 0,
+    hasTechnologies: technologies && technologies.length > 0,
+    hasDomains: niches && niches.length > 0,
+    loading: portfolioLoading
+  };
 
   // Handle scroll effect for header background
   useEffect(() => {
@@ -27,36 +28,6 @@ const Header = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Check data availability for each section
-  useEffect(() => {
-    const checkSectionsData = async () => {
-      try {
-        const [projects, technologies, domains] = await Promise.all([
-          portfolioService.getPublishedProjects(),
-          portfolioService.getDomainsTechnologies(),
-          portfolioService.getNiches()
-        ]);
-
-        setSectionsData({
-          hasProjects: projects && projects.length > 0,
-          hasTechnologies: technologies && technologies.length > 0,
-          hasDomains: domains && domains.length > 0,
-          loading: false
-        });
-      } catch (error) {
-        // console.error('Error checking sections data:', error);
-        setSectionsData({
-          hasProjects: false,
-          hasTechnologies: false,
-          hasDomains: false,
-          loading: false
-        });
-      }
-    };
-
-    checkSectionsData();
   }, []);
 
   const openForm = () => {

@@ -1,42 +1,134 @@
-import { supabase } from '../config/supabase';
+import { supabase, TABLES } from '../config/supabase';
 import { fallbackDataService } from './fallbackDataService';
-import { fallbackUtils } from '../utils/fallbackUtils';
 import { publicPortfolioService } from './supabaseService';
 import { portfolioConfig } from '../config/portfolio';
 
 // ================ PUBLIC PORTFOLIO OPERATIONS ================
 // These functions fetch data for the public portfolio (no authentication required)
 
-export const portfolioService = {
-  // Get all published projects for public display
+const portfolioService = {
+  // These functions now use context data - no direct API calls
+  async getProjects() {
+    // This function is now deprecated - use usePortfolioData context instead
+    console.warn('⚠️ portfolioService.getProjects() is deprecated. Use usePortfolioData context instead.');
+    return [];
+  },
+
+  async getDomainsTechnologies() {
+    // This function is now deprecated - use usePortfolioData context instead
+    console.warn('⚠️ portfolioService.getDomainsTechnologies() is deprecated. Use usePortfolioData context instead.');
+    return [];
+  },
+
+  async getNiches() {
+    // This function is now deprecated - use usePortfolioData context instead
+    console.warn('⚠️ portfolioService.getNiches() is deprecated. Use usePortfolioData context instead.');
+    return [];
+  },
+
+  // Public API functions (still need direct calls for public access)
   async getPublishedProjects() {
     try {
-      const data = await publicPortfolioService.getPublishedProjects();
-      
-      // Transform data to match existing frontend format
-      return data?.map(project => ({
-        id: project.id,
-        title: project.title,
-        description: project.description,
-        category: project.category || 'Web Development',
-        image: project.project_images?.[0]?.url || '/images/domains/default.jpeg',
-        buttonText: 'View Details',
-        details: {
-          overview: project.overview || project.description,
-          technologies: Array.isArray(project.technologies) ? project.technologies : [],
-          features: Array.isArray(project.features) ? project.features : [],
-          liveUrl: project.live_url || '#',
-          githubUrl: project.github_url || '#',
-          images: project.project_images?.map(img => ({
-            url: img.url,
-            caption: img.original_name || 'Project Image'
-          })) || []
-        }
-      })) || [];
+      // This is for public access, so we need to determine the user ID
+      const userId = await this.determineUserId();
+      if (!userId) {
+        console.warn('⚠️ No user ID found for public projects');
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from(TABLES.PROJECTS)
+        .select(`
+          *,
+          project_images (*)
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
     } catch (error) {
-      // console.error('Error fetching published projects:', error);
-      // Return fallback data when Supabase fails
-      return this.transformFallbackProjects(fallbackDataService.getProjects());
+      console.error('Error fetching published projects:', error);
+      return [];
+    }
+  },
+
+  async getPublicDomainsTechnologies() {
+    try {
+      const userId = await this.determineUserId();
+      if (!userId) return [];
+
+      const { data, error } = await supabase
+        .from('domains_technologies')
+        .select(`
+          *,
+          tech_skills (*)
+        `)
+        .eq('user_id', userId)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching public domains/technologies:', error);
+      return [];
+    }
+  },
+
+  async getPublicNiches() {
+    try {
+      const userId = await this.determineUserId();
+      if (!userId) return [];
+
+      const { data, error } = await supabase
+        .from('niche')
+        .select('*')
+        .eq('user_id', userId)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching public niches:', error);
+      return [];
+    }
+  },
+
+  async determineUserId() {
+    try {
+      // First try to get from environment config
+      const envEmail = process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
+      
+      if (envEmail) {
+        const { data, error } = await supabase
+          .from('portfolio_config')
+          .select('owner_user_id')
+          .eq('owner_email', envEmail)
+          .eq('is_active', true)
+          .single();
+        
+        if (!error && data) {
+          return data.owner_user_id;
+        }
+      }
+
+      // Fallback to any active portfolio config
+      const { data, error } = await supabase
+        .from('portfolio_config')
+        .select('owner_user_id')
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+      
+      if (error || !data) {
+        return null;
+      }
+      
+      return data.owner_user_id;
+    } catch (error) {
+      console.error('Error determining user ID:', error);
+      return null;
     }
   },
 
@@ -68,26 +160,6 @@ export const portfolioService = {
       // Return fallback categories
       const fallbackCategories = fallbackDataService.getCategories();
       return ['All', ...fallbackCategories];
-    }
-  },
-
-  // Get domains and technologies for public display
-  async getDomainsTechnologies() {
-    try {
-      return await publicPortfolioService.getDomainsTechnologies();
-    } catch (error) {
-      // console.error('Error fetching domains/technologies:', error);
-      return fallbackDataService.getTechnologies();
-    }
-  },
-
-  // Get niches for public display
-  async getNiches() {
-    try {
-      return await publicPortfolioService.getNiches();
-    } catch (error) {
-      // console.error('Error fetching niches:', error);
-      return fallbackDataService.getNiches();
     }
   },
 

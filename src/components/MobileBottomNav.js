@@ -1,74 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Briefcase, Code, Globe, CheckCircle, Mail } from 'lucide-react';
 import ContactForm from './ContactForm';
-import portfolioService from '../services/portfolioService';
+import { usePortfolioData } from '../services/portfolioDataContext';
 
 const MobileBottomNav = () => {
   const [activeSection, setActiveSection] = useState('hero');
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
-  
-  // Track which sections have data
-  const [sectionsData, setSectionsData] = useState({
-    hasProjects: false,
-    hasTechnologies: false,
-    hasDomains: false,
-    loading: true
-  });
+  const { projects, technologies, niches, loading: portfolioLoading } = usePortfolioData();
 
-  // Check data availability for each section
-  useEffect(() => {
-    const checkSectionsData = async () => {
-      try {
-        const [projects, technologies, domains] = await Promise.all([
-          portfolioService.getPublishedProjects(),
-          portfolioService.getDomainsTechnologies(),
-          portfolioService.getNiches()
-        ]);
-
-        setSectionsData({
-          hasProjects: projects && projects.length > 0,
-          hasTechnologies: technologies && technologies.length > 0,
-          hasDomains: domains && domains.length > 0,
-          loading: false
-        });
-      } catch (error) {
-        // console.error('Error checking sections data:', error);
-        setSectionsData({
-          hasProjects: false,
-          hasTechnologies: false,
-          hasDomains: false,
-          loading: false
-        });
-      }
-    };
-
-    checkSectionsData();
-  }, []);
-
-  // Track which section is currently in view
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.3,
-      rootMargin: '-100px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
-    }, observerOptions);
-
-    // Observe sections
-    const sections = ['portfolio', 'technologies', 'domains', 'process'];
-    sections.forEach(sectionId => {
-      const element = document.getElementById(sectionId);
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, []);
+  // Track which sections have data (now from context)
+  const sectionsData = {
+    hasProjects: projects && projects.length > 0,
+    hasTechnologies: technologies && technologies.length > 0,
+    hasDomains: niches && niches.length > 0,
+    loading: portfolioLoading
+  };
 
   // Smooth scroll to section function
   const scrollToSection = (sectionId) => {

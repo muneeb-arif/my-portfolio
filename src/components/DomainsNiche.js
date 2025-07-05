@@ -1,30 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DomainCard from './DomainCard';
 import DomainModal from './DomainModal';
-import portfolioService from '../services/portfolioService';
+import { usePortfolioData } from '../services/portfolioDataContext';
 
 const DomainsNiche = () => {
   const [selectedNiche, setSelectedNiche] = useState(null);
-  const [nichesData, setNichesData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadNiches();
-  }, []);
-
-  const loadNiches = async () => {
-    try {
-      setLoading(true);
-      const data = await portfolioService.getNiches();
-      setNichesData(data);
-    } catch (error) {
-      // console.error('Error loading niches:', error);
-      // Fallback to empty array if there's an error
-      setNichesData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { niches: nichesData, nichesLoading } = usePortfolioData();
 
   // Map icon names to actual icon components
   const getIconComponent = (iconName) => {
@@ -56,27 +37,28 @@ const DomainsNiche = () => {
 
   // Helper function to transform raw niche data to domain format
   const transformNicheToDomain = (niche) => {
-    // Convert tools string to array
-    const toolsArray = niche.tools ? niche.tools.split(',').map(tool => tool.trim()).filter(tool => tool) : [];
-    
-    // Convert key_features string to array, splitting by newlines
-    const keyFeaturesArray = niche.key_features 
-      ? niche.key_features.split('\n').map(feature => feature.trim()).filter(feature => feature)
-      : [];
+    // Create tags from tools (split by comma and clean up)
+    const toolsArray = niche.tools ? niche.tools.split(',').map(tool => tool.trim()) : [];
     
     return {
-      ...niche,
+      id: niche.id,
+      title: niche.title,
+      subtitle: niche.overview || niche.description || '',
+      description: niche.overview || niche.description || '',
       icon: getIconComponent('Target'), // Use Target icon for niches
-      subtitle: niche.overview || 'Specialized domain expertise',
-      tags: toolsArray,
-      image: niche.image.startsWith('http') ? niche.image : `/images/domains/${niche.image}`,
-      modalContent: keyFeaturesArray,
-      ai_driven: niche.ai_driven
+      image: niche.image,
+      tags: toolsArray, // Convert tools string to array for tags
+      skills: niche.skills || [],
+      color: niche.color,
+      technologies: niche.technologies || [],
+      ai_driven: niche.ai_driven || false,
+      modalContent: niche.key_features ? niche.key_features.split(',').map(feature => feature.trim()) : []
     };
   };
 
-  const handleCardClick = (niche) => {
-    setSelectedNiche(niche);
+  const handleDomainClick = (niche) => {
+    const transformedNiche = transformNicheToDomain(niche);
+    setSelectedNiche(transformedNiche);
   };
 
   const handleCloseModal = () => {
@@ -115,7 +97,7 @@ const DomainsNiche = () => {
     };
   };
 
-  if (loading) {
+  if (nichesLoading) {
     return (
       <section id="domains" className="bg-[#F5F1EB] py-20 relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
@@ -136,9 +118,11 @@ const DomainsNiche = () => {
   }
 
   // Hide the entire section if no niches data
-  if (!loading && nichesData.length === 0) {
+  if (!nichesLoading && nichesData.length === 0) {
     return null;
   }
+
+  const domainsData = nichesData.map(transformNicheToDomain);
 
   return (
     <section id="domains" className="bg-[#F5F1EB] py-20 relative overflow-hidden">
@@ -165,20 +149,16 @@ const DomainsNiche = () => {
         </div>
 
         {/* Niches Grid */}
-        {nichesData.length > 0 ? (
+        {domainsData.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-12">
-            {nichesData.map((niche) => {
-              const transformedNiche = transformNicheToDomain(niche);
-              
-              return (
-                <DomainCard
-                  key={niche.id}
-                  domain={transformedNiche}
-                  onClick={handleCardClick}
-                  isSelected={selectedNiche?.id === niche.id}
-                />
-              );
-            })}
+            {domainsData.map((domain, index) => (
+              <DomainCard
+                key={domain.id}
+                domain={domain}
+                onClick={() => handleDomainClick(domain)}
+                index={index}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-20">
@@ -195,15 +175,17 @@ const DomainsNiche = () => {
       </div>
 
       {/* Modal */}
-      <DomainModal 
-        domain={selectedNiche} 
-        onClose={handleCloseModal}
-        onNavigate={handleNicheNavigation}
-        {...getNavigationState()}
-      />
+      {selectedNiche && (
+        <DomainModal
+          domain={selectedNiche}
+          onClose={handleCloseModal}
+          onNavigate={handleNicheNavigation}
+          navigationState={getNavigationState()}
+        />
+      )}
 
       {/* Bottom border gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-sand-dark to-transparent"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#B8936A] to-transparent opacity-30"></div>
     </section>
   );
 };

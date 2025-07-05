@@ -103,14 +103,18 @@ const DomainCard = ({ domain, onClick, isSelected }) => {
 
         {/* Tags */}
         <div className="flex flex-wrap gap-2">
-          {tags.map((tag, index) => (
+          {tags && tags.length > 0 ? tags.map((tag, index) => (
             <span
               key={index}
               className="bg-sand-light text-sand-dark text-xs font-medium px-3 py-1 rounded-full border border-sand transition-colors duration-300 group-hover:bg-sand group-hover:text-white"
             >
               {tag}
             </span>
-          ))}
+          )) : (
+            <span className="bg-gray-100 text-gray-500 text-xs font-medium px-3 py-1 rounded-full border border-gray-200">
+              No tags available
+            </span>
+          )}
         </div>
       </div>
 
