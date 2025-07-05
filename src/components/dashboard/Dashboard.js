@@ -30,12 +30,19 @@ const Dashboard = () => {
     }
   };
 
-  // Loading state
+  // Loading state with debug info
   if (loading) {
     return (
       <div className="dashboard-loading">
         <div className="loading-spinner"></div>
         <p>Loading dashboard...</p>
+        <div style={{ marginTop: '20px', fontSize: '14px', opacity: 0.7 }}>
+          <p>Debug info:</p>
+          <p>Loading: {loading ? 'true' : 'false'}</p>
+          <p>User: {user ? user.email : 'null'}</p>
+          <p>Error: {error ? error.message : 'none'}</p>
+          <p>Time: {new Date().toLocaleTimeString()}</p>
+        </div>
       </div>
     );
   }

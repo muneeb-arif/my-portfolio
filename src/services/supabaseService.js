@@ -1278,12 +1278,67 @@ export const publicPortfolioService = {
   // Cache for user resolution to avoid repeated calls
   _userIdCache: null,
   _isInitialized: false,
+  
+  // Data caches with timestamps
+  _projectsCache: { data: null, timestamp: 0, promise: null },
+  _categoriesCache: { data: null, timestamp: 0, promise: null },
+  _domainsCache: { data: null, timestamp: 0, promise: null },
+  _nichesCache: { data: null, timestamp: 0, promise: null },
+  _settingsCache: { data: null, timestamp: 0, promise: null },
+  
+  // Cache duration: 10 seconds during initialization
+  _cacheDuration: 10000,
 
   // Clear cache (call this when email changes)
   clearCache() {
       // console.log('🗑️ Clearing public portfolio cache');
     this._userIdCache = null;
     this._isInitialized = false;
+    
+    // Clear all data caches
+    this._projectsCache = { data: null, timestamp: 0, promise: null };
+    this._categoriesCache = { data: null, timestamp: 0, promise: null };
+    this._domainsCache = { data: null, timestamp: 0, promise: null };
+    this._nichesCache = { data: null, timestamp: 0, promise: null };
+    this._settingsCache = { data: null, timestamp: 0, promise: null };
+  },
+
+  // Helper function to manage caching for API calls
+  async _withCache(cacheKey, apiCall) {
+    const cache = this[cacheKey];
+    const now = Date.now();
+    
+    // Return cached result if fresh
+    if (cache.data !== null && (now - cache.timestamp) < this._cacheDuration) {
+      console.log(`📋 PUBLIC PORTFOLIO: Using cached ${cacheKey.replace('_', '').replace('Cache', '')}`);
+      return cache.data;
+    }
+    
+    // If there's already a pending request, wait for it
+    if (cache.promise) {
+      console.log(`📋 PUBLIC PORTFOLIO: Waiting for pending ${cacheKey.replace('_', '').replace('Cache', '')} request...`);
+      return await cache.promise;
+    }
+    
+    // Create new request
+    console.log(`📋 PUBLIC PORTFOLIO: Making fresh ${cacheKey.replace('_', '').replace('Cache', '')} request...`);
+    cache.promise = (async () => {
+      try {
+        const result = await apiCall();
+        cache.data = result;
+        cache.timestamp = now;
+        return result;
+      } catch (error) {
+        // Don't cache errors, let them retry
+        cache.data = null;
+        cache.timestamp = 0;
+        throw error;
+      } finally {
+        cache.promise = null;
+      }
+    })();
+    
+    return await cache.promise;
   },
 
   // Initialize configuration once
@@ -1327,199 +1382,209 @@ export const publicPortfolioService = {
 
   // Get published projects for public display
   async getPublishedProjects() {
-    try {
-      // Initialize only once
-      await this.initialize();
-      
-      // Get the user ID for the .env email
-      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
-      
-      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-      // console.log('⚠️ No portfolio config found, using fallback data');
+    return await this._withCache('_projectsCache', async () => {
+      try {
+        // Initialize only once
+        await this.initialize();
+        
+        // Get the user ID for the .env email
+        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        
+        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+        // console.log('⚠️ No portfolio config found, using fallback data');
+          return fallbackDataService.getProjects();
+        }
+
+        // console.log('📊 Fetching projects for user ID:', portfolioConfig.owner_user_id);
+        
+        const { data, error } = await supabase
+          .from(TABLES.PROJECTS)
+          .select(`
+            *,
+            project_images (*)
+          `)
+          .eq('status', 'published')
+          .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        // console.log(`✅ Found ${data?.length || 0} projects for .env user`);
+        return data || [];
+      } catch (error) {
+        // console.error('Error fetching published projects from Supabase, using fallback data:', error);
+        // Show fallback notification
+        fallbackUtils.showFallbackNotification();
+        // Return fallback data when Supabase fails
         return fallbackDataService.getProjects();
       }
-
-      // console.log('📊 Fetching projects for user ID:', portfolioConfig.owner_user_id);
-      
-      const { data, error } = await supabase
-        .from(TABLES.PROJECTS)
-        .select(`
-          *,
-          project_images (*)
-        `)
-        .eq('status', 'published')
-        .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // console.log(`✅ Found ${data?.length || 0} projects for .env user`);
-      return data || [];
-    } catch (error) {
-      // console.error('Error fetching published projects from Supabase, using fallback data:', error);
-      // Show fallback notification
-      fallbackUtils.showFallbackNotification();
-      // Return fallback data when Supabase fails
-      return fallbackDataService.getProjects();
-    }
+    });
   },
 
   // Get categories for public display
   async getCategories() {
-    try {
-      // Initialize only once
-      await this.initialize();
-      
-      // Get the user ID for the .env email
-      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
-      
-      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        // console.log('⚠️ No portfolio config found, using fallback data');
+    return await this._withCache('_categoriesCache', async () => {
+      try {
+        // Initialize only once
+        await this.initialize();
+        
+        // Get the user ID for the .env email
+        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        
+        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+          // console.log('⚠️ No portfolio config found, using fallback data');
+          return fallbackDataService.getCategories();
+        }
+
+        const { data, error } = await supabase
+          .from(TABLES.CATEGORIES)
+          .select('*')
+          .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
+          .order('name');
+
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        // console.error('Error fetching categories from Supabase, using fallback data:', error);
+        // Show fallback notification
+        fallbackUtils.showFallbackNotification();
+        // Return fallback data when Supabase fails
         return fallbackDataService.getCategories();
       }
-
-      const { data, error } = await supabase
-        .from(TABLES.CATEGORIES)
-        .select('*')
-        .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
-        .order('name');
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      // console.error('Error fetching categories from Supabase, using fallback data:', error);
-      // Show fallback notification
-      fallbackUtils.showFallbackNotification();
-      // Return fallback data when Supabase fails
-      return fallbackDataService.getCategories();
-    }
+    });
   },
 
   // Get domains and technologies for public display
   async getDomainsTechnologies() {
-    try {
-      // Initialize only once
-      await this.initialize();
-      
-      // Get the user ID for the .env email
-      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
-      
-      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-      // console.log('⚠️ No portfolio config found, using fallback data');
+    return await this._withCache('_domainsCache', async () => {
+      try {
+        // Initialize only once
+        await this.initialize();
+        
+        // Get the user ID for the .env email
+        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        
+        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+        // console.log('⚠️ No portfolio config found, using fallback data');
+          return fallbackDataService.getTechnologies();
+        }
+
+        const { data, error } = await supabase
+          .from('domains_technologies')
+          .select(`
+            *,
+            tech_skills (*)
+          `)
+          .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
+          .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        // console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
+        // Show fallback notification
+        fallbackUtils.showFallbackNotification();
+        // Return fallback data when Supabase fails
         return fallbackDataService.getTechnologies();
       }
-
-      const { data, error } = await supabase
-        .from('domains_technologies')
-        .select(`
-          *,
-          tech_skills (*)
-        `)
-        .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      // console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
-      // Show fallback notification
-      fallbackUtils.showFallbackNotification();
-      // Return fallback data when Supabase fails
-      return fallbackDataService.getTechnologies();
-    }
+    });
   },
 
   // Get niches for public display
   async getNiches() {
-    try {
-      // Initialize only once
-      await this.initialize();
-      
-      // Get the user ID for the .env email
-      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
-      
-      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        // console.log('⚠️ No portfolio config found, using fallback data');
+    return await this._withCache('_nichesCache', async () => {
+      try {
+        // Initialize only once
+        await this.initialize();
+        
+        // Get the user ID for the .env email
+        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        
+        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+          // console.log('⚠️ No portfolio config found, using fallback data');
+          return fallbackDataService.getNiches();
+        }
+
+        const { data, error } = await supabase
+          .from('niche')
+          .select('*')
+          .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
+          .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        // console.error('Error fetching niches from Supabase, using fallback data:', error);
+        // Show fallback notification
+        fallbackUtils.showFallbackNotification();
+        // Return fallback data when Supabase fails
         return fallbackDataService.getNiches();
       }
-
-      const { data, error } = await supabase
-        .from('niche')
-        .select('*')
-        .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      // console.error('Error fetching niches from Supabase, using fallback data:', error);
-      // Show fallback notification
-      fallbackUtils.showFallbackNotification();
-      // Return fallback data when Supabase fails
-      return fallbackDataService.getNiches();
-    }
+    });
   },
 
   // Get settings for public display
   async getPublicSettings() {
-    try {
-      console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
-      console.log('  - process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
-      
-      // Initialize only once
-      await this.initialize();
-      
-      console.log('🔍 publicPortfolioService.getPublicSettings: Getting portfolio config...');
-      
-      // Get the user ID for the .env email
-      const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
-      
-      console.log('📋 publicPortfolioService.getPublicSettings: Portfolio config result:', portfolioConfig);
-      
-      if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        console.log('⚠️ publicPortfolioService.getPublicSettings: No portfolio config found for settings');
-        console.log('   - portfolioConfig exists:', !!portfolioConfig);
-        console.log('   - owner_user_id exists:', portfolioConfig?.owner_user_id);
+    return await this._withCache('_settingsCache', async () => {
+      try {
+        console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
+        console.log('  - process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
+        
+        // Initialize only once
+        await this.initialize();
+        
+        console.log('🔍 publicPortfolioService.getPublicSettings: Getting portfolio config...');
+        
+        // Get the user ID for the .env email
+        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        
+        console.log('📋 publicPortfolioService.getPublicSettings: Portfolio config result:', portfolioConfig);
+        
+        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
+          console.log('⚠️ publicPortfolioService.getPublicSettings: No portfolio config found for settings');
+          console.log('   - portfolioConfig exists:', !!portfolioConfig);
+          console.log('   - owner_user_id exists:', portfolioConfig?.owner_user_id);
+          return {};
+        }
+
+        console.log('🔍 publicPortfolioService.getPublicSettings: Querying settings table...');
+        console.log('   - Using user_id:', portfolioConfig.owner_user_id);
+        console.log('   - Portfolio config owner_email:', portfolioConfig.owner_email);
+
+        const { data, error } = await supabase
+          .from('settings')
+          .select('*')
+          .eq('user_id', portfolioConfig.owner_user_id);  // ← NOW filtering by correct user!
+
+        console.log('📊 publicPortfolioService.getPublicSettings: Supabase query result:');
+        console.log('   - Error:', error);
+        console.log('   - Data length:', data?.length || 0);
+        console.log('   - Raw data:', data);
+
+        if (error) {
+          console.error('❌ publicPortfolioService.getPublicSettings: Supabase error:', error);
+          throw error;
+        }
+        
+        // Convert array to object for easier access
+        const settingsObj = {};
+        (data || []).forEach(setting => {
+          settingsObj[setting.key] = setting.value;
+          console.log(`   - Setting: ${setting.key} = ${setting.value}`);
+        });
+        
+        console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);
+        console.log('   - banner_name:', settingsObj.banner_name);
+        console.log('   - banner_title:', settingsObj.banner_title);
+        console.log('   - banner_tagline:', settingsObj.banner_tagline);
+        console.log('   - avatar_image:', settingsObj.avatar_image);
+        
+        return settingsObj;
+      } catch (error) {
+        console.error('❌ publicPortfolioService.getPublicSettings: Error fetching public settings:', error);
         return {};
       }
-
-      console.log('🔍 publicPortfolioService.getPublicSettings: Querying settings table...');
-      console.log('   - Using user_id:', portfolioConfig.owner_user_id);
-      console.log('   - Portfolio config owner_email:', portfolioConfig.owner_email);
-
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('user_id', portfolioConfig.owner_user_id);  // ← NOW filtering by correct user!
-
-      console.log('📊 publicPortfolioService.getPublicSettings: Supabase query result:');
-      console.log('   - Error:', error);
-      console.log('   - Data length:', data?.length || 0);
-      console.log('   - Raw data:', data);
-
-      if (error) {
-        console.error('❌ publicPortfolioService.getPublicSettings: Supabase error:', error);
-        throw error;
-      }
-      
-      // Convert array to object for easier access
-      const settingsObj = {};
-      (data || []).forEach(setting => {
-        settingsObj[setting.key] = setting.value;
-        console.log(`   - Setting: ${setting.key} = ${setting.value}`);
-      });
-      
-      console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);
-      console.log('   - banner_name:', settingsObj.banner_name);
-      console.log('   - banner_title:', settingsObj.banner_title);
-      console.log('   - banner_tagline:', settingsObj.banner_tagline);
-      console.log('   - avatar_image:', settingsObj.avatar_image);
-      
-      return settingsObj;
-    } catch (error) {
-      console.error('❌ publicPortfolioService.getPublicSettings: Error fetching public settings:', error);
-      return {};
-    }
+    });
   },
 
   // Legacy method - kept for backward compatibility but now just calls initialize()

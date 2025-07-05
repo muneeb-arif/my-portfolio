@@ -134,57 +134,28 @@ function App() {
   //   // generateParticles();
   // }, []);
 
-  // Optimized animation with requestAnimationFrame
-  useEffect(() => { 
-    let animationId;
-    let lastTime = 0;
-    const targetFPS = 12; // Reduced FPS for better performance
-    const interval = 1000 / targetFPS;
+  // Disabled animation loop to prevent infinite re-renders
+  // useEffect(() => { 
+  //   let animationId;
+  //   let lastTime = 0;
+  //   const targetFPS = 12;
+  //   const interval = 1000 / targetFPS;
 
-    const animate = (currentTime) => {
-      if (currentTime - lastTime >= interval) {
-        setParticles(prev => 
-          prev.map(particle => {
-            // Less frequent direction changes
-            const timeSinceLastChange = currentTime - particle.lastDirectionChange;
-            const shouldChangeDirection = timeSinceLastChange > 3000 && Math.random() < 0.01;
-            
-            let newSpeedX = particle.speedX;
-            let newSpeedY = particle.speedY;
-            let lastDirectionChange = particle.lastDirectionChange;
-            
-            if (shouldChangeDirection) {
-              newSpeedX = (Math.random() - 0.5) * 0.6;
-              newSpeedY = (Math.random() - 0.5) * 0.4;
-              lastDirectionChange = currentTime;
-            }
+  //   const animate = (currentTime) => {
+  //     if (currentTime - lastTime >= interval) {
+  //       setParticles(prev => 
+  //         prev.map(particle => {
+  //           // ... animation logic
+  //         })
+  //       );
+  //       lastTime = currentTime;
+  //     }
+  //     animationId = requestAnimationFrame(animate);
+  //   };
 
-            // Simplified wandering
-            const wanderX = Math.cos(particle.wanderAngle) * particle.wanderRadius * 0.5;
-            const wanderY = Math.sin(particle.wanderAngle) * particle.wanderRadius * 0.5;
-
-            return {
-              ...particle,
-              x: (particle.x + newSpeedX + wanderX + 100) % 100,
-              y: (particle.y + newSpeedY + wanderY + 100) % 100,
-              speedX: newSpeedX,
-              speedY: newSpeedY,
-              rotation: particle.rotation + particle.rotationSpeed,
-              wanderAngle: particle.wanderAngle + particle.wanderSpeed,
-              lastDirectionChange,
-              // Simplified opacity animation
-              opacity: particle.baseOpacity + Math.sin(currentTime * 0.002 + particle.id) * 0.15
-            };
-          })
-        );
-        lastTime = currentTime;
-      }
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animationId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationId);
-  }, []);
+  //   animationId = requestAnimationFrame(animate);
+  //   return () => cancelAnimationFrame(animationId);
+  // }, []);
 
   const filteredProjects = projects; // Projects are already filtered by the service
 
@@ -226,9 +197,13 @@ function App() {
     };
   };
 
-  // If dashboard route, show dashboard
+  // If dashboard route, show dashboard wrapped in AuthProvider
   if (isDashboard) {
-    return <Dashboard />;
+    return (
+      <AuthProvider>
+        <Dashboard />
+      </AuthProvider>
+    );
   }
 
   return (

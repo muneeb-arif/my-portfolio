@@ -28,25 +28,41 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state - called only once
   const initializeAuth = useCallback(async () => {
+    console.log('🔑 CENTRAL AUTH: Initializing authentication state...');
+    setLoading(true);
+    setError(null);
+    
+    // Immediate timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.warn('🔑 CENTRAL AUTH: Auth timeout - proceeding without user');
+      setUser(null);
+      setLoading(false);
+    }, 2000); // 2 second timeout
+    
     try {
-      console.log('🔑 CENTRAL AUTH: Initializing authentication state...');
-      setLoading(true);
-      setError(null);
+      const authPromise = supabase.auth.getUser();
+      const result = await Promise.race([
+        authPromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth timeout')), 1500)
+        )
+      ]);
       
-      const { data: { user }, error } = await supabase.auth.getUser();
+      clearTimeout(timeoutId);
       
-      if (error) {
-        console.log('🔑 CENTRAL AUTH: No active session found');
+      if (result.error) {
+        console.log('🔑 CENTRAL AUTH: No active session found:', result.error.message);
         setUser(null);
-        setError(null); // Don't treat missing session as error
+        setError(null);
       } else {
-        console.log('🔑 CENTRAL AUTH: Active session found for user:', user?.email);
-        setUser(user);
+        console.log('🔑 CENTRAL AUTH: Active session found for user:', result.data?.user?.email || 'null');
+        setUser(result.data?.user || null);
       }
     } catch (err) {
-      console.error('🔑 CENTRAL AUTH: Error during initialization:', err);
-      setError(err);
+      clearTimeout(timeoutId);
+      console.warn('🔑 CENTRAL AUTH: Auth initialization failed or timed out:', err.message);
       setUser(null);
+      setError(null); // Don't show errors for timeouts
     } finally {
       setLoading(false);
     }
@@ -180,34 +196,21 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     console.log('🔑 CENTRAL AUTH: Setting up auth state listener...');
     
-    // Initialize auth state
+    // Simple initialization without async complications
     initializeAuth();
     
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔑 CENTRAL AUTH: Auth state changed:', event);
-        
-        // Clear caches when auth state changes
-        try {
-          // Import here to avoid circular dependencies
-          const { publicPortfolioService, portfolioConfigService } = await import('./supabaseService');
-          const { clearAuthCache } = await import('./authUtils');
-          
-          publicPortfolioService.clearCache();
-          portfolioConfigService.clearCache();
-          clearAuthCache(); // Clear auth utils cache (also clears portfolio config cache)
-          clearConfigCache(); // Clear portfolio config cache directly
-          console.log('🔑 CENTRAL AUTH: All caches cleared');
-        } catch (error) {
-          console.warn('🔑 CENTRAL AUTH: Could not clear caches:', error);
-        }
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           setUser(session?.user || null);
+          setLoading(false);
           console.log('🔑 CENTRAL AUTH: User signed in');
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
+          setLoading(false);
           console.log('🔑 CENTRAL AUTH: User signed out');
         }
       }
@@ -217,7 +220,7 @@ export const AuthProvider = ({ children }) => {
       console.log('🔑 CENTRAL AUTH: Cleaning up auth listener...');
       subscription.unsubscribe();
     };
-  }, [initializeAuth]);
+  }, []); // Empty dependency array to run only once
 
   const value = {
     user,
