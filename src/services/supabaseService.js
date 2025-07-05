@@ -2,63 +2,13 @@ import { supabase, TABLES, BUCKETS } from '../config/supabase';
 import { fallbackDataService } from './fallbackDataService';
 import { fallbackUtils } from '../utils/fallbackUtils';
 import { getCurrentUser } from './authUtils';
+import { getPortfolioConfig, getSiteUrl } from './portfolioConfigUtils';
 
 // ================ AUTH OPERATIONS ================
 
 // Helper function to get site URL from database settings
 const getSiteUrlFromSettings = async () => {
-  try {
-    // First try to get the portfolio owner from environment config
-    const envEmail = process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
-    let portfolioConfig = null;
-
-    if (envEmail) {
-      // Try to get the specific owner from env email first
-      const { data, error } = await supabase
-        .from('portfolio_config')
-        .select('owner_user_id')
-        .eq('owner_email', envEmail)
-        .eq('is_active', true)
-        .single();
-      
-      if (!error && data) {
-        portfolioConfig = data;
-      }
-    }
-
-    // If no env email config found, get any active portfolio config
-    if (!portfolioConfig) {
-      const { data, error } = await supabase
-        .from('portfolio_config')
-        .select('owner_user_id')
-        .eq('is_active', true)
-        .limit(1)
-        .single();
-      
-      if (error || !data) {
-        return window.location.origin;
-      }
-      portfolioConfig = data;
-    }
-
-    // Get site_url from settings
-    const { data: settingsData, error: settingsError } = await supabase
-      .from('settings')
-      .select('value')
-      .eq('user_id', portfolioConfig.owner_user_id)
-      .eq('key', 'site_url')
-      .single();
-
-    if (settingsError || !settingsData?.value) {
-      // Fallback to window location if no site_url setting found
-      return window.location.origin;
-    }
-
-    return settingsData.value;
-  } catch (error) {
-    console.warn('⚠️ Could not fetch site URL from settings, using fallback:', error);
-    return window.location.origin;
-  }
+  return await getSiteUrl();
 };
 
 export const authService = {
@@ -1190,59 +1140,7 @@ export const portfolioConfigService = {
 
   // Get portfolio configuration matching the EXACT email in .env (no fallbacks)
   async getPortfolioConfig() {
-    try {
-      // console.log('🔍 portfolioConfigService.getPortfolioConfig: Starting...');
-      
-      // Get the email from .env config
-      const { portfolioConfig } = await import('../config/portfolio');
-      const envEmail = portfolioConfig.ownerEmail;
-
-      // console.log('📧 portfolioConfigService.getPortfolioConfig: Environment configuration:');
-      // console.log('   - envEmail from portfolioConfig.ownerEmail:', envEmail);
-      // console.log('   - process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
-
-      // STRICT: Only return data for the exact email in .env, no fallbacks
-      if (!envEmail) {
-      // console.log('❌ portfolioConfigService.getPortfolioConfig: No email configured in .env - returning null');
-        return null;
-      }
-
-      // console.log('🎯 portfolioConfigService.getPortfolioConfig: STRICT MODE - Looking ONLY for .env email:', envEmail);
-      
-      // Look for the EXACT .env email in active portfolio configs
-      const { data, error } = await supabase
-        .from('portfolio_config')
-        .select('*')
-        .eq('owner_email', envEmail)
-        .eq('is_active', true)
-        .single();
-
-      // console.log('📊 portfolioConfigService.getPortfolioConfig: Exact email query result:');
-      // console.log('   - Searching for:', envEmail);
-      // console.log('   - Error:', error);
-      // console.log('   - Data:', data);
-
-      if (error) {
-      // console.log('❌ portfolioConfigService.getPortfolioConfig: .env email not found or error:', error.message);
-      // console.log('   - This means the email', envEmail, 'is not configured in portfolio_config table');
-        return null;
-      }
-
-      if (data) {
-      // console.log('✅ portfolioConfigService.getPortfolioConfig: Found EXACT match for .env email:', envEmail);
-      // console.log('   - owner_user_id:', data.owner_user_id);
-      // console.log('   - is_active:', data.is_active);
-      // console.log('   - created_at:', data.created_at);
-      // console.log('   - updated_at:', data.updated_at);
-        return data;
-      }
-
-      // console.log('❌ portfolioConfigService.getPortfolioConfig: No data returned for .env email');
-      return null;
-    } catch (error) {
-      // console.error('❌ portfolioConfigService.getPortfolioConfig: Error in getPortfolioConfig:', error);
-      return null;
-    }
+    return await getPortfolioConfig();
   },
 
   // Check if portfolio is configured and set it up if needed (with caching)
@@ -1302,14 +1200,9 @@ export const portfolioConfigService = {
       }
 
       // Check if .env email exists and is active in portfolio_config
-      const { data: existingConfig, error } = await supabase
-        .from('portfolio_config')
-        .select('*')
-        .eq('owner_email', envEmail)
-        .eq('is_active', true)
-        .single();
+      const existingConfig = await getPortfolioConfig();
 
-      if (!error && existingConfig) {
+      if (existingConfig) {
       // console.log('✅ .env email already configured:', envEmail);
         return { success: true, message: 'Already configured', config: existingConfig };
       }

@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase';
+import { clearConfigCache } from './portfolioConfigUtils';
 
 // Simple auth utilities with short-term caching to prevent repeated API calls
 // during app initialization while working with the centralized AuthContext
@@ -77,6 +78,9 @@ export const clearAuthCache = () => {
     timestamp: 0,
     promise: null
   };
+  
+  // Also clear portfolio config cache since auth state affects it
+  clearConfigCache();
 };
 
 export default {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
+import { getSiteUrl, clearConfigCache } from './portfolioConfigUtils';
 
 const AuthContext = createContext({
   user: null,
@@ -73,53 +74,7 @@ export const AuthProvider = ({ children }) => {
 
   // Helper function to get site URL from database settings
   const getSiteUrlFromSettings = async () => {
-    try {
-      const envEmail = process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
-      let portfolioConfig = null;
-
-      if (envEmail) {
-        const { data, error } = await supabase
-          .from('portfolio_config')
-          .select('owner_user_id')
-          .eq('owner_email', envEmail)
-          .eq('is_active', true)
-          .single();
-        
-        if (!error && data) {
-          portfolioConfig = data;
-        }
-      }
-
-      if (!portfolioConfig) {
-        const { data, error } = await supabase
-          .from('portfolio_config')
-          .select('owner_user_id')
-          .eq('is_active', true)
-          .limit(1)
-          .single();
-        
-        if (error || !data) {
-          return window.location.origin;
-        }
-        portfolioConfig = data;
-      }
-
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('user_id', portfolioConfig.owner_user_id)
-        .eq('key', 'site_url')
-        .single();
-
-      if (settingsError || !settingsData?.value) {
-        return window.location.origin;
-      }
-
-      return settingsData.value;
-    } catch (error) {
-      console.warn('⚠️ Could not fetch site URL from settings, using fallback:', error);
-      return window.location.origin;
-    }
+    return await getSiteUrl();
   };
 
   // Sign up new user
@@ -241,7 +196,8 @@ export const AuthProvider = ({ children }) => {
           
           publicPortfolioService.clearCache();
           portfolioConfigService.clearCache();
-          clearAuthCache(); // Clear auth utils cache
+          clearAuthCache(); // Clear auth utils cache (also clears portfolio config cache)
+          clearConfigCache(); // Clear portfolio config cache directly
           console.log('🔑 CENTRAL AUTH: All caches cleared');
         } catch (error) {
           console.warn('🔑 CENTRAL AUTH: Could not clear caches:', error);
