@@ -554,10 +554,10 @@ export const themes = {
     '--color-error': '#E53E3E',
     '--color-info': '#3182CE'
   },
-  flamingo: {
+  flamingo: { 
     name: 'Electric Flamingo',
     // Primary brand colors - Hot pink and electric yellow
-    '--color-primary': '#FF654F',
+    '--color-primary': '#fc361a',
     '--color-primary-light': '#FF8A75',
     '--color-primary-dark': '#E55347',
     '--color-primary-subtle': '#FFF0EE',

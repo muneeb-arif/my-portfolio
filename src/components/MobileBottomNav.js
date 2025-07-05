@@ -61,7 +61,7 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
   // Track scroll position to update active section
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['hero', 'portfolio', 'technologies', 'domains', 'lifecycle'];
+      const sections = ['hero', 'portfolio', 'technologies', 'domains', 'process'];
       const scrollPosition = window.scrollY + 200;
 
       for (let i = sections.length - 1; i >= 0; i--) {
@@ -98,64 +98,54 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
   // Build navigation items based on available data
   const navItems = [];
   
-  // Always show home
-  navItems.push({
-    id: 'hero',
-    label: 'Home',
-    icon: CheckCircle,
-    onClick: () => scrollToSection('hero')
-  });
-
-  // Add sections that have data
-  if (showNavigation) {
-    if (sectionsData.hasProjects) {
-      navItems.push({
-        id: 'portfolio',
-        label: 'Projects',
-        icon: Briefcase,
-        onClick: () => scrollToSection('portfolio')
-      });
-    }
-
-    if (sectionsData.hasTechnologies) {
-      navItems.push({
-        id: 'technologies',
-        label: 'Tech',
-        icon: Code,
-        onClick: () => scrollToSection('technologies')
-      });
-    }
-
-    if (sectionsData.hasDomains) {
-      navItems.push({
-        id: 'domains',
-        label: 'Domains',
-        icon: Globe,
-        onClick: () => scrollToSection('domains')
-      });
-    }
-
-    // Always show process
-    navItems.push({
-      id: 'lifecycle',
-      label: 'Process',
-      icon: CheckCircle,
-      onClick: () => scrollToSection('lifecycle')
-    });
-  }
-
   // Always show contact
   navItems.push({
     id: 'contact',
     label: 'Contact',
     icon: Mail,
-    onClick: openContactForm
+    onClick: () => setIsContactFormOpen(true)
   });
+
+  // Always show process
+  navItems.push({
+    id: 'process',
+    label: 'Process',
+    icon: CheckCircle,
+    onClick: () => scrollToSection('process')
+  });
+
+  // Conditionally show other items based on data availability
+  if (sectionsData.hasProjects) {
+    navItems.push({
+      id: 'portfolio',
+      label: 'Portfolio',
+      icon: Briefcase,
+      onClick: () => scrollToSection('portfolio')
+    });
+  }
+
+  if (sectionsData.hasTechnologies) {
+    navItems.push({
+      id: 'technologies',
+      label: 'Tech',
+      icon: Code,
+      onClick: () => scrollToSection('technologies')
+    });
+  }
+
+  if (sectionsData.hasDomains) {
+    navItems.push({
+      id: 'domains',
+      label: 'Domains',
+      icon: Globe,
+      onClick: () => scrollToSection('domains')
+    });
+  }
 
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-        <div className="bg-sand-light/95 backdrop-blur-sm border-t border-sand-dark/20 shadow-lg">
+        <div className="backdrop-blur-sm border-t border-white/20 shadow-lg" style={{ backgroundColor: 'var(--color-primary)' }}>
           <div className="flex justify-around items-center py-2">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -167,12 +157,12 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
                   onClick={item.onClick}
                   className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${
                     isActive 
-                      ? 'text-sand-dark bg-sand-dark/10' 
-                      : 'text-sand-dark/60 hover:text-sand-dark'
+                      ? 'text-white bg-white/20' 
+                      : 'text-white/70 hover:text-white'
                   }`}
                 >
                   <Icon size={18} />
-                  <span className="text-xs mt-1 font-medium">{item.label}</span>
+                  <span className="text-xs mt-1 font-bold">{item.label}</span>
                 </button>
               );
             })}
@@ -181,9 +171,7 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
       </nav>
 
       {/* Contact Form */}
-      {isContactFormOpen && (
-        <ContactForm onClose={closeContactForm} />
-      )}
+      <ContactForm isOpen={isContactFormOpen} onClose={closeContactForm} />
     </>
   );
 };

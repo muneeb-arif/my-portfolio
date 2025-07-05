@@ -38,7 +38,7 @@ const Footer = () => {
 
   return (
     <>
-      <footer className="pt-12 pb-24 lg:pb-12 relative overflow-hidden theme-footer">
+      <footer className="pt-12 pb-24 lg:pb-12 relative overflow-hidden" style={{ backgroundColor: 'var(--color-primary)' }}>
         {/* Background Pattern - Behind content */}
         <div className="absolute inset-0 opacity-5 z-0 pointer-events-none">
           <div className="absolute inset-0" 
@@ -221,7 +221,7 @@ const Footer = () => {
               </button>
               <button 
                 onClick={openForm}
-                className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-4 py-2 rounded-lg hover:bg-gradient-to-r hover:from-sand-dark/20 hover:to-sand/20 hover:scale-105 transform hover:shadow-lg border border-transparent hover:border-white/20"
+                className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-4 py-2 rounded-lg hover:bg-white/10 hover:scale-105 transform hover:shadow-lg border border-transparent hover:border-white/20"
               >
                 Start Project
               </button>
