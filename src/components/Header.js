@@ -92,10 +92,18 @@ const Header = ({ additionalDataLoading }) => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">
+              <div className="relative w-12 h-8 flex items-center justify-center">
+                {/* Main logo background */}
+                <div className="absolute inset-0 bg-white/10 rounded-sm"></div>
+                
+                {/* MA Initials */}
+                <span className="relative text-white font-bold text-2xl tracking-wider">
                   {getSetting('logo_initials') || 'MA'}
                 </span>
+                
+                {/* Decorative dots */}
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></div>
+                <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
               </div>
             </div>
 
