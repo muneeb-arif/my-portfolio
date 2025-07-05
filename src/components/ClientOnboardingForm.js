@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Building, Users, FileText, Palette, Settings, Shield, Calendar, Target, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { saveOnboardingQuery } from '../services/supabaseService';
 
 const ClientOnboardingForm = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -191,9 +192,8 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
     return isValid;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-      // console.log('Form submitted:', formData);
 
     // Validate form before submission
     if (!validateForm()) {
@@ -211,62 +211,110 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
       return;
     }
     
-    // Show SweetAlert2 success notification
+    // Show loading state
     Swal.fire({
-      title: 'Questionnaire Submitted! 🎉',
-      text: "Thank you for providing detailed project information. I'll review your requirements and get back to you with a detailed proposal within 48 hours.",
-      icon: 'success',
-      showCancelButton: true,
-      confirmButtonColor: '#B8936A',
-      cancelButtonColor: '#6B7280',
-      confirmButtonText: 'Perfect, Thanks!',
-      cancelButtonText: 'Submit Another Form',
+      title: 'Submitting Questionnaire...',
+      text: 'Please wait while we save your project details.',
+      icon: 'info',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
       customClass: {
-        popup: 'rounded-3xl',
-        confirmButton: 'rounded-full px-6 py-3 font-semibold',
-        cancelButton: 'rounded-full px-6 py-3 font-semibold'
-      },
-      showCloseButton: true,
-      backdrop: `
-        rgba(0,0,0,0.6)
-        left top
-        no-repeat
-      `
-    }).then((result) => {
-      if (result.isConfirmed) {
-        onClose(); // Close the main form
+        popup: 'rounded-3xl'
       }
-      // If cancelled, keep the form open for another submission
     });
     
-    // Reset form
-    setFormData({
-      companyName: '',
-      contactPerson: '',
-      communicationChannel: 'Email',
-      businessDescription: '',
-      targetCustomer: '',
-      uniqueValue: '',
-      problemSolving: '',
-      coreFeatures: '',
-      existingSystem: '',
-      technicalConstraints: '',
-      competitors: '',
-      brandGuide: '',
-      colorPreferences: '',
-      toneOfVoice: 'Corporate',
-      paymentGateways: '',
-      integrations: '',
-      adminControl: '',
-      gdprCompliance: false,
-      termsPrivacy: false,
-      launchDate: '',
-      budgetRange: '',
-      postMvpFeatures: '',
-      longTermGoals: ''
-    });
-    setErrors({});
-    setTouched({});
+    try {
+      // Save to database
+      const result = await saveOnboardingQuery(formData);
+      
+      if (result.success) {
+        // Show SweetAlert2 success notification
+        Swal.fire({
+          title: 'Questionnaire Submitted! 🎉',
+          text: "Thank you for providing detailed project information. Your requirements have been saved and I'll review them to get back to you with a detailed proposal within 48 hours.",
+          icon: 'success',
+          showCancelButton: true,
+          confirmButtonColor: '#B8936A',
+          cancelButtonColor: '#6B7280',
+          confirmButtonText: 'Perfect, Thanks!',
+          cancelButtonText: 'Submit Another Form',
+          customClass: {
+            popup: 'rounded-3xl',
+            confirmButton: 'rounded-full px-6 py-3 font-semibold',
+            cancelButton: 'rounded-full px-6 py-3 font-semibold'
+          },
+          showCloseButton: true,
+          backdrop: `
+            rgba(0,0,0,0.6)
+            left top
+            no-repeat
+          `
+        }).then((result) => {
+          if (result.isConfirmed) {
+            onClose(); // Close the main form
+          }
+          // If cancelled, keep the form open for another submission
+        });
+        
+        // Reset form
+        setFormData({
+          companyName: '',
+          contactPerson: '',
+          communicationChannel: 'Email',
+          businessDescription: '',
+          targetCustomer: '',
+          uniqueValue: '',
+          problemSolving: '',
+          coreFeatures: '',
+          existingSystem: '',
+          technicalConstraints: '',
+          competitors: '',
+          brandGuide: '',
+          colorPreferences: '',
+          toneOfVoice: 'Corporate',
+          paymentGateways: '',
+          integrations: '',
+          adminControl: '',
+          gdprCompliance: false,
+          termsPrivacy: false,
+          launchDate: '',
+          budgetRange: '',
+          postMvpFeatures: '',
+          longTermGoals: ''
+        });
+        setErrors({});
+        setTouched({});
+      } else {
+        // Show error notification
+        Swal.fire({
+          title: 'Error Submitting Questionnaire',
+          text: result.error || 'There was an error saving your questionnaire. Please try again.',
+          icon: 'error',
+          confirmButtonColor: '#B8936A',
+          confirmButtonText: 'Try Again',
+          customClass: {
+            popup: 'rounded-3xl',
+            confirmButton: 'rounded-full px-6 py-3 font-semibold'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting onboarding form:', error);
+      
+      // Show error notification
+      Swal.fire({
+        title: 'Error Submitting Questionnaire',
+        text: 'There was an error saving your questionnaire. Please try again.',
+        icon: 'error',
+        confirmButtonColor: '#B8936A',
+        confirmButtonText: 'Try Again',
+        customClass: {
+          popup: 'rounded-3xl',
+          confirmButton: 'rounded-full px-6 py-3 font-semibold'
+        }
+      });
+    }
   };
 
   const handleBackdropClick = (e) => {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mail, User, Building, Phone, MessageSquare, Tag, AlertCircle } from 'lucide-react';
+import { X, Mail, User, MessageSquare, Tag, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useSettings } from '../services/settingsContext';
+import { saveContactQuery } from '../services/supabaseService';
 
 const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
   const { getSetting } = useSettings();
@@ -108,7 +109,7 @@ const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
         break;
 
       case 'phone':
-        if (value && !/^[\+]?[1-9][\d]{0,15}$/.test(value.replace(/[\s\-\(\)]/g, ''))) {
+        if (value && !/^[+]?[1-9][\d]{0,15}$/.test(value.replace(/[\s\-()]/g, ''))) {
           error = 'Please enter a valid phone number';
         }
         break;
@@ -175,7 +176,7 @@ const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
     return isValid;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Get dynamic values from settings
@@ -196,9 +197,27 @@ const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
       return;
     }
     
-    // Create email content with dynamic name
-    const emailSubject = formData.subject || `${formData.inquiryType} - ${formData.name}`;
-    const emailBody = `
+    // Show loading state
+    Swal.fire({
+      title: 'Sending Message...',
+      text: 'Please wait while we save your message.',
+      icon: 'info',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      customClass: {
+        popup: 'rounded-3xl'
+      }
+    });
+    
+    try {
+      // Save to database
+      const result = await saveContactQuery(formData);
+      
+      if (result.success) {
+        // Create email content with dynamic name
+        const emailSubject = formData.subject || `${formData.inquiryType} - ${formData.name}`;
+        const emailBody = `
 Hi ${bannerName.split(' ')[0]},
 
 I'm interested in discussing a project with you.
@@ -222,55 +241,85 @@ Looking forward to hearing from you!
 
 Best regards,
 ${formData.name}
-    `.trim();
+        `.trim();
 
-    // Open email client with pre-filled content using dynamic email
-    const mailtoLink = `mailto:${socialEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-    window.location.href = mailtoLink;
+        // Open email client with pre-filled content using dynamic email
+        const mailtoLink = `mailto:${socialEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+        window.location.href = mailtoLink;
 
-    // Show SweetAlert2 success notification
-    Swal.fire({
-      title: 'Message Sent Successfully! 🎉',
-      text: "Your email client has been opened with your message. I'll get back to you within 24 hours to discuss your project.",
-      icon: 'success',
-      showCancelButton: true,
-      confirmButtonColor: '#B8936A',
-      cancelButtonColor: '#6B7280',
-      confirmButtonText: 'Great, Thanks!',
-      cancelButtonText: 'Send Another Message',
-      customClass: {
-        popup: 'rounded-3xl',
-        confirmButton: 'rounded-full px-6 py-3 font-semibold',
-        cancelButton: 'rounded-full px-6 py-3 font-semibold'
-      },
-      showCloseButton: true,
-      backdrop: `
-        rgba(0,0,0,0.6)
-        url("/images/nyan-cat.gif")
-        left top
-        no-repeat
-      `
-    }).then((result) => {
-      if (result.isConfirmed) {
-        onClose(); // Close the main form
+        // Show SweetAlert2 success notification
+        Swal.fire({
+          title: 'Message Sent Successfully! 🎉',
+          text: "Your message has been saved and your email client has been opened. I'll get back to you within 24 hours to discuss your project.",
+          icon: 'success',
+          showCancelButton: true,
+          confirmButtonColor: '#B8936A',
+          cancelButtonColor: '#6B7280',
+          confirmButtonText: 'Great, Thanks!',
+          cancelButtonText: 'Send Another Message',
+          customClass: {
+            popup: 'rounded-3xl',
+            confirmButton: 'rounded-full px-6 py-3 font-semibold',
+            cancelButton: 'rounded-full px-6 py-3 font-semibold'
+          },
+          showCloseButton: true,
+          backdrop: `
+            rgba(0,0,0,0.6)
+            url("/images/nyan-cat.gif")
+            left top
+            no-repeat
+          `
+        }).then((result) => {
+          if (result.isConfirmed) {
+            onClose(); // Close the main form
+          }
+          // If cancelled, keep the form open for another message
+        });
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          company: '',
+          inquiryType: 'General Inquiry',
+          subject: '',
+          message: '',
+          budget: '',
+          timeline: ''
+        });
+        setErrors({});
+        setTouched({});
+      } else {
+        // Show error notification
+        Swal.fire({
+          title: 'Error Saving Message',
+          text: result.error || 'There was an error saving your message. Please try again.',
+          icon: 'error',
+          confirmButtonColor: '#B8936A',
+          confirmButtonText: 'Try Again',
+          customClass: {
+            popup: 'rounded-3xl',
+            confirmButton: 'rounded-full px-6 py-3 font-semibold'
+          }
+        });
       }
-      // If cancelled, keep the form open for another message
-    });
-    
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-      inquiryType: 'General Inquiry',
-      subject: '',
-      message: '',
-      budget: '',
-      timeline: ''
-    });
-    setErrors({});
-    setTouched({});
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      
+      // Show error notification
+      Swal.fire({
+        title: 'Error Saving Message',
+        text: 'There was an error saving your message. Please try again.',
+        icon: 'error',
+        confirmButtonColor: '#B8936A',
+        confirmButtonText: 'Try Again',
+        customClass: {
+          popup: 'rounded-3xl',
+          confirmButton: 'rounded-full px-6 py-3 font-semibold'
+        }
+      });
+    }
   };
 
   const getInputClassName = (field) => {

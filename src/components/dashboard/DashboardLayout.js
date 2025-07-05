@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { projectService, settingsService } from '../../services/supabaseService';
+import { projectService } from '../../services/supabaseService';
 import { syncService } from '../../services/syncService';
 import { supabase } from '../../config/supabase';
 import { useSettings } from '../../services/settingsContext';
@@ -7,9 +7,10 @@ import ProjectsManager from './ProjectsManager';
 import CategoriesManager from './CategoriesManager';
 import DomainsTechnologiesManager from './DomainsTechnologiesManager';
 import NicheManager from './NicheManager';
+import QueriesManager from './QueriesManager';
 import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
-import { applyTheme, getCurrentTheme, themes, saveThemeToSettings } from '../../utils/themeUtils';
+import { applyTheme, themes } from '../../utils/themeUtils';
 import './DashboardLayout.css';
 import './ProjectsManager.css';
 import './CategoriesManager.css';
@@ -66,6 +67,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
   const navItems = [
     { id: 'overview', label: 'Overview', icon: '📊' },
     { id: 'projects', label: 'Projects', icon: '💼' },
+    { id: 'queries', label: 'Contact Queries', icon: '📨' },
     { id: 'domains-technologies', label: 'Technologies', icon: '🎯' },
     { id: 'niche', label: 'Domains / Niche', icon: '🏆' },
     { id: 'media', label: 'Media Library', icon: '🖼️' },
@@ -453,6 +455,8 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
         );
       case 'projects':
         return <ProjectsManager projects={projects} onProjectsChange={loadDashboardData} />;
+      case 'queries':
+        return <QueriesManager />;
       case 'domains-technologies':
         return <DomainsTechnologiesManager />;
       case 'niche':
@@ -875,7 +879,7 @@ const MediaSection = () => {
         // Generate unique filename
         const fileName = `${Date.now()}-${file.name}`;
         
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('images')
           .upload(fileName, file);
 
@@ -1009,7 +1013,7 @@ const MediaSection = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [fullscreenImage, currentImageIndex, images]);
+  }, [fullscreenImage, currentImageIndex, images, navigateFullscreen]);
 
   return (
     <div className="dashboard-section">
@@ -1180,7 +1184,7 @@ const MediaSection = () => {
 };
 
 const AppearanceSection = () => {
-  const { settings, loading, updateSettings, refreshSettings } = useSettings();
+  const { settings, loading, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState({});
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');

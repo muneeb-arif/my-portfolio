@@ -2,7 +2,7 @@ import React from 'react';
 
 const FilterMenu = ({ filters, activeFilter, onFilterChange }) => {
   return (
-    <div id="portfolio" className="mb-12">
+    <div id="portfolio" className="mt-5 mb-12">
       <div className="flex flex-wrap justify-center gap-4 md:gap-8">
         {filters.map((filter) => (
           <button

@@ -1597,3 +1597,183 @@ export const publicPortfolioService = {
 // ================ CACHE MANAGEMENT ================
 // Cache clearing is now handled by the centralized AuthContext
 // No need for additional auth state listeners here 
+
+/**
+ * Save contact form submission
+ */
+const saveContactQuery = async (formData) => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const queryData = {
+      user_id: user.id,
+      form_type: 'contact',
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || null,
+      company: formData.company || null,
+      subject: formData.subject,
+      message: formData.message,
+      budget: formData.budget || null,
+      timeline: formData.timeline || null,
+      inquiry_type: formData.inquiryType || 'General Inquiry',
+      status: 'new',
+      priority: 'medium'
+    };
+
+    const { data, error } = await supabase
+      .from('contact_queries')
+      .insert(queryData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving contact query:', error);
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error in saveContactQuery:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Save onboarding form submission
+ */
+const saveOnboardingQuery = async (formData) => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const queryData = {
+      user_id: user.id,
+      form_type: 'onboarding',
+      company_name: formData.companyName,
+      contact_person: formData.contactPerson,
+      communication_channel: formData.communicationChannel,
+      business_description: formData.businessDescription,
+      target_customer: formData.targetCustomer,
+      unique_value: formData.uniqueValue || null,
+      problem_solving: formData.problemSolving,
+      core_features: formData.coreFeatures,
+      existing_system: formData.existingSystem || null,
+      technical_constraints: formData.technicalConstraints || null,
+      competitors: formData.competitors || null,
+      brand_guide: formData.brandGuide || null,
+      color_preferences: formData.colorPreferences || null,
+      tone_of_voice: formData.toneOfVoice,
+      payment_gateways: formData.paymentGateways || null,
+      integrations: formData.integrations || null,
+      admin_control: formData.adminControl || null,
+      gdpr_compliance: formData.gdprCompliance,
+      terms_privacy: formData.termsPrivacy,
+      launch_date: formData.launchDate || null,
+      budget_range: formData.budgetRange,
+      post_mvp_features: formData.postMvpFeatures || null,
+      long_term_goals: formData.longTermGoals || null,
+      status: 'new',
+      priority: 'high' // Onboarding queries are typically higher priority
+    };
+
+    const { data, error } = await supabase
+      .from('contact_queries')
+      .insert(queryData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving onboarding query:', error);
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error in saveOnboardingQuery:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get all contact queries for the current user
+ */
+const getContactQueries = async () => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase
+      .from('contact_queries')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching contact queries:', error);
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error in getContactQueries:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Update contact query status
+ */
+const updateQueryStatus = async (queryId, status, notes = null) => {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const updateData = {
+      status,
+      updated_at: new Date().toISOString()
+    };
+
+    if (notes) {
+      updateData.notes = notes;
+    }
+
+    if (status === 'completed') {
+      updateData.responded_at = new Date().toISOString();
+    }
+
+    const { data, error } = await supabase
+      .from('contact_queries')
+      .update(updateData)
+      .eq('id', queryId)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating query status:', error);
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error in updateQueryStatus:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export {
+  saveContactQuery,
+  saveOnboardingQuery,
+  getContactQueries,
+  updateQueryStatus
+}; 
