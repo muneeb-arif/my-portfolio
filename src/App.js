@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
@@ -19,11 +19,54 @@ import portfolioService from './services/portfolioService';
 import { SettingsProvider, useSettings } from './services/settingsContext';
 import { AuthProvider } from './services/authContext';
 import { checkEnvMissing } from './config/supabase';
-import { themeUpdateService } from './services/themeUpdateService';
-import { sharedHostingUpdateService } from './services/sharedHostingUpdateService';
-import { automaticUpdateService } from './services/automaticUpdateService';
+
+// Route detector component
+function RouteHandler() {
+  const location = useLocation();
+  
+  // Check if we're on dashboard route (handles both /dashboard and /#/dashboard)
+  const isDashboard = location.pathname === '/dashboard' || 
+                     window.location.hash === '#/dashboard' ||
+                     window.location.pathname === '/dashboard';
+  
+  console.log('🔍 RouteHandler - Location:', location.pathname);
+  console.log('🔍 RouteHandler - Hash:', window.location.hash);
+  console.log('🔍 RouteHandler - isDashboard:', isDashboard);
+  
+  // Handle hash routing redirect
+  useEffect(() => {
+    if (window.location.hash === '#/dashboard' && location.pathname !== '/dashboard') {
+      console.log('🔄 Redirecting from hash to path routing');
+      window.history.replaceState(null, '', '/dashboard');
+    }
+  }, [location.pathname]);
+  
+  if (isDashboard) {
+    return <Dashboard />;
+  }
+  
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
+  );
+}
 
 function App() {
+  // Debug logging
+  console.log('🔍 App.js - Current URL:', window.location.href);
+  console.log('🔍 App.js - Pathname:', window.location.pathname);
+  console.log('🔍 App.js - Hash:', window.location.hash);
+  
+  // Handle initial hash routing
+  useEffect(() => {
+    if (window.location.hash === '#/dashboard') {
+      console.log('🔄 Initial hash routing detected, redirecting to path routing');
+      window.history.replaceState(null, '', '/dashboard');
+      window.location.reload();
+    }
+  }, []);
+  
   return (
     <Router>
       <AuthProvider>
@@ -38,8 +81,8 @@ function App() {
             </SettingsProvider>
           } />
           
-          {/* Redirect any other route to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Catch-all route that handles both normal and hash routing */}
+          <Route path="*" element={<RouteHandler />} />
         </Routes>
       </AuthProvider>
     </Router>
@@ -119,24 +162,6 @@ function AppContent() {
     if (!settingsLoading && settingsInitialized) {
       // Settings are loaded, now load portfolio data in background
       loadPortfolioData();
-      
-      // Initialize theme update service for public views
-      themeUpdateService.initialize().then(result => {
-        if (result.success) {
-          console.log('🚀 Theme update service initialized successfully');
-        } else {
-          console.log('⚠️ Theme update service initialization failed:', result.error);
-        }
-      });
-
-      // Also initialize shared hosting update service
-      sharedHostingUpdateService.initialize().then(result => {
-        if (result.success) {
-          console.log('🏗️ Shared hosting update service initialized successfully');
-        } else {
-          console.log('⚠️ Shared hosting update service initialization failed:', result.error);
-        }
-      });
     }
   }, [settingsLoading, settingsInitialized, loadPortfolioData]);
 

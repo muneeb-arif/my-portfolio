@@ -39,6 +39,7 @@ const Hero = ({ isLoading = false }) => {
   const bannerTitle = settings.banner_title || 'Full Stack Developer';
   const bannerTagline = settings.banner_tagline || 'Creating amazing digital experiences with modern technologies';
   const resumeFile = settings.resume_file;
+  const showResumeDownload = settings.show_resume_download !== false; // Default to true if not set
 
   const scrollToPortfolio = () => {
     const element = document.getElementById('portfolio');
@@ -167,7 +168,7 @@ const Hero = ({ isLoading = false }) => {
                 >
                   View My Work
                 </button>
-                {resumeFile && (
+                {resumeFile && showResumeDownload && (
                   <button
                     onClick={downloadResume}
                     className="px-6 sm:px-8 py-3 sm:py-4 bg-white/90 backdrop-blur-sm text-sand-dark font-semibold rounded-full hover:bg-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/50 whitespace-nowrap text-sm sm:text-base"

@@ -11,6 +11,7 @@ import QueriesManager from './QueriesManager';
 import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
 import AutomaticUpdateDashboard from './AutomaticUpdateDashboard';
+import UpdateNotificationBar from './UpdateNotificationBar';
 import { applyTheme, themes } from '../../utils/themeUtils';
 import './DashboardLayout.css';
 import './ProjectsManager.css';
@@ -572,6 +573,9 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
 
       {/* Main Content */}
       <main className="dashboard-main">
+        {/* Update Notification - Only shown when logged into dashboard */}
+        <UpdateNotificationBar />
+        
         {renderContent()}
       </main>
 
@@ -1214,6 +1218,7 @@ const AppearanceSection = () => {
     banner_tagline: 'I craft dreams, not projects.',
     site_url: 'https://your-domain.com',
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
+    show_resume_download: true,
     social_email: 'muneeb@example.com',
     social_github: 'https://github.com/muneebarif',
     social_instagram: '',
@@ -1694,6 +1699,18 @@ const AppearanceSection = () => {
                        <p>Current: {localSettings.resume_file.split('/').pop()}</p>
                      </div>
                    )}
+                 </div>
+                 <div className="form-group">
+                   <label>
+                     <input
+                       type="checkbox"
+                       checked={localSettings.show_resume_download !== false}
+                       onChange={(e) => handleInputChange('show_resume_download', e.target.checked)}
+                       style={{ marginRight: '8px' }}
+                     />
+                     Show "Download Resume" button on homepage
+                   </label>
+                   <small className="form-help">Uncheck to hide the resume download button from the homepage banner</small>
                  </div>
                </div>
 
