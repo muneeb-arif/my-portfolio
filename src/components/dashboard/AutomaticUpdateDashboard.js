@@ -3,7 +3,7 @@ import { supabase } from '../../config/supabase';
 import './AutomaticUpdateDashboard.css';
 
 const AutomaticUpdateDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('updates');
   const [automaticCapabilities, setAutomaticCapabilities] = useState([]);
   const [automaticStats, setAutomaticStats] = useState({});
   const [recentActivity, setRecentActivity] = useState([]);
@@ -13,6 +13,9 @@ const AutomaticUpdateDashboard = () => {
   // Update management states
   const [updates, setUpdates] = useState([]);
   const [clients, setClients] = useState([]);
+  const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(null);
+  const [distributing, setDistributing] = useState(null);
   const [newUpdate, setNewUpdate] = useState({
     version: '',
     title: '',
@@ -21,7 +24,8 @@ const AutomaticUpdateDashboard = () => {
     package_url: '',
     special_instructions: '',
     channel: 'stable',
-    is_critical: false
+    is_critical: false,
+    is_active: true
   });
 
   useEffect(() => {
@@ -99,7 +103,7 @@ const AutomaticUpdateDashboard = () => {
   const createUpdate = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true);
+      setCreating(true);
 
       // Validate form
       if (!newUpdate.version || !newUpdate.title || !newUpdate.package_url) {
@@ -127,7 +131,8 @@ const AutomaticUpdateDashboard = () => {
         package_url: '',
         special_instructions: '',
         channel: 'stable',
-        is_critical: false
+        is_critical: false,
+        is_active: true
       });
 
       // Reload data
@@ -141,12 +146,13 @@ const AutomaticUpdateDashboard = () => {
       console.error('Failed to create update:', err);
       setError('Failed to create update: ' + err.message);
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   };
 
   const toggleUpdateStatus = async (updateId, currentStatus) => {
     try {
+      setUpdating(updateId);
       const { error } = await supabase
         .from('shared_hosting_updates')
         .update({ is_active: !currentStatus })
@@ -159,6 +165,35 @@ const AutomaticUpdateDashboard = () => {
     } catch (err) {
       console.error('Failed to toggle update status:', err);
       alert('❌ Failed to update status');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleDistributeUpdate = async (updateId) => {
+    try {
+      setDistributing(updateId);
+      
+      // Simulate distribution process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const { error } = await supabase
+        .from('shared_hosting_updates')
+        .update({ 
+          pushed_at: new Date().toISOString(),
+          is_active: true
+        })
+        .eq('id', updateId);
+
+      if (error) throw error;
+
+      await loadUpdates();
+      alert('✅ Update distributed successfully!');
+    } catch (err) {
+      console.error('Failed to distribute update:', err);
+      alert('❌ Failed to distribute update');
+    } finally {
+      setDistributing(null);
     }
   };
 
@@ -216,6 +251,18 @@ const AutomaticUpdateDashboard = () => {
 
       <div className="dashboard-tabs">
         <button 
+          className={`tab ${activeTab === 'updates' ? 'active' : ''}`}
+          onClick={() => setActiveTab('updates')}
+        >
+          📦 Updates List
+        </button>
+        <button 
+          className={`tab ${activeTab === 'management' ? 'active' : ''}`}
+          onClick={() => setActiveTab('management')}
+        >
+          ➕ Create Update
+        </button>
+        <button 
           className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
@@ -233,15 +280,194 @@ const AutomaticUpdateDashboard = () => {
         >
           📝 Recent Activity
         </button>
-        <button 
-          className={`tab ${activeTab === 'management' ? 'active' : ''}`}
-          onClick={() => setActiveTab('management')}
-        >
-          🏗️ Update Management
-        </button>
       </div>
 
       <div className="tab-content">
+        {activeTab === 'updates' && (
+          <div className="updates-tab">
+            <div className="updates-header">
+              <h3>📦 Manage Updates</h3>
+              <p>All theme updates available for distribution</p>
+            </div>
+
+            <div className="updates-list">
+              {updates.map(update => (
+                <div key={update.id} className="update-item">
+                  <div className="update-info">
+                    <div className="update-main">
+                      <h4>{update.title}</h4>
+                      <div className="update-meta">
+                        <span className="version">v{update.version}</span>
+                        <span className={`channel ${update.channel}`}>{update.channel}</span>
+                        {update.is_critical && <span className="critical">🚨 Critical</span>}
+                        <span className={`status ${update.is_active ? 'active' : 'inactive'}`}>
+                          {update.is_active ? '✅ Active' : '❌ Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="update-details">
+                      <p><strong>Description:</strong> {update.description || 'No description'}</p>
+                      <p><strong>Created:</strong> {formatDate(update.created_at)}</p>
+                      <p><strong>Package:</strong> <a href={update.package_url} target="_blank" rel="noopener noreferrer">Download ZIP</a></p>
+                      {update.special_instructions && (
+                        <div className="special-instructions">
+                          <strong>Special Instructions:</strong>
+                          <p>{update.special_instructions}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="update-actions">
+                    <button 
+                      className="btn-update-action"
+                      onClick={() => toggleUpdateStatus(update.id, update.is_active)}
+                      disabled={updating === update.id}
+                    >
+                      {updating === update.id ? '🔄' : (update.is_active ? '❌ Deactivate' : '✅ Activate')}
+                    </button>
+                    {update.is_active && (
+                      <button 
+                        className="btn-update-action primary"
+                        onClick={() => handleDistributeUpdate(update.id)}
+                        disabled={distributing === update.id}
+                      >
+                        {distributing === update.id ? '🔄 Distributing...' : '📤 Distribute'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {updates.length === 0 && (
+                <div className="no-updates">
+                  <p>📭 No updates created yet</p>
+                  <p>Click "Create Update" to create your first theme update package</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'management' && (
+          <div className="management-tab">
+            <div className="create-update-section">
+              <h3>🚀 Create New Update</h3>
+              <p>Create a new theme update package for distribution to all clients</p>
+              
+              <form onSubmit={createUpdate} className="update-form">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="version">Version *</label>
+                    <input
+                      type="text"
+                      id="version"
+                      placeholder="e.g., 2.1.0"
+                      value={newUpdate.version}
+                      onChange={(e) => setNewUpdate({...newUpdate, version: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="title">Title *</label>
+                    <input
+                      type="text"
+                      id="title"
+                      placeholder="e.g., Bug fixes and improvements"
+                      value={newUpdate.title}
+                      onChange={(e) => setNewUpdate({...newUpdate, title: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="channel">Release Channel</label>
+                    <select
+                      id="channel"
+                      value={newUpdate.channel}
+                      onChange={(e) => setNewUpdate({...newUpdate, channel: e.target.value})}
+                    >
+                      <option value="stable">Stable</option>
+                      <option value="beta">Beta</option>
+                      <option value="alpha">Alpha</option>
+                    </select>
+                  </div>
+                  
+                  <div className="form-group full-width">
+                    <label htmlFor="description">Description *</label>
+                    <textarea
+                      id="description"
+                      placeholder="Describe what's new in this update..."
+                      value={newUpdate.description}
+                      onChange={(e) => setNewUpdate({...newUpdate, description: e.target.value})}
+                      rows="4"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="package_url">Package URL *</label>
+                    <input
+                      type="url"
+                      id="package_url"
+                      placeholder="https://example.com/update.zip"
+                      value={newUpdate.package_url}
+                      onChange={(e) => setNewUpdate({...newUpdate, package_url: e.target.value})}
+                      required
+                    />
+                    <small>URL to the update package ZIP file</small>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="special_instructions">Special Instructions</label>
+                    <textarea
+                      id="special_instructions"
+                      placeholder="Any special instructions for this update..."
+                      value={newUpdate.special_instructions}
+                      onChange={(e) => setNewUpdate({...newUpdate, special_instructions: e.target.value})}
+                      rows="3"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={newUpdate.is_critical}
+                        onChange={(e) => setNewUpdate({...newUpdate, is_critical: e.target.checked})}
+                      />
+                      This is a critical update
+                    </label>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={newUpdate.is_active}
+                        onChange={(e) => setNewUpdate({...newUpdate, is_active: e.target.checked})}
+                      />
+                      Activate immediately
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-actions">
+                  <button type="submit" disabled={creating} className="btn-primary">
+                    {creating ? '🔄 Creating...' : '🚀 Create Update'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveTab('updates')}
+                    className="btn-secondary"
+                  >
+                    📋 View Updates
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'overview' && (
           <div className="overview-tab">
             <div className="stats-grid">
@@ -440,185 +666,6 @@ const AutomaticUpdateDashboard = () => {
                 <div className="no-activity">
                   <p>📭 No recent activity</p>
                   <p>Activity will appear here when clients perform updates</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'management' && (
-          <div className="management-tab">
-            <div className="create-update-section">
-              <h3>🚀 Create New Update</h3>
-              <p>Create a new theme update package for distribution to all clients</p>
-              
-              <form onSubmit={createUpdate} className="update-form">
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label htmlFor="version">Version *</label>
-                    <input
-                      type="text"
-                      id="version"
-                      placeholder="e.g., 2.1.0"
-                      value={newUpdate.version}
-                      onChange={(e) => setNewUpdate({...newUpdate, version: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="title">Title *</label>
-                    <input
-                      type="text"
-                      id="title"
-                      placeholder="e.g., Bug fixes and improvements"
-                      value={newUpdate.title}
-                      onChange={(e) => setNewUpdate({...newUpdate, title: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="channel">Release Channel</label>
-                    <select
-                      id="channel"
-                      value={newUpdate.channel}
-                      onChange={(e) => setNewUpdate({...newUpdate, channel: e.target.value})}
-                    >
-                      <option value="stable">Stable</option>
-                      <option value="beta">Beta</option>
-                      <option value="alpha">Alpha</option>
-                    </select>
-                  </div>
-                  
-                  <div className="form-group full-width">
-                    <label htmlFor="package_url">Package URL *</label>
-                    <input
-                      type="url"
-                      id="package_url"
-                      placeholder="https://example.com/updates/build-v2.1.0.zip"
-                      value={newUpdate.package_url}
-                      onChange={(e) => setNewUpdate({...newUpdate, package_url: e.target.value})}
-                      required
-                    />
-                    <small>Direct download link to your ZIP package</small>
-                  </div>
-                  
-                  <div className="form-group full-width">
-                    <label htmlFor="description">Description</label>
-                    <textarea
-                      id="description"
-                      rows="3"
-                      placeholder="Brief description of what's new in this update"
-                      value={newUpdate.description}
-                      onChange={(e) => setNewUpdate({...newUpdate, description: e.target.value})}
-                    />
-                  </div>
-                  
-                  <div className="form-group full-width">
-                    <label htmlFor="release_notes">Release Notes</label>
-                    <textarea
-                      id="release_notes"
-                      rows="4"
-                      placeholder="Detailed release notes for users"
-                      value={newUpdate.release_notes}
-                      onChange={(e) => setNewUpdate({...newUpdate, release_notes: e.target.value})}
-                    />
-                  </div>
-                  
-                  <div className="form-group full-width">
-                    <label htmlFor="special_instructions">Special Instructions</label>
-                    <textarea
-                      id="special_instructions"
-                      rows="2"
-                      placeholder="Any special instructions for manual installation"
-                      value={newUpdate.special_instructions}
-                      onChange={(e) => setNewUpdate({...newUpdate, special_instructions: e.target.value})}
-                    />
-                  </div>
-                  
-                  <div className="form-group full-width">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={newUpdate.is_critical}
-                        onChange={(e) => setNewUpdate({...newUpdate, is_critical: e.target.checked})}
-                      />
-                      Critical Update (requires immediate attention)
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="form-actions">
-                  <button type="submit" className="action-btn primary" disabled={loading}>
-                    {loading ? '🔄 Creating...' : '🚀 Create Update'}
-                  </button>
-                  <button 
-                    type="button" 
-                    className="action-btn secondary"
-                    onClick={() => setActiveTab('updates')}
-                  >
-                    📋 View Updates
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'updates' && (
-          <div className="updates-tab">
-            <div className="updates-header">
-              <h3>📦 Manage Updates</h3>
-              <p>All theme updates available for distribution</p>
-            </div>
-
-            <div className="updates-list">
-              {updates.map(update => (
-                <div key={update.id} className="update-item">
-                  <div className="update-info">
-                    <div className="update-main">
-                      <h4>{update.title}</h4>
-                      <div className="update-meta">
-                        <span className="version">v{update.version}</span>
-                        <span className={`channel ${update.channel}`}>{update.channel}</span>
-                        {update.is_critical && <span className="critical">🚨 Critical</span>}
-                        <span className={`status ${update.is_active ? 'active' : 'inactive'}`}>
-                          {update.is_active ? '✅ Active' : '❌ Inactive'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="update-details">
-                      <p><strong>Description:</strong> {update.description || 'No description'}</p>
-                      <p><strong>Created:</strong> {formatDate(update.created_at)}</p>
-                      <p><strong>Package:</strong> <a href={update.package_url} target="_blank" rel="noopener noreferrer">Download ZIP</a></p>
-                      {update.special_instructions && (
-                        <div className="special-instructions">
-                          <strong>Special Instructions:</strong>
-                          <p>{update.special_instructions}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="update-actions">
-                    <button 
-                      className={`btn-small ${update.is_active ? 'danger' : 'success'}`}
-                      onClick={() => toggleUpdateStatus(update.id, update.is_active)}
-                    >
-                      {update.is_active ? '❌ Deactivate' : '✅ Activate'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {updates.length === 0 && (
-                <div className="no-updates">
-                  <p>📭 No updates created yet</p>
-                  <button 
-                    className="action-btn primary"
-                    onClick={() => setActiveTab('management')}
-                  >
-                    🚀 Create First Update
-                  </button>
                 </div>
               )}
             </div>

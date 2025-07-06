@@ -73,11 +73,12 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     { id: 'domains-technologies', label: 'Technologies', icon: '🎯' },
     { id: 'niche', label: 'Domains / Niche', icon: '🏆' },
     { id: 'media', label: 'Media Library', icon: '🖼️' },
+    { id: 'backup-files', label: 'Backup Files', icon: '📦' },
     { id: 'categories', label: 'Categories', icon: '📁' },
     { id: 'appearance', label: 'Appearance', icon: '🎨' },
     { id: 'theme-updates', label: 'Theme Updates', icon: '🚀' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
-    { id: 'export', label: 'Import/Export', icon: '📦' },
+    { id: 'export', label: 'Import/Export', icon: '📤' },
     { id: 'debug', label: 'Debug Sync', icon: '🔧' }
   ];
 
@@ -466,6 +467,8 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
         return <NicheManager />;
       case 'media':
         return <MediaSection />;
+      case 'backup-files':
+        return <BackupFilesSection />;
       case 'categories':
         return <CategoriesManager />;
       case 'appearance':
@@ -1231,6 +1234,7 @@ const AppearanceSection = () => {
   const loadLocalSettings = useCallback(() => {
     try {
       console.log('🎨 Dashboard: Loading settings from global context...');
+      console.log('🔍 Dashboard: Global settings show_resume_download:', settings.show_resume_download);
       
       // Get settings from global context (already loaded)
       const contextSettings = { ...defaultSettings };
@@ -1240,6 +1244,7 @@ const AppearanceSection = () => {
         }
       });
       
+      console.log('🔍 Dashboard: Final contextSettings show_resume_download:', contextSettings.show_resume_download);
       console.log('🎨 Dashboard: Settings loaded from context:', {
         settingsCount: Object.keys(contextSettings).length,
         hasTheme: !!contextSettings.theme_name,
@@ -1704,7 +1709,7 @@ const AppearanceSection = () => {
                    <label>
                      <input
                        type="checkbox"
-                       checked={localSettings.show_resume_download !== false}
+                       checked={localSettings.show_resume_download === undefined ? true : localSettings.show_resume_download}
                        onChange={(e) => handleInputChange('show_resume_download', e.target.checked)}
                        style={{ marginRight: '8px' }}
                      />
@@ -1818,5 +1823,312 @@ const ExportSection = () => (
     </div>
   </div>
 );
+
+// Backup Files Section Component
+const BackupFilesSection = () => {
+  const [backupFiles, setBackupFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Load all backup files from updates storage
+  const loadBackupFiles = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      // List all files from the updates bucket
+      const { data: files, error } = await supabase.storage
+        .from('updates')
+        .list('', {
+          limit: 1000,
+          sortBy: { column: 'created_at', order: 'desc' }
+        });
+
+      if (error) throw error;
+
+      // Filter backup files and get public URLs
+      const backupFilesData = files.filter(file => 
+        file.name.match(/\.(zip|tar|gz|rar|7z)$/i) && 
+        !file.name.startsWith('.')
+      );
+
+      const filesWithUrls = backupFilesData.map(file => {
+        const { data: { publicUrl } } = supabase.storage
+          .from('updates')
+          .getPublicUrl(file.name);
+        
+        return {
+          name: file.name,
+          url: publicUrl,
+          size: file.metadata?.size || 0,
+          created_at: file.created_at,
+          updated_at: file.updated_at
+        };
+      });
+
+      setBackupFiles(filesWithUrls);
+    } catch (error) {
+      console.error('Error loading backup files:', error);
+      setError('Failed to load backup files: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Upload new backup file
+  const handleFileUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    try {
+      setUploading(true);
+      setError('');
+
+      for (const file of files) {
+        // Generate unique filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const fileName = `backup-${timestamp}-${file.name}`;
+        
+        const { error } = await supabase.storage
+          .from('updates')
+          .upload(fileName, file);
+
+        if (error) throw error;
+      }
+
+      // Reload files after upload
+      await loadBackupFiles();
+      
+      // Clear the input
+      event.target.value = '';
+      
+    } catch (error) {
+      console.error('Error uploading backup files:', error);
+      setError('Failed to upload backup files: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Download backup file
+  const downloadFile = async (file) => {
+    try {
+      const response = await fetch(file.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      setError('Failed to download file');
+    }
+  };
+
+  // Delete backup file
+  const deleteFile = async (file) => {
+    if (!window.confirm(`Are you sure you want to delete ${file.name}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.storage
+        .from('updates')
+        .remove([file.name]);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setBackupFiles(backupFiles.filter(f => f.name !== file.name));
+      
+    } catch (error) {
+      console.error('Error deleting backup file:', error);
+      setError('Failed to delete backup file: ' + error.message);
+    }
+  };
+
+  // Format file size
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return 'Unknown size';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Get file type icon
+  const getFileIcon = (fileName) => {
+    const extension = fileName.split('.').pop().toLowerCase();
+    switch (extension) {
+      case 'zip': return '📦';
+      case 'tar': return '📦';
+      case 'gz': return '🗜️';
+      case 'rar': return '📦';
+      case '7z': return '🗜️';
+      default: return '📄';
+    }
+  };
+
+  // Copy public URL to clipboard
+  const copyUrl = async (file) => {
+    try {
+      await navigator.clipboard.writeText(file.url);
+      
+      // Show success message
+      const originalText = document.querySelector(`[data-file="${file.name}"] .copy-btn`).textContent;
+      const copyBtn = document.querySelector(`[data-file="${file.name}"] .copy-btn`);
+      copyBtn.textContent = '✅ Copied!';
+      copyBtn.style.color = '#16a34a';
+      
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        copyBtn.textContent = originalText;
+        copyBtn.style.color = '';
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error copying URL:', error);
+      setError('Failed to copy URL to clipboard');
+    }
+  };
+
+  // Load files on component mount
+  useEffect(() => {
+    loadBackupFiles();
+  }, []);
+
+  return (
+    <div className="dashboard-section">
+      <div className="section-header">
+        <h2>📦 Backup Files</h2>
+        <div className="flex gap-2">
+          <button 
+            className="btn-secondary" 
+            onClick={loadBackupFiles}
+            disabled={loading}
+          >
+            🔄 Refresh
+          </button>
+          <label className="btn-primary">
+            {uploading ? '⏳ Uploading...' : '+ Upload Backup'}
+            <input
+              type="file"
+              multiple
+              accept=".zip,.tar,.gz,.rar,.7z"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+              disabled={uploading}
+            />
+          </label>
+        </div>
+      </div>
+
+      {error && (
+        <div className="error-message" style={{ 
+          color: '#dc2626', 
+          background: '#fef2f2', 
+          padding: '12px', 
+          borderRadius: '8px', 
+          margin: '16px 0',
+          border: '1px solid #fecaca'
+        }}>
+          {error}
+        </div>
+      )}
+
+      <div className="backup-stats">
+        <p>{backupFiles.length} backup files • Total size: {formatFileSize(backupFiles.reduce((total, file) => total + file.size, 0))}</p>
+      </div>
+
+      {loading ? (
+        <div className="loading-state">
+          <div className="backup-files-list">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="backup-file-item skeleton">
+                <div className="file-icon skeleton-box"></div>
+                <div className="file-info">
+                  <div className="skeleton-text"></div>
+                  <div className="skeleton-text short"></div>
+                </div>
+                <div className="file-actions">
+                  <div className="skeleton-box" style={{ width: '80px', height: '32px' }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="backup-files-list">
+          {backupFiles.map((file, index) => (
+            <div key={file.name} className="backup-file-item" data-file={file.name}>
+              <div className="file-icon">
+                {getFileIcon(file.name)}
+              </div>
+              <div className="file-info">
+                <h4>{file.name}</h4>
+                <div className="file-meta">
+                  <span>{formatFileSize(file.size)}</span>
+                  <span>•</span>
+                  <span>{formatDate(file.created_at)}</span>
+                </div>
+              </div>
+              <div className="file-actions">
+                <button 
+                  onClick={() => copyUrl(file)}
+                  className="action-btn copy copy-btn"
+                  title="Copy public URL"
+                >
+                  📋 Copy URL
+                </button>
+                <button 
+                  onClick={() => downloadFile(file)}
+                  className="action-btn download"
+                  title="Download"
+                >
+                  📥 Download
+                </button>
+                <button 
+                  onClick={() => deleteFile(file)}
+                  className="action-btn delete"
+                  title="Delete"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {backupFiles.length === 0 && !loading && (
+        <div className="empty-state">
+          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📦</div>
+            <h3>No backup files found</h3>
+            <p>Upload backup files to store and manage your project backups</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default DashboardLayout; 

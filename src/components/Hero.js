@@ -39,7 +39,8 @@ const Hero = ({ isLoading = false }) => {
   const bannerTitle = settings.banner_title || 'Full Stack Developer';
   const bannerTagline = settings.banner_tagline || 'Creating amazing digital experiences with modern technologies';
   const resumeFile = settings.resume_file;
-  const showResumeDownload = settings.show_resume_download !== false; // Default to true if not set
+  // Fix: Properly handle the boolean setting - default to true only if undefined, otherwise respect the actual value
+  const showResumeDownload = settings.show_resume_download === undefined ? true : settings.show_resume_download;
 
   const scrollToPortfolio = () => {
     const element = document.getElementById('portfolio');

@@ -93,17 +93,46 @@ const Header = ({ additionalDataLoading }) => {
             {/* Logo */}
             <div className="flex items-center space-x-2">
               <div className="relative w-12 h-8 flex items-center justify-center">
-                {/* Main logo background */}
-                <div className="absolute inset-0 bg-white/10 rounded-sm"></div>
+                {getSetting('logo_type') === 'image' && getSetting('logo_image') ? (
+                  // Show logo image
+                  <img 
+                    src={getSetting('logo_image')} 
+                    alt="Logo" 
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      // Fallback to initials if image fails to load
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                ) : (
+                  // Show initials (default)
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    {/* Main logo background */}
+                    <div className="absolute inset-0 bg-white/10 rounded-sm"></div>
+                    
+                    {/* MA Initials */}
+                    <span className="relative text-white font-bold text-2xl tracking-wider">
+                      {getSetting('logo_initials') || 'MA'}
+                    </span>
+                    
+                    {/* Decorative dots */}
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                  </div>
+                )}
                 
-                {/* MA Initials */}
-                <span className="relative text-white font-bold text-2xl tracking-wider">
-                  {getSetting('logo_initials') || 'MA'}
-                </span>
-                
-                {/* Decorative dots */}
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                {/* Fallback initials (hidden by default, shown if image fails) */}
+                {getSetting('logo_type') === 'image' && getSetting('logo_image') && (
+                  <div className="relative w-full h-full flex items-center justify-center" style={{ display: 'none' }}>
+                    <div className="absolute inset-0 bg-white/10 rounded-sm"></div>
+                    <span className="relative text-white font-bold text-2xl tracking-wider">
+                      {getSetting('logo_initials') || 'MA'}
+                    </span>
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                  </div>
+                )}
               </div>
             </div>
 

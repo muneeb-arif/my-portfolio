@@ -389,10 +389,16 @@ export const settingsService = {
       
       // console.log('📊 Raw settings data:', data);
       
-      // Convert array to object for easier access
+      // Convert array to object for easier access and parse JSON values
       const settingsObj = {};
       (data || []).forEach(setting => {
-        settingsObj[setting.key] = setting.value;
+        try {
+          // Try to parse as JSON to restore original data types
+          settingsObj[setting.key] = JSON.parse(setting.value);
+        } catch (error) {
+          // If parsing fails, use the raw value (for backwards compatibility)
+          settingsObj[setting.key] = setting.value;
+        }
       });
       
       // console.log('🔧 Processed settings object:', settingsObj);
@@ -417,7 +423,14 @@ export const settingsService = {
         .single();
 
       if (error) throw error;
-      return data?.value || null;
+      
+      try {
+        // Try to parse as JSON to restore original data type
+        return data?.value ? JSON.parse(data.value) : null;
+      } catch (parseError) {
+        // If parsing fails, return raw value (for backwards compatibility)
+        return data?.value || null;
+      }
     } catch (error) {
       // console.error(`Error fetching setting ${key}:`, error);
       return null;
@@ -435,7 +448,7 @@ export const settingsService = {
         .upsert({
           user_id: user.id,
           key: key,
-          value: value
+          value: JSON.stringify(value) // Store as JSON to preserve data types
         }, { onConflict: 'user_id,key' });
 
       if (error) throw error;
@@ -455,7 +468,7 @@ export const settingsService = {
       const settingsData = Object.entries(settings).map(([key, value]) => ({
         user_id: user.id,
         key: key,
-        value: value
+        value: JSON.stringify(value) // Store as JSON to preserve data types
       }));
 
       const { error } = await supabase
@@ -1566,11 +1579,17 @@ export const publicPortfolioService = {
           throw error;
         }
         
-        // Convert array to object for easier access
+        // Convert array to object for easier access and parse JSON values
         const settingsObj = {};
         (data || []).forEach(setting => {
-          settingsObj[setting.key] = setting.value;
-          console.log(`   - Setting: ${setting.key} = ${setting.value}`);
+          try {
+            // Try to parse as JSON to restore original data types
+            settingsObj[setting.key] = JSON.parse(setting.value);
+          } catch (error) {
+            // If parsing fails, use the raw value (for backwards compatibility)
+            settingsObj[setting.key] = setting.value;
+          }
+          console.log(`   - Setting: ${setting.key} = ${settingsObj[setting.key]}`);
         });
         
         console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);

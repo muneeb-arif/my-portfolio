@@ -6,6 +6,12 @@ const UpdateNotificationBar = () => {
   const [updateInfo, setUpdateInfo] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isApplyingUpdate, setIsApplyingUpdate] = useState(false);
+  const [progressDisplay, setProgressDisplay] = useState({
+    isVisible: false,
+    currentStep: '',
+    messages: [],
+    progress: 0
+  });
 
   useEffect(() => {
     checkForUpdates();
@@ -76,39 +82,94 @@ const UpdateNotificationBar = () => {
   const handleApplyUpdate = async () => {
     try {
       setIsApplyingUpdate(true);
+      setProgressDisplay({
+        isVisible: true,
+        currentStep: 'Initializing update...',
+        messages: ['🚀 Starting automatic update process'],
+        progress: 0
+      });
       
       // Check if automatic updates are supported
+      setProgressDisplay(prev => ({
+        ...prev,
+        currentStep: 'Checking server compatibility...',
+        messages: [...prev.messages, '🔍 Checking automatic update support'],
+        progress: 20
+      }));
+
       const isSupported = await automaticUpdateService.checkSupport();
       
       if (isSupported) {
+        setProgressDisplay(prev => ({
+          ...prev,
+          currentStep: 'Downloading update package...',
+          messages: [...prev.messages, '✅ Server supports automatic updates', '📥 Downloading update package'],
+          progress: 40
+        }));
+
         // Trigger automatic update
         const result = await automaticUpdateService.applyUpdate(updateInfo, {
           createBackup: true,
           progressCallback: (message, type) => {
             console.log(`${type}: ${message}`);
+            setProgressDisplay(prev => ({
+              ...prev,
+              currentStep: message,
+              messages: [...prev.messages, `${type === 'info' ? '🔄' : type === 'success' ? '✅' : '❌'} ${message}`],
+              progress: Math.min(prev.progress + 10, 90)
+            }));
           }
         });
 
         if (result.success) {
+          setProgressDisplay(prev => ({
+            ...prev,
+            currentStep: 'Update completed successfully!',
+            messages: [...prev.messages, '🎉 Update applied successfully!', '🔄 Preparing to reload...'],
+            progress: 100
+          }));
+
           // Update successful
           localStorage.setItem('theme_version', updateInfo.version);
           setIsVisible(false);
           
           // Show success and reload
-          alert('🎉 Update applied successfully! Reloading page...');
           setTimeout(() => {
-            window.location.reload();
+            alert('🎉 Update applied successfully! Reloading page...');
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           }, 2000);
         } else {
           throw new Error(result.error || 'Update failed');
         }
       } else {
+        setProgressDisplay(prev => ({
+          ...prev,
+          currentStep: 'Server requires manual update',
+          messages: [...prev.messages, '📋 Automatic updates not supported on this server', '🔄 Switching to manual update...'],
+          progress: 100
+        }));
+
         // Fallback to manual update
-        handleManualUpdate();
+        setTimeout(() => {
+          setProgressDisplay({ isVisible: false, currentStep: '', messages: [], progress: 0 });
+          handleManualUpdate();
+        }, 2000);
       }
     } catch (error) {
       console.error('Failed to apply update:', error);
-      alert(`❌ Auto-update failed: ${error.message}\n\nTry the manual update instead.`);
+      setProgressDisplay(prev => ({
+        ...prev,
+        currentStep: 'Update failed',
+        messages: [...prev.messages, `❌ Auto-update failed: ${error.message}`, '💡 Please try manual update instead'],
+        progress: 100
+      }));
+      
+      setTimeout(() => {
+        alert(`❌ Auto-update failed: ${error.message}\n\nTry the manual update instead.`);
+        setProgressDisplay({ isVisible: false, currentStep: '', messages: [], progress: 0 });
+      }, 3000);
     } finally {
       setIsApplyingUpdate(false);
     }
@@ -155,7 +216,7 @@ Mark as applied when done.`);
     <div className="update-notification-bar">
       <div className="update-content">
         <div className="update-header">
-          <div className="update-icon" style={{ flexDirection: 'row' }}>🚀</div>
+          <div className="update-icon">🚀</div>
           <div className="update-text">
             <strong>Website Update Available!</strong>
             <p>Version {updateInfo.version}: {updateInfo.title}</p>
@@ -165,6 +226,31 @@ Mark as applied when done.`);
             NEW
           </div>
         </div>
+        
+        {progressDisplay.isVisible && (
+          <div className="progress-display">
+            <div className="progress-header">
+              <h4>🔄 Update in Progress</h4>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${progressDisplay.progress}%` }}
+                ></div>
+              </div>
+              <span className="progress-text">{progressDisplay.progress}%</span>
+            </div>
+            <div className="current-step">
+              <strong>{progressDisplay.currentStep}</strong>
+            </div>
+            <div className="progress-messages">
+              {progressDisplay.messages.slice(-3).map((message, index) => (
+                <div key={index} className="progress-message">
+                  {message}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         <div className="update-actions">
           <button 
@@ -177,12 +263,14 @@ Mark as applied when done.`);
           <button 
             className="btn-manual-update"
             onClick={handleManualUpdate}
+            disabled={isApplyingUpdate}
           >
             📥 Manual Update
           </button>
           <button 
             className="btn-mark-applied"
             onClick={handleMarkApplied}
+            disabled={isApplyingUpdate}
           >
             ✅ Mark as Applied
           </button>
@@ -286,6 +374,70 @@ Mark as applied when done.`);
           40% { transform: translateY(-4px); }
           60% { transform: translateY(-2px); }
         }
+
+        .progress-display {
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 16px;
+          backdrop-filter: blur(10px);
+        }
+
+        .progress-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .progress-header h4 {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        .progress-bar {
+          flex: 1;
+          height: 8px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10b981, #059669);
+          transition: width 0.3s ease;
+          border-radius: 4px;
+        }
+
+        .progress-text {
+          font-size: 0.9rem;
+          font-weight: 600;
+          min-width: 40px;
+        }
+
+        .current-step {
+          margin-bottom: 12px;
+          font-size: 0.9rem;
+          color: #f1f5f9;
+        }
+
+        .progress-messages {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .progress-message {
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.9);
+          padding: 4px 8px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
+          border-left: 3px solid #10b981;
+        }
         
         .update-actions {
           display: flex;
@@ -307,6 +459,12 @@ Mark as applied when done.`);
           position: relative;
           overflow: hidden;
         }
+
+        .update-actions button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
         
         .btn-auto-update.primary {
           background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -321,12 +479,6 @@ Mark as applied when done.`);
           box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         }
         
-        .btn-auto-update:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-          transform: none;
-        }
-        
         .btn-manual-update, .btn-mark-applied {
           background: rgba(255, 255, 255, 0.15);
           color: white;
@@ -334,7 +486,7 @@ Mark as applied when done.`);
           backdrop-filter: blur(10px);
         }
         
-        .btn-manual-update:hover, .btn-mark-applied:hover {
+        .btn-manual-update:hover:not(:disabled), .btn-mark-applied:hover:not(:disabled) {
           background: rgba(255, 255, 255, 0.25);
           border-color: rgba(255, 255, 255, 0.5);
           transform: translateY(-1px);
@@ -369,6 +521,7 @@ Mark as applied when done.`);
           }
           
           .update-actions {
+            flex-direction: row;
             justify-content: center;
             gap: 8px;
           }
@@ -377,6 +530,12 @@ Mark as applied when done.`);
             flex: 1;
             min-width: 0;
             padding: 10px 16px;
+          }
+          
+          .progress-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
           }
         }
         
