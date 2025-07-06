@@ -10,6 +10,7 @@ import NicheManager from './NicheManager';
 import QueriesManager from './QueriesManager';
 import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
+import AutomaticUpdateDashboard from './AutomaticUpdateDashboard';
 import { applyTheme, themes } from '../../utils/themeUtils';
 import './DashboardLayout.css';
 import './ProjectsManager.css';
@@ -73,6 +74,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     { id: 'media', label: 'Media Library', icon: '🖼️' },
     { id: 'categories', label: 'Categories', icon: '📁' },
     { id: 'appearance', label: 'Appearance', icon: '🎨' },
+    { id: 'theme-updates', label: 'Theme Updates', icon: '🚀' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
     { id: 'export', label: 'Import/Export', icon: '📦' },
     { id: 'debug', label: 'Debug Sync', icon: '🔧' }
@@ -467,6 +469,8 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
         return <CategoriesManager />;
       case 'appearance':
         return <AppearanceSection />;
+      case 'theme-updates':
+        return <AutomaticUpdateDashboard />;
       case 'settings':
         return <SettingsSection user={user} />;
       case 'export':

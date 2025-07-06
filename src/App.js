@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
@@ -18,11 +19,35 @@ import portfolioService from './services/portfolioService';
 import { SettingsProvider, useSettings } from './services/settingsContext';
 import { AuthProvider } from './services/authContext';
 import { checkEnvMissing } from './config/supabase';
+import { themeUpdateService } from './services/themeUpdateService';
+import { sharedHostingUpdateService } from './services/sharedHostingUpdateService';
+import { automaticUpdateService } from './services/automaticUpdateService';
 
 function App() {
-  // Check if we're on the dashboard route
-  const isDashboard = window.location.pathname === '/dashboard';
-  
+  return (
+    <Router>
+      <AuthProvider>
+        <Routes>
+          {/* Dashboard route */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Main portfolio route */}
+          <Route path="/" element={
+            <SettingsProvider>
+              <AppContent />
+            </SettingsProvider>
+          } />
+          
+          {/* Redirect any other route to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </Router>
+  );
+}
+
+// Separate component that can use useSettings hook
+function AppContent() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
   const [particles, setParticles] = useState([]);
@@ -31,6 +56,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [additionalDataLoading, setAdditionalDataLoading] = useState(false);
   const [showEnvToast, setShowEnvToast] = useState(false);
+
+  const { loading: settingsLoading, initialized: settingsInitialized } = useSettings();
 
   // Check for missing environment variables on app load
   useEffect(() => {
@@ -43,51 +70,6 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, []);
-
-  // If dashboard route, show dashboard wrapped in AuthProvider
-  if (isDashboard) {
-    return (
-      <AuthProvider>
-        <Dashboard />
-      </AuthProvider>
-    );
-  }
-
-  // For public pages, wrap in both AuthProvider and SettingsProvider, and use AppContent
-  return (
-    <AuthProvider>
-      <SettingsProvider>
-        <AppContent 
-          activeFilter={activeFilter}
-          setActiveFilter={setActiveFilter}
-          selectedProject={selectedProject}
-          setSelectedProject={setSelectedProject}
-          particles={particles}
-          setParticles={setParticles}
-          projects={projects}
-          setProjects={setProjects}
-          filters={filters}
-          setFilters={setFilters}
-          loading={loading}
-          setLoading={setLoading}
-          additionalDataLoading={additionalDataLoading}
-          setAdditionalDataLoading={setAdditionalDataLoading}
-          showEnvToast={showEnvToast}
-          setShowEnvToast={setShowEnvToast}
-        />
-      </SettingsProvider>
-    </AuthProvider>
-  );
-}
-
-// Separate component that can use useSettings hook
-function AppContent({ 
-  activeFilter, setActiveFilter, selectedProject, setSelectedProject, 
-  particles, setParticles, projects, setProjects, filters, setFilters, 
-  loading, setLoading, additionalDataLoading, setAdditionalDataLoading,
-  showEnvToast, setShowEnvToast 
-}) {
-  const { loading: settingsLoading, initialized: settingsInitialized } = useSettings();
 
   // Define loadPortfolioData function first
   const loadPortfolioData = useCallback(async () => {
@@ -115,18 +97,46 @@ function AppContent({
     } finally {
       setAdditionalDataLoading(false);
     }
-  }, [setAdditionalDataLoading, setProjects, setFilters]);
+  }, []);
 
-  // Hide the main loader as soon as settings are loaded
+  // Hide the main loader with 1 second delay after settings are loaded
   useEffect(() => {
-    setLoading(settingsLoading);
-  }, [settingsLoading, setLoading]);
+    if (settingsLoading) {
+      // Show loader immediately when settings start loading
+      setLoading(true);
+    } else {
+      // Add 1 second delay before hiding loader when settings finish loading
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [settingsLoading]);
 
-  // Wait for settings to load, then load portfolio data
+  // Wait for settings to load, then load portfolio data and initialize theme updates
   useEffect(() => {
     if (!settingsLoading && settingsInitialized) {
       // Settings are loaded, now load portfolio data in background
       loadPortfolioData();
+      
+      // Initialize theme update service for public views
+      themeUpdateService.initialize().then(result => {
+        if (result.success) {
+          console.log('🚀 Theme update service initialized successfully');
+        } else {
+          console.log('⚠️ Theme update service initialization failed:', result.error);
+        }
+      });
+
+      // Also initialize shared hosting update service
+      sharedHostingUpdateService.initialize().then(result => {
+        if (result.success) {
+          console.log('🏗️ Shared hosting update service initialized successfully');
+        } else {
+          console.log('⚠️ Shared hosting update service initialization failed:', result.error);
+        }
+      });
     }
   }, [settingsLoading, settingsInitialized, loadPortfolioData]);
 
