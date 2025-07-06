@@ -3,6 +3,7 @@ import { X, Mail, User, MessageSquare, Tag, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useSettings } from '../services/settingsContext';
 import { saveContactQuery } from '../services/supabaseService';
+import { sendContactEmail } from '../services/emailService';
 
 const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
   const { getSetting } = useSettings();
@@ -211,46 +212,22 @@ const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
     });
     
     try {
-      // Save to database
-      const result = await saveContactQuery(formData);
+      // Save to database first
+      const dbResult = await saveContactQuery(formData);
       
-      if (result.success) {
-        // Create email content with dynamic name
-        const emailSubject = formData.subject || `${formData.inquiryType} - ${formData.name}`;
-        const emailBody = `
-Hi ${bannerName.split(' ')[0]},
-
-I'm interested in discussing a project with you.
-
-Contact Details:
-• Name: ${formData.name}
-• Email: ${formData.email}
-• Phone: ${formData.phone || 'Not provided'}
-• Company: ${formData.company || 'Not provided'}
-
-Project Information:
-• Inquiry Type: ${formData.inquiryType}
-• Subject: ${formData.subject}
-• Budget Range: ${formData.budget || 'To be discussed'}
-• Timeline: ${formData.timeline || 'Flexible'}
-
-Message:
-${formData.message}
-
-Looking forward to hearing from you!
-
-Best regards,
-${formData.name}
-        `.trim();
-
-        // Open email client with pre-filled content using dynamic email
-        const mailtoLink = `mailto:${socialEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-        window.location.href = mailtoLink;
-
-        // Show SweetAlert2 success notification
+      if (!dbResult.success) {
+        console.warn('Database save failed:', dbResult.error);
+        // Continue with email sending even if database save fails
+      }
+      
+      // Send email using EmailJS
+      const emailResult = await sendContactEmail(formData);
+      
+      if (emailResult.success) {
+        // Show success notification
         Swal.fire({
           title: 'Message Sent Successfully! 🎉',
-          text: "Your message has been saved and your email client has been opened. I'll get back to you within 24 hours to discuss your project.",
+          text: `Your message has been sent directly to ${bannerName}. ${dbResult.success ? 'It has also been saved to our database.' : ''} I'll get back to you within 24 hours to discuss your project.`,
           icon: 'success',
           showCancelButton: true,
           confirmButtonColor: '#B8936A',
@@ -291,18 +268,34 @@ ${formData.name}
         setErrors({});
         setTouched({});
       } else {
-        // Show error notification
-        Swal.fire({
-          title: 'Error Saving Message',
-          text: result.error || 'There was an error saving your message. Please try again.',
-          icon: 'error',
-          confirmButtonColor: '#B8936A',
-          confirmButtonText: 'Try Again',
-          customClass: {
-            popup: 'rounded-3xl',
-            confirmButton: 'rounded-full px-6 py-3 font-semibold'
-          }
-        });
+        // Email sending failed, but database might have succeeded
+        if (dbResult.success) {
+          // Show partial success notification
+          Swal.fire({
+            title: 'Message Saved! ⚠️',
+            text: `Your message has been saved to our database, but email sending failed. ${bannerName} will still see your message in the dashboard. Error: ${emailResult.error}`,
+            icon: 'warning',
+            confirmButtonColor: '#B8936A',
+            confirmButtonText: 'Understood',
+            customClass: {
+              popup: 'rounded-3xl',
+              confirmButton: 'rounded-full px-6 py-3 font-semibold'
+            }
+          });
+        } else {
+          // Both failed - show error
+          Swal.fire({
+            title: 'Error Sending Message',
+            text: `Both email sending and database save failed. Please try again or contact ${bannerName} directly. Email error: ${emailResult.error}`,
+            icon: 'error',
+            confirmButtonColor: '#B8936A',
+            confirmButtonText: 'Try Again',
+            customClass: {
+              popup: 'rounded-3xl',
+              confirmButton: 'rounded-full px-6 py-3 font-semibold'
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('Error submitting contact form:', error);

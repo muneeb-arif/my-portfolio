@@ -913,14 +913,14 @@ const MediaSection = () => {
   };
 
   // Navigate in fullscreen
-  const navigateFullscreen = (direction) => {
+  const navigateFullscreen = useCallback((direction) => {
     const newIndex = direction === 'next' 
       ? (currentImageIndex + 1) % images.length
       : (currentImageIndex - 1 + images.length) % images.length;
     
     setCurrentImageIndex(newIndex);
     setFullscreenImage(images[newIndex]);
-  };
+  }, [currentImageIndex, images]);
 
   // Download image
   const downloadImage = async (image) => {

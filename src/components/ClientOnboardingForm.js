@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Building, Users, FileText, Palette, Settings, Shield, Calendar, Target, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { saveOnboardingQuery } from '../services/supabaseService';
+import { sendOnboardingEmail } from '../services/emailService';
 
 const ClientOnboardingForm = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -225,14 +226,22 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
     });
     
     try {
-      // Save to database
-      const result = await saveOnboardingQuery(formData);
+      // Save to database first
+      const dbResult = await saveOnboardingQuery(formData);
       
-      if (result.success) {
-        // Show SweetAlert2 success notification
+      if (!dbResult.success) {
+        console.warn('Database save failed:', dbResult.error);
+        // Continue with email sending even if database save fails
+      }
+      
+      // Send email using EmailJS
+      const emailResult = await sendOnboardingEmail(formData);
+      
+      if (emailResult.success) {
+        // Show success notification
         Swal.fire({
           title: 'Questionnaire Submitted! 🎉',
-          text: "Thank you for providing detailed project information. Your requirements have been saved and I'll review them to get back to you with a detailed proposal within 48 hours.",
+          text: `Thank you for providing detailed project information. Your questionnaire has been sent directly to Muneeb Arif. ${dbResult.success ? 'It has also been saved to our database.' : ''} I'll review them to get back to you with a detailed proposal within 48 hours.`,
           icon: 'success',
           showCancelButton: true,
           confirmButtonColor: '#B8936A',
@@ -286,18 +295,34 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
         setErrors({});
         setTouched({});
       } else {
-        // Show error notification
-        Swal.fire({
-          title: 'Error Submitting Questionnaire',
-          text: result.error || 'There was an error saving your questionnaire. Please try again.',
-          icon: 'error',
-          confirmButtonColor: '#B8936A',
-          confirmButtonText: 'Try Again',
-          customClass: {
-            popup: 'rounded-3xl',
-            confirmButton: 'rounded-full px-6 py-3 font-semibold'
-          }
-        });
+        // Email sending failed, but database might have succeeded
+        if (dbResult.success) {
+          // Show partial success notification
+          Swal.fire({
+            title: 'Questionnaire Saved! ⚠️',
+            text: `Your questionnaire has been saved to our database, but email sending failed. Muneeb Arif will still see your questionnaire in the dashboard. Error: ${emailResult.error}`,
+            icon: 'warning',
+            confirmButtonColor: '#B8936A',
+            confirmButtonText: 'Understood',
+            customClass: {
+              popup: 'rounded-3xl',
+              confirmButton: 'rounded-full px-6 py-3 font-semibold'
+            }
+          });
+        } else {
+          // Both failed - show error
+          Swal.fire({
+            title: 'Error Submitting Questionnaire',
+            text: `Both email sending and database save failed. Please try again or contact Muneeb Arif directly. Email error: ${emailResult.error}`,
+            icon: 'error',
+            confirmButtonColor: '#B8936A',
+            confirmButtonText: 'Try Again',
+            customClass: {
+              popup: 'rounded-3xl',
+              confirmButton: 'rounded-full px-6 py-3 font-semibold'
+            }
+          });
+        }
       }
     } catch (error) {
       console.error('Error submitting onboarding form:', error);
