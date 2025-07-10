@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { projectService } from '../../services/supabaseService';
 import { syncService } from '../../services/syncService';
 import { supabase } from '../../config/supabase';
+import { getCurrentUser } from '../../services/authUtils';
 import { useSettings } from '../../services/settingsContext';
 import ProjectsManager from './ProjectsManager';
 import CategoriesManager from './CategoriesManager';
@@ -838,35 +839,94 @@ const MediaSection = () => {
       setLoading(true);
       setError('');
       
-      // List all files from the images bucket
-      const { data: files, error } = await supabase.storage
-        .from('images')
-        .list('', {
-          limit: 1000,
-          sortBy: { column: 'created_at', order: 'desc' }
-        });
+      // Get current user to fetch their specific images
+      const user = await getCurrentUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
 
-      if (error) throw error;
+      const allImageFiles = [];
+      
+      // 1. Fetch images from user's specific folder (where project images are stored)
+      try {
+        const { data: userFiles, error: userError } = await supabase.storage
+          .from('images')
+          .list(user.id, {
+            limit: 1000,
+            sortBy: { column: 'created_at', order: 'desc' }
+          });
 
-      // Filter only image files and get public URLs
-      const imageFiles = files.filter(file => 
-        file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
-        !file.name.startsWith('.')
-      );
+        if (!userError && userFiles) {
+          // Add user folder prefix to file names and mark as user files
+          const userImageFiles = userFiles
+            .filter(file => 
+              file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
+              !file.name.startsWith('.')
+            )
+            .map(file => ({
+              ...file,
+              fullPath: `${user.id}/${file.name}`,
+              isUserFile: true
+            }));
+          
+          allImageFiles.push(...userImageFiles);
+        }
+      } catch (userFolderError) {
+        console.log('No user folder found or error accessing it:', userFolderError.message);
+      }
+      
+      // 2. Fetch images from root folder (legacy images)
+      try {
+        const { data: rootFiles, error: rootError } = await supabase.storage
+          .from('images')
+          .list('', {
+            limit: 1000,
+            sortBy: { column: 'created_at', order: 'desc' }
+          });
 
-      const imagesWithUrls = imageFiles.map(file => {
+        if (!rootError && rootFiles) {
+          const rootImageFiles = rootFiles
+            .filter(file => 
+              file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
+              !file.name.startsWith('.') &&
+              file.name !== user.id // Exclude the user folder itself
+            )
+            .map(file => ({
+              ...file,
+              fullPath: file.name,
+              isUserFile: false
+            }));
+          
+          allImageFiles.push(...rootImageFiles);
+        }
+      } catch (rootFolderError) {
+        console.log('Error accessing root folder:', rootFolderError.message);
+      }
+
+      if (allImageFiles.length === 0) {
+        setImages([]);
+        return;
+      }
+
+      // Generate public URLs and create image objects
+      const imagesWithUrls = allImageFiles.map(file => {
         const { data: { publicUrl } } = supabase.storage
           .from('images')
-          .getPublicUrl(file.name);
+          .getPublicUrl(file.fullPath);
         
         return {
           name: file.name,
+          fullPath: file.fullPath,
           url: publicUrl,
           size: file.metadata?.size || 0,
           created_at: file.created_at,
-          updated_at: file.updated_at
+          updated_at: file.updated_at,
+          isUserFile: file.isUserFile
         };
       });
+
+      // Sort by creation date (newest first)
+      imagesWithUrls.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       setImages(imagesWithUrls);
     } catch (error) {
@@ -886,9 +946,32 @@ const MediaSection = () => {
       setUploading(true);
       setError('');
 
+      // Get current user for folder organization
+      const user = await getCurrentUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       for (const file of files) {
-        // Generate unique filename
-        const fileName = `${Date.now()}-${file.name}`;
+        // Sanitize filename to prevent "Invalid key" errors
+        const sanitizeFilename = (filename) => {
+          const lastDotIndex = filename.lastIndexOf('.');
+          const name = lastDotIndex !== -1 ? filename.substring(0, lastDotIndex) : filename;
+          const extension = lastDotIndex !== -1 ? filename.substring(lastDotIndex) : '';
+          
+          const sanitizedName = name
+            .replace(/[^a-zA-Z0-9.-]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '')
+            .substring(0, 100);
+          
+          return sanitizedName + extension;
+        };
+
+        // Generate unique filename with user folder and sanitization
+        const timestamp = Date.now();
+        const sanitizedFilename = sanitizeFilename(file.name);
+        const fileName = `${user.id}/${timestamp}_${sanitizedFilename}`;
         
         const { error } = await supabase.storage
           .from('images')
@@ -963,15 +1046,15 @@ const MediaSection = () => {
     try {
       const { error } = await supabase.storage
         .from('images')
-        .remove([image.name]);
+        .remove([image.fullPath]); // Use fullPath for deletion
 
       if (error) throw error;
 
       // Remove from local state
-      setImages(images.filter(img => img.name !== image.name));
+      setImages(images.filter(img => img.fullPath !== image.fullPath));
       
       // Close fullscreen if this image was open
-      if (fullscreenImage && fullscreenImage.name === image.name) {
+      if (fullscreenImage && fullscreenImage.fullPath === image.fullPath) {
         closeFullscreen();
       }
 
@@ -1086,7 +1169,7 @@ const MediaSection = () => {
       ) : (
         <div className="media-grid">
           {images.map((image, index) => (
-            <div key={image.name} className="media-item">
+            <div key={image.fullPath} className="media-item">
               <div 
                 className="media-thumbnail"
                 onClick={() => openFullscreen(image, index)}
@@ -1103,6 +1186,13 @@ const MediaSection = () => {
               <div className="media-info">
                 <h4>{image.name}</h4>
                 <p>{formatFileSize(image.size)}</p>
+                <div className="media-location">
+                  {image.isUserFile ? (
+                    <span className="location-tag user-folder">📁 Your Images</span>
+                  ) : (
+                    <span className="location-tag root-folder">🌐 Shared</span>
+                  )}
+                </div>
                 <div className="media-actions">
                   <button 
                     onClick={() => downloadImage(image)}

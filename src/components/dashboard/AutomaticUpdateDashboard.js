@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
+import AutoUpdateDebugPanel from './AutoUpdateDebugPanel';
 import './AutomaticUpdateDashboard.css';
 
 const AutomaticUpdateDashboard = () => {
@@ -279,6 +280,12 @@ const AutomaticUpdateDashboard = () => {
           onClick={() => setActiveTab('activity')}
         >
           📝 Recent Activity
+        </button>
+        <button 
+          className={`tab ${activeTab === 'debug' ? 'active' : ''}`}
+          onClick={() => setActiveTab('debug')}
+        >
+          🔧 Debug
         </button>
       </div>
 
@@ -669,6 +676,16 @@ const AutomaticUpdateDashboard = () => {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'debug' && (
+          <div className="debug-tab">
+            <div className="debug-header">
+              <h3>🔧 Debug & Troubleshooting</h3>
+              <p>Detailed debugging information for automatic update failures</p>
+            </div>
+            <AutoUpdateDebugPanel />
           </div>
         )}
       </div>

@@ -29,7 +29,7 @@ export const portfolioService = {
           githubUrl: project.github_url || '#',
           images: project.project_images?.map(img => ({
             url: img.url,
-            caption: img.original_name || 'Project Image'
+            caption: null // Don't show filenames as captions
           })) || []
         }
       })) || [];

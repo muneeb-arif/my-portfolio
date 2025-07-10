@@ -80,6 +80,26 @@ const UpdateNotificationBar = () => {
   };
 
   const handleApplyUpdate = async () => {
+    const startTime = Date.now();
+    const debugData = {
+      startTime,
+      updateInfo: {
+        id: updateInfo.id,
+        version: updateInfo.version,
+        title: updateInfo.title,
+        packageUrl: updateInfo.package_url ? 'PROVIDED' : 'MISSING'
+      },
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+      localStorage: {
+        automaticUpdatesSupported: localStorage.getItem('automatic_updates_supported'),
+        clientId: localStorage.getItem('auto_update_client_id'),
+        currentVersion: localStorage.getItem('theme_version')
+      }
+    };
+
+    console.log('🚀 [UpdateNotificationBar] Starting update process', debugData);
+
     try {
       setIsApplyingUpdate(true);
       setProgressDisplay({
@@ -89,7 +109,14 @@ const UpdateNotificationBar = () => {
         progress: 0
       });
       
+      // Store debug info in localStorage
+      localStorage.setItem('last_update_attempt', JSON.stringify({
+        ...debugData,
+        status: 'started'
+      }));
+      
       // Check if automatic updates are supported
+      console.log('🔍 [UpdateNotificationBar] Checking server support');
       setProgressDisplay(prev => ({
         ...prev,
         currentStep: 'Checking server compatibility...',
@@ -97,9 +124,18 @@ const UpdateNotificationBar = () => {
         progress: 20
       }));
 
+      const supportCheckStart = Date.now();
       const isSupported = await automaticUpdateService.checkSupport();
+      const supportCheckDuration = Date.now() - supportCheckStart;
+      
+      console.log('📋 [UpdateNotificationBar] Support check completed', {
+        isSupported,
+        duration: `${supportCheckDuration}ms`,
+        endpoint: automaticUpdateService.updateEndpoint
+      });
       
       if (isSupported) {
+        console.log('✅ [UpdateNotificationBar] Server supports automatic updates');
         setProgressDisplay(prev => ({
           ...prev,
           currentStep: 'Downloading update package...',
@@ -107,26 +143,64 @@ const UpdateNotificationBar = () => {
           progress: 40
         }));
 
+        // Store support confirmation
+        localStorage.setItem('last_update_attempt', JSON.stringify({
+          ...debugData,
+          status: 'supported',
+          supportCheckDuration
+        }));
+
         // Trigger automatic update
+        console.log('🔄 [UpdateNotificationBar] Starting automatic update');
+        const updateStart = Date.now();
+        
+        let stepCount = 0;
         const result = await automaticUpdateService.applyUpdate(updateInfo, {
           createBackup: true,
           progressCallback: (message, type) => {
-            console.log(`${type}: ${message}`);
+            stepCount++;
+            const stepTime = Date.now();
+            console.log(`[UpdateProgress:${stepCount}] ${type}: ${message}`, {
+              stepNumber: stepCount,
+              stepTime,
+              elapsedTotal: stepTime - startTime
+            });
+            
             setProgressDisplay(prev => ({
               ...prev,
               currentStep: message,
               messages: [...prev.messages, `${type === 'info' ? '🔄' : type === 'success' ? '✅' : '❌'} ${message}`],
-              progress: Math.min(prev.progress + 10, 90)
+              progress: Math.min(prev.progress + 8, 90)
             }));
           }
         });
 
+        const updateDuration = Date.now() - updateStart;
+        console.log('📊 [UpdateNotificationBar] Update process completed', {
+          success: result.success,
+          duration: `${updateDuration}ms`,
+          totalSteps: stepCount,
+          hasDebugReport: !!result.debugReport
+        });
+
         if (result.success) {
+          console.log('🎉 [UpdateNotificationBar] Update successful');
           setProgressDisplay(prev => ({
             ...prev,
             currentStep: 'Update completed successfully!',
             messages: [...prev.messages, '🎉 Update applied successfully!', '🔄 Preparing to reload...'],
             progress: 100
+          }));
+
+          // Store success in localStorage
+          localStorage.setItem('last_update_attempt', JSON.stringify({
+            ...debugData,
+            status: 'completed',
+            supportCheckDuration,
+            updateDuration,
+            stepCount,
+            filesUpdated: result.filesUpdated,
+            backupCreated: result.backupCreated
           }));
 
           // Update successful
@@ -141,6 +215,16 @@ const UpdateNotificationBar = () => {
             }, 2000);
           }, 2000);
         } else {
+          console.error('❌ [UpdateNotificationBar] Update failed', {
+            error: result.error,
+            debugReport: result.debugReport
+          });
+          
+          // Store debug report if available
+          if (result.debugReport) {
+            localStorage.setItem('last_update_debug_report', JSON.stringify(result.debugReport));
+          }
+          
           throw new Error(result.error || 'Update failed');
         }
       } else {
@@ -158,7 +242,33 @@ const UpdateNotificationBar = () => {
         }, 2000);
       }
     } catch (error) {
-      console.error('Failed to apply update:', error);
+      const errorTime = Date.now();
+      const totalDuration = errorTime - startTime;
+      
+      console.error('❌ [UpdateNotificationBar] Update process failed', {
+        error: error.message,
+        name: error.name,
+        stack: error.stack,
+        totalDuration: `${totalDuration}ms`,
+        updateInfo: debugData.updateInfo
+      });
+      
+      // Store comprehensive error information
+      const errorData = {
+        ...debugData,
+        status: 'failed',
+        error: {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        },
+        totalDuration,
+        timestamp: new Date().toISOString()
+      };
+      
+      localStorage.setItem('last_update_attempt', JSON.stringify(errorData));
+      localStorage.setItem('last_update_error', JSON.stringify(errorData));
+      
       setProgressDisplay(prev => ({
         ...prev,
         currentStep: 'Update failed',
@@ -166,8 +276,21 @@ const UpdateNotificationBar = () => {
         progress: 100
       }));
       
+      // Export debug logs for troubleshooting
+      try {
+        automaticUpdateService.exportDebugLogs();
+        console.log('📁 [UpdateNotificationBar] Debug logs exported for troubleshooting');
+      } catch (exportError) {
+        console.warn('⚠️ [UpdateNotificationBar] Failed to export debug logs:', exportError);
+      }
+      
       setTimeout(() => {
-        alert(`❌ Auto-update failed: ${error.message}\n\nTry the manual update instead.`);
+        const debugHint = '\n\n🔧 Debug Info:\n' +
+          `- Check browser console for detailed logs\n` +
+          `- Check localStorage key "last_update_error" for error details\n` +
+          `- Debug logs have been exported to downloads`;
+          
+        alert(`❌ Auto-update failed: ${error.message}\n\nTry the manual update instead.${debugHint}`);
         setProgressDisplay({ isVisible: false, currentStep: '', messages: [], progress: 0 });
       }, 3000);
     } finally {

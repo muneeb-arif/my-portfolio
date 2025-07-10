@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { projectService, imageService, metaService } from '../../services/supabaseService';
+import { supabase } from '../../config/supabase';
+import { getCurrentUser } from '../../services/authUtils';
+import MediaSelectionModal from './MediaSelectionModal';
+import './ProjectsManager.css';
 
 const ProjectsManager = ({ projects, onProjectsChange }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  // New state for tracking individual image upload progress
+  const [imageUploadProgress, setImageUploadProgress] = useState([]);
+  // Media selection modal state
+  const [showMediaModal, setShowMediaModal] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -22,11 +30,16 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [imageFiles, setImageFiles] = useState([]);
   const [categories, setCategories] = useState([]);
+  // Drag and drop state
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   // Load categories from database
   useEffect(() => {
     loadCategories();
   }, []);
+
+
 
   const loadCategories = async () => {
     try {
@@ -89,6 +102,7 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
     setFeatureInput('');
     setSelectedImages([]);
     setImageFiles([]);
+    setImageUploadProgress([]);
     setEditingProject(null);
   };
 
@@ -140,15 +154,26 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
     // Add new files to existing imageFiles array
     setImageFiles(prev => [...prev, ...files]);
     
-    // Create preview URLs
-    const previews = files.map(file => ({
+    // Create preview URLs and initialize upload progress
+    const previews = files.map((file, index) => ({
       file,
       url: URL.createObjectURL(file),
       original_name: file.name,
-      isNew: true
+      isNew: true,
+      uploadIndex: imageFiles.length + index // Track which progress entry this belongs to
+    }));
+    
+    // Initialize progress tracking for new files
+    const progressEntries = files.map((file, index) => ({
+      fileName: file.name,
+      status: 'pending', // pending, uploading, completed, failed
+      progress: 0,
+      error: null,
+      fileIndex: imageFiles.length + index
     }));
     
     setSelectedImages(prev => [...prev, ...previews]);
+    setImageUploadProgress(prev => [...prev, ...progressEntries]);
   };
 
   const handleRemoveImage = (index) => {
@@ -160,10 +185,15 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
       if (removedImage.url.startsWith('blob:')) {
         URL.revokeObjectURL(removedImage.url);
         
-        // Also remove from imageFiles array if it's a new image
+        // Also remove from imageFiles array and progress tracking if it's a new image
         if (removedImage.isNew) {
           setImageFiles(prevFiles => {
             return prevFiles.filter(file => file !== removedImage.file);
+          });
+          
+          // Remove from progress tracking
+          setImageUploadProgress(prevProgress => {
+            return prevProgress.filter(progress => progress.fileIndex !== removedImage.uploadIndex);
           });
         }
       }
@@ -171,6 +201,167 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
       newImages.splice(index, 1);
       return newImages;
     });
+  };
+
+  // Helper function to update progress for a specific file
+  const updateImageProgress = (fileIndex, updates) => {
+    setImageUploadProgress(prev => 
+      prev.map(progress => 
+        progress.fileIndex === fileIndex 
+          ? { ...progress, ...updates }
+          : progress
+      )
+    );
+  };
+
+  // Handle media selection from existing library
+  const handleMediaSelection = (selectedMediaImages) => {
+    // Add selected media images to the selectedImages array
+    setSelectedImages(prev => [...prev, ...selectedMediaImages]);
+  };
+
+  // Helper function to manage project images in database
+  const updateProjectImages = async (projectId, currentImages) => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // First, delete all existing project images for this project
+      const { error: deleteError } = await supabase
+        .from('project_images')
+        .delete()
+        .eq('project_id', projectId);
+
+      if (deleteError) {
+        console.error('Error deleting existing project images:', deleteError);
+        // Don't throw here, continue with adding new images
+      }
+
+      // Then, add all current images to the database in the exact order they appear
+      if (currentImages.length > 0) {
+        // First, try with order_index column
+        let imageInserts = currentImages.map((image, index) => ({
+          project_id: projectId,
+          user_id: user.id,
+          url: image.url,
+          path: image.fullPath || image.url, // Use fullPath if available, otherwise url
+          name: image.name || image.original_name,
+          original_name: image.original_name || image.name,
+          bucket: 'images', // Default bucket for project images
+          order_index: index // Preserve the user's selected order
+        }));
+
+        const { error: insertError } = await supabase
+          .from('project_images')
+          .insert(imageInserts);
+
+        if (insertError) {
+          // If order_index column doesn't exist, try without it
+          if (insertError.message?.includes('order_index')) {
+            console.warn('⚠️ order_index column not found, inserting without ordering. Please run the SQL migration.');
+            
+            const fallbackInserts = currentImages.map(image => ({
+              project_id: projectId,
+              user_id: user.id,
+              url: image.url,
+              path: image.fullPath || image.url,
+              name: image.name || image.original_name,
+              original_name: image.original_name || image.name,
+              bucket: 'images'
+            }));
+
+            const { error: fallbackError } = await supabase
+              .from('project_images')
+              .insert(fallbackInserts);
+
+            if (fallbackError) {
+              console.error('Error inserting project images (fallback):', fallbackError);
+              throw new Error(`Failed to save project images: ${fallbackError.message}`);
+            }
+
+            console.log(`✅ Successfully updated ${currentImages.length} project images (without ordering)`);
+          } else {
+            console.error('Error inserting project images:', insertError);
+            throw new Error(`Failed to save project images: ${insertError.message}`);
+          }
+        } else {
+          console.log(`✅ Successfully updated ${currentImages.length} project images with ordering`);
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating project images:', error);
+      throw error;
+    }
+  };
+
+  // Open media selection modal
+  const handleChooseMedia = () => {
+    setShowMediaModal(true);
+  };
+
+  // Close media selection modal
+  const handleCloseMediaModal = () => {
+    setShowMediaModal(false);
+  };
+
+  // Drag and drop handlers for image reordering
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnter = (e, index) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = (e) => {
+    // Only clear dragOverIndex if we're leaving the container entirely
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    // Create new array with reordered items
+    const newSelectedImages = [...selectedImages];
+    const draggedItem = newSelectedImages[draggedIndex];
+    
+    // Remove dragged item from original position
+    newSelectedImages.splice(draggedIndex, 1);
+    
+    // Insert dragged item at new position
+    newSelectedImages.splice(dropIndex, 0, draggedItem);
+    
+    // Update state
+    setSelectedImages(newSelectedImages);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+
+    console.log(`✅ Image reordered: moved from position ${draggedIndex} to ${dropIndex}`);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   const handleSubmit = async (e) => {
@@ -194,33 +385,125 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
         projectData = await projectService.createProject(formData);
       }
 
-      // Upload new images if any
-      if (imageFiles.length > 0) {
+      // Process images in the exact order they appear in selectedImages array
+      const finalImages = [];
+      let successCount = 0;
+      let failureCount = 0;
+      const failedImages = [];
+      
+      if (selectedImages.length > 0) {
         setUploadingImages(true);
-      // console.log(`📤 Uploading ${imageFiles.length} images for project ${projectData.id}`);
         
-        let uploadedCount = 0;
-        let failedCount = 0;
-        
-        for (const file of imageFiles) {
+        // Process each image in selectedImages array to maintain order
+        for (let index = 0; index < selectedImages.length; index++) {
+          const image = selectedImages[index];
+          
           try {
-      // console.log(`📤 Uploading: ${file.name}`);
-            const result = await imageService.uploadProjectImage(projectData.id, file);
-      // console.log(`✅ Uploaded: ${file.name}`, result);
-            uploadedCount++;
+            if (image.isNew && image.file) {
+              // This is a new file that needs to be uploaded
+              const fileIndex = imageUploadProgress.find(p => p.fileName === image.file.name)?.fileIndex || index;
+              
+              // Update status to uploading
+              updateImageProgress(fileIndex, { 
+                status: 'uploading', 
+                progress: 0,
+                error: null 
+              });
+              
+              // Simulate progressive upload with more realistic increments
+              updateImageProgress(fileIndex, { progress: 20 });
+              await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for visual effect
+              
+              updateImageProgress(fileIndex, { progress: 50 });
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
+              updateImageProgress(fileIndex, { progress: 80 });
+              
+              const result = await imageService.uploadImage(image.file);
+              
+              // Add uploaded image with preserved order
+              finalImages.push({
+                url: result.url,
+                name: result.name,
+                original_name: result.originalName,
+                fullPath: result.path,
+                order_index: index
+              });
+              
+              // Update progress to show completion
+              updateImageProgress(fileIndex, { 
+                status: 'completed', 
+                progress: 100,
+                error: null 
+              });
+              
+              successCount++;
+            } else {
+              // This is either an existing image or one from media library
+              finalImages.push({
+                url: image.url,
+                name: image.name || image.original_name,
+                original_name: image.original_name || image.name,
+                fullPath: image.fullPath || image.url,
+                order_index: index
+              });
+            }
           } catch (error) {
-      // console.error(`❌ Failed to upload ${file.name}:`, error);
-            failedCount++;
+            console.error(`❌ Failed to process image at position ${index}:`, error);
+            
+            // Capture detailed error information
+            let errorMessage = 'Unknown error occurred';
+            if (error.message) {
+              errorMessage = error.message;
+            } else if (error.error) {
+              errorMessage = error.error.message || error.error;
+            } else if (typeof error === 'string') {
+              errorMessage = error;
+            }
+            
+            if (image.isNew && image.file) {
+              const fileIndex = imageUploadProgress.find(p => p.fileName === image.file.name)?.fileIndex || index;
+              
+              // Update progress to show failure with detailed error
+              updateImageProgress(fileIndex, { 
+                status: 'failed', 
+                progress: 0,
+                error: errorMessage 
+              });
+              
+              failureCount++;
+              failedImages.push({
+                fileName: image.file.name,
+                error: errorMessage
+              });
+            }
           }
         }
         
-      // console.log(`📊 Upload complete: ${uploadedCount} success, ${failedCount} failed`);
+        // Show detailed results for failed uploads
+        if (failureCount > 0) {
+          let alertMessage = `Warning: ${failureCount} out of ${imageFiles.length} images failed to upload:\n\n`;
+          failedImages.forEach(failedImage => {
+            alertMessage += `• ${failedImage.fileName}: ${failedImage.error}\n`;
+          });
+          alertMessage += '\nPlease check the file sizes, formats, and try again.';
+          alert(alertMessage);
+        }
         
-        if (failedCount > 0) {
-          alert(`Warning: ${failedCount} out of ${imageFiles.length} images failed to upload. Please try again.`);
+        if (successCount > 0) {
+          console.log(`✅ Successfully uploaded ${successCount} images`);
         }
         
         setUploadingImages(false);
+      }
+
+      // Update project images in database preserving the exact order
+      try {
+        await updateProjectImages(projectData.id, finalImages);
+        console.log(`✅ Successfully managed ${finalImages.length} project images in user-selected order`);
+      } catch (error) {
+        console.error('❌ Error managing project images:', error);
+        alert(`Warning: Project saved but image management failed: ${error.message}`);
       }
 
       // Refresh projects list
@@ -233,7 +516,7 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
       alert(`Project ${editingProject ? 'updated' : 'created'} successfully!`);
       
     } catch (error) {
-      // console.error('Error saving project:', error);
+      console.error('Error saving project:', error);
       alert(`Error ${editingProject ? 'updating' : 'creating'} project: ${error.message}`);
     } finally {
       setLoading(false);
@@ -417,25 +700,151 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
           {/* Image Upload */}
           <div className="form-group">
             <label htmlFor="images">Project Images</label>
-            <input
-              type="file"
-              id="images"
-              accept="image/*"
-              multiple
-              onChange={handleImageSelect}
-            />
-            <div className="images-preview">
-              {selectedImages.map((image, index) => (
-                <div key={index} className="image-preview">
-                  <img src={image.url} alt={`Preview ${index}`} />
-                  <button
-                    type="button"
-                    className="remove-image"
-                    onClick={() => handleRemoveImage(index)}
-                  >×</button>
-                </div>
-              ))}
+            {selectedImages.length > 1 && (
+              <p className="form-help" style={{ color: '#6b7280', fontSize: '12px', marginBottom: '8px' }}>
+                💡 Tip: Drag images by the ⋮⋮ handle to reorder them
+              </p>
+            )}
+            
+            {/* Image upload options */}
+            <div className="image-upload-options">
+              <div className="upload-option">
+                <input
+                  type="file"
+                  id="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageSelect}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="images" className="btn-upload">
+                  📤 Upload New Images
+                </label>
+              </div>
+              
+              <div className="upload-option-divider">
+                <span>OR</span>
+              </div>
+              
+              <div className="upload-option">
+                <button
+                  type="button"
+                  className="btn-choose-media"
+                  onClick={handleChooseMedia}
+                >
+                  📁 Choose from Media
+                </button>
+              </div>
             </div>
+            
+            <div className="images-preview">
+              {selectedImages.map((image, index) => {
+                // Find the corresponding progress entry for new images
+                const progressEntry = image.isNew 
+                  ? imageUploadProgress.find(p => p.fileIndex === image.uploadIndex)
+                  : null;
+                
+                const isDragging = draggedIndex === index;
+                const isDragOver = dragOverIndex === index;
+                
+                return (
+                  <div 
+                    key={index} 
+                    className={`image-preview ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="image-container">
+                      <div className="drag-handle" title="Drag to reorder">
+                        ⋮⋮
+                      </div>
+                      <img src={image.url} alt={`Preview ${index}`} />
+                      <button
+                        type="button"
+                        className="remove-image"
+                        onClick={() => handleRemoveImage(index)}
+                      >×</button>
+                    </div>
+                    
+                    {/* Show progress and status for new images */}
+                    {image.isNew && progressEntry && (
+                      <div className="upload-status">
+                        {/* Progress bar */}
+                        {progressEntry.status === 'uploading' && (
+                          <div className="progress-container">
+                            <div className="progress-bar">
+                              <div 
+                                className="progress-fill" 
+                                style={{ width: `${progressEntry.progress}%` }}
+                              ></div>
+                            </div>
+                            <span className="progress-text">{progressEntry.progress}%</span>
+                          </div>
+                        )}
+                        
+                        {/* Status indicators */}
+                        <div className={`status-indicator status-${progressEntry.status}`}>
+                          {progressEntry.status === 'pending' && (
+                            <span className="status-text">⏳ Waiting...</span>
+                          )}
+                          {progressEntry.status === 'uploading' && (
+                            <span className="status-text">📤 Uploading...</span>
+                          )}
+                          {progressEntry.status === 'completed' && (
+                            <span className="status-text">✅ Uploaded</span>
+                          )}
+                          {progressEntry.status === 'failed' && (
+                            <span className="status-text">❌ Failed</span>
+                          )}
+                        </div>
+                        
+                        {/* Error details */}
+                        {progressEntry.status === 'failed' && progressEntry.error && (
+                          <div className="error-details">
+                            <strong>Error:</strong> {progressEntry.error}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Status for images from media library */}
+                    {image.isFromMedia && (
+                      <div className="upload-status">
+                        <div className="status-indicator status-from-media">
+                          <span className="status-text">📁 From Media</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Simple label for existing images */}
+                    {!image.isNew && !image.isFromMedia && (
+                      <div className="upload-status">
+                        <div className="status-indicator status-existing">
+                          <span className="status-text">💾 Saved</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Upload summary */}
+            {uploadingImages && imageUploadProgress.length > 0 && (
+              <div className="upload-summary">
+                <div className="summary-stats">
+                  {imageUploadProgress.filter(p => p.status === 'completed').length} completed, {' '}
+                  {imageUploadProgress.filter(p => p.status === 'uploading').length} uploading, {' '}
+                  {imageUploadProgress.filter(p => p.status === 'failed').length} failed, {' '}
+                  {imageUploadProgress.filter(p => p.status === 'pending').length} pending
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -471,6 +880,14 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
             </button>
           </div>
         </form>
+        
+        {/* Media Selection Modal */}
+        <MediaSelectionModal
+          isOpen={showMediaModal}
+          onClose={handleCloseMediaModal}
+          onSelect={handleMediaSelection}
+          allowMultiple={true}
+        />
       </div>
     );
   }
@@ -545,6 +962,15 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
           </button>
         </div>
       )}
+      
+      {/* Media Selection Modal */}
+      <MediaSelectionModal
+        isOpen={showMediaModal}
+        onClose={handleCloseMediaModal}
+        onSelect={handleMediaSelection}
+        allowMultiple={true}
+      />
+
     </div>
   );
 };

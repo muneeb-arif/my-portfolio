@@ -130,14 +130,28 @@ export const projectService = {
       const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
+      // Try with order_index first, fallback to created_at if column doesn't exist
+      let { data, error } = await supabase
         .from(TABLES.PROJECTS)
         .select(`
           *,
-          project_images (*)
+          project_images(*).order(order_index)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+
+      // If order_index column doesn't exist, try without ordering
+      if (error && error.message?.includes('order_index')) {
+        console.warn('⚠️ order_index column not found, falling back to created_at ordering');
+        ({ data, error } = await supabase
+          .from(TABLES.PROJECTS)
+          .select(`
+            *,
+            project_images(*).order(created_at)
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }));
+      }
 
       if (error) throw error;
       return data || [];
@@ -153,14 +167,28 @@ export const projectService = {
   // Get single project
   async getProject(id) {
     try {
-      const { data, error } = await supabase
+      // Try with order_index first, fallback to created_at if column doesn't exist
+      let { data, error } = await supabase
         .from(TABLES.PROJECTS)
         .select(`
           *,
-          project_images (*)
+          project_images(*).order(order_index)
         `)
         .eq('id', id)
         .single();
+
+      // If order_index column doesn't exist, try without ordering
+      if (error && error.message?.includes('order_index')) {
+        console.warn('⚠️ order_index column not found, falling back to created_at ordering');
+        ({ data, error } = await supabase
+          .from(TABLES.PROJECTS)
+          .select(`
+            *,
+            project_images(*).order(created_at)
+          `)
+          .eq('id', id)
+          .single());
+      }
 
       if (error) throw error;
       return data;
@@ -246,15 +274,37 @@ export const projectService = {
 // ================ IMAGE OPERATIONS ================
 
 export const imageService = {
+  // Helper function to sanitize filename for storage
+  sanitizeFilename(filename) {
+    // Get file extension
+    const lastDotIndex = filename.lastIndexOf('.');
+    const name = lastDotIndex !== -1 ? filename.substring(0, lastDotIndex) : filename;
+    const extension = lastDotIndex !== -1 ? filename.substring(lastDotIndex) : '';
+    
+    // Sanitize the name part:
+    // - Replace spaces with underscores
+    // - Replace special characters with underscores  
+    // - Remove multiple consecutive underscores
+    // - Remove leading/trailing underscores
+    const sanitizedName = name
+      .replace(/[^a-zA-Z0-9.-]/g, '_')  // Replace non-alphanumeric chars (except . and -) with _
+      .replace(/_+/g, '_')              // Replace multiple underscores with single
+      .replace(/^_+|_+$/g, '')          // Remove leading/trailing underscores
+      .substring(0, 100);               // Limit length to prevent very long names
+    
+    return sanitizedName + extension;
+  },
+
   // Upload single image
   async uploadImage(file, bucket = BUCKETS.IMAGES) {
     try {
       const user = await getCurrentUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Generate unique filename
+      // Generate unique filename with sanitization
       const timestamp = Date.now();
-      const fileName = `${user.id}/${timestamp}_${file.name}`;
+      const sanitizedFilename = this.sanitizeFilename(file.name);
+      const fileName = `${user.id}/${timestamp}_${sanitizedFilename}`;
 
       // Upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -273,7 +323,8 @@ export const imageService = {
         url: publicUrl,
         path: uploadData.path,
         name: fileName,
-        originalName: file.name,
+        originalName: file.name, // Keep original name for display
+        sanitizedName: sanitizedFilename,
         size: file.size,
         type: file.type,
         bucket: bucket
@@ -1410,15 +1461,30 @@ export const publicPortfolioService = {
 
         // console.log('📊 Fetching projects for user ID:', portfolioConfig.owner_user_id);
         
-        const { data, error } = await supabase
+        // Try with order_index first, fallback to created_at if column doesn't exist
+        let { data, error } = await supabase
           .from(TABLES.PROJECTS)
           .select(`
             *,
-            project_images (*)
+            project_images(*).order(order_index)
           `)
           .eq('status', 'published')
           .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
           .order('created_at', { ascending: false });
+
+        // If order_index column doesn't exist, try without ordering
+        if (error && error.message?.includes('order_index')) {
+          console.warn('⚠️ order_index column not found, falling back to created_at ordering');
+          ({ data, error } = await supabase
+            .from(TABLES.PROJECTS)
+            .select(`
+              *,
+              project_images(*).order(created_at)
+            `)
+            .eq('status', 'published')
+            .eq('user_id', portfolioConfig.owner_user_id)
+            .order('created_at', { ascending: false }));
+        }
 
         if (error) throw error;
         

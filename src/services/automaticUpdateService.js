@@ -1,6 +1,97 @@
 import { supabase } from '../config/supabase';
 
 /**
+ * Debug Logger for Automatic Updates
+ */
+class AutoUpdateDebugLogger {
+  constructor() {
+    this.logs = [];
+    this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    this.maxLogs = 500; // Keep last 500 log entries
+  }
+
+  log(level, step, message, data = null) {
+    const timestamp = new Date().toISOString();
+    const logEntry = {
+      timestamp,
+      sessionId: this.sessionId,
+      level,
+      step,
+      message,
+      data: data ? JSON.parse(JSON.stringify(data)) : null,
+      url: window.location.href,
+      userAgent: navigator.userAgent
+    };
+
+    this.logs.push(logEntry);
+    
+    // Keep only recent logs
+    if (this.logs.length > this.maxLogs) {
+      this.logs = this.logs.slice(-this.maxLogs);
+    }
+
+    // Store in localStorage for debugging
+    try {
+      localStorage.setItem('auto_update_debug_logs', JSON.stringify(this.logs));
+      localStorage.setItem('auto_update_last_session', this.sessionId);
+    } catch (e) {
+      console.warn('Failed to store debug logs:', e);
+    }
+
+    // Console logging with better formatting
+    const prefix = `[AutoUpdate:${step}]`;
+    switch (level) {
+      case 'info':
+        console.log(`%c${prefix} ${message}`, 'color: blue', data || '');
+        break;
+      case 'success':
+        console.log(`%c${prefix} ${message}`, 'color: green', data || '');
+        break;
+      case 'warn':
+        console.warn(`${prefix} ${message}`, data || '');
+        break;
+      case 'error':
+        console.error(`${prefix} ${message}`, data || '');
+        break;
+      default:
+        console.log(`${prefix} ${message}`, data || '');
+    }
+  }
+
+  getDebugReport() {
+    return {
+      sessionId: this.sessionId,
+      totalLogs: this.logs.length,
+      logs: this.logs,
+      systemInfo: {
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        timestamp: new Date().toISOString(),
+        localStorage: {
+          clientId: localStorage.getItem('auto_update_client_id'),
+          version: localStorage.getItem('theme_version'),
+          automaticUpdatesEnabled: localStorage.getItem('automatic_updates_enabled'),
+          automaticUpdatesSupported: localStorage.getItem('automatic_updates_supported')
+        }
+      }
+    };
+  }
+
+  exportLogs() {
+    const report = this.getDebugReport();
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auto-update-debug-${this.sessionId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
  * Automatic Update Service
  * Handles server-side automatic updates for shared hosting
  */
@@ -9,6 +100,14 @@ export class AutomaticUpdateService {
     this.apiKey = 'sk_update_2024_portfolio_secure_key_255d78d54885303d0fc7564b88b70527'; // Should match PHP endpoint
     this.updateEndpoint = window.location.origin + '/update-endpoint.php';
     this.clientId = this.getOrCreateClientId();
+    this.debugLogger = new AutoUpdateDebugLogger();
+    
+    // Initialize debug logging
+    this.debugLogger.log('info', 'init', 'AutomaticUpdateService initialized', {
+      endpoint: this.updateEndpoint,
+      clientId: this.clientId,
+      origin: window.location.origin
+    });
   }
 
   /**
@@ -19,6 +118,9 @@ export class AutomaticUpdateService {
     if (!clientId) {
       clientId = 'auto_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
       localStorage.setItem('auto_update_client_id', clientId);
+      this.debugLogger?.log('info', 'client_id', 'Generated new client ID', { clientId });
+    } else {
+      this.debugLogger?.log('info', 'client_id', 'Using existing client ID', { clientId });
     }
     return clientId;
   }
@@ -27,21 +129,99 @@ export class AutomaticUpdateService {
    * Check if automatic updates are supported
    */
   async checkSupport() {
+    this.debugLogger.log('info', 'check_support', 'Starting support check', {
+      endpoint: this.updateEndpoint,
+      method: 'POST'
+    });
+
     try {
+      const requestBody = {
+        api_key: this.apiKey,
+        action: 'check_support'
+      };
+
+      this.debugLogger.log('info', 'check_support', 'Sending support check request', {
+        requestBody: { ...requestBody, api_key: 'REDACTED' },
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const startTime = Date.now();
       const response = await fetch(this.updateEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          api_key: this.apiKey,
-          action: 'check_support'
-        })
+        body: JSON.stringify(requestBody)
       });
 
-      return response.status !== 404;
+      const duration = Date.now() - startTime;
+      
+      this.debugLogger.log('info', 'check_support', 'Received response', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        duration: `${duration}ms`,
+        url: response.url
+      });
+
+      if (response.status === 404) {
+        this.debugLogger.log('warn', 'check_support', 'Endpoint not found - automatic updates not supported', {
+          status: 404,
+          endpoint: this.updateEndpoint
+        });
+        localStorage.setItem('automatic_updates_supported', 'false');
+        return false;
+      }
+
+      if (!response.ok) {
+        this.debugLogger.log('error', 'check_support', 'Non-OK response', {
+          status: response.status,
+          statusText: response.statusText
+        });
+        localStorage.setItem('automatic_updates_supported', 'false');
+        return false;
+      }
+
+      const responseText = await response.text();
+      this.debugLogger.log('info', 'check_support', 'Response body received', {
+        bodyLength: responseText.length,
+        bodyPreview: responseText.substring(0, 200)
+      });
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        this.debugLogger.log('success', 'check_support', 'JSON parsed successfully', result);
+      } catch (parseError) {
+        this.debugLogger.log('error', 'check_support', 'Failed to parse JSON response', {
+          parseError: parseError.message,
+          responseText: responseText.substring(0, 500)
+        });
+        localStorage.setItem('automatic_updates_supported', 'false');
+        return false;
+      }
+
+      if (result.success) {
+        this.debugLogger.log('success', 'check_support', 'Automatic updates supported', {
+          serverInfo: result.server_info,
+          phpVersion: result.php_version
+        });
+        localStorage.setItem('automatic_updates_supported', 'true');
+        return true;
+      } else {
+        this.debugLogger.log('warn', 'check_support', 'Server reports no support', result);
+        localStorage.setItem('automatic_updates_supported', 'false');
+        return false;
+      }
+
     } catch (error) {
-      console.log('Automatic updates not supported on this server');
+      this.debugLogger.log('error', 'check_support', 'Exception during support check', {
+        error: error.message,
+        name: error.name,
+        stack: error.stack,
+        endpoint: this.updateEndpoint
+      });
+      localStorage.setItem('automatic_updates_supported', 'false');
       return false;
     }
   }
@@ -50,52 +230,154 @@ export class AutomaticUpdateService {
    * Apply automatic update
    */
   async applyUpdate(updateInfo, options = {}) {
+    const updateId = updateInfo.id || 'unknown';
     const createBackup = options.createBackup !== undefined ? options.createBackup : true;
     const progressCallback = options.progressCallback || null;
+
+    this.debugLogger.log('info', 'apply_update', 'Starting update process', {
+      updateId,
+      version: updateInfo.version,
+      packageUrl: updateInfo.package_url,
+      createBackup,
+      hasProgressCallback: !!progressCallback
+    });
 
     try {
       // Validate update info
       if (!updateInfo.package_url || !updateInfo.version) {
-        throw new Error('Invalid update information');
+        const error = 'Invalid update information - missing package_url or version';
+        this.debugLogger.log('error', 'apply_update', error, {
+          updateInfo: {
+            id: updateInfo.id,
+            version: updateInfo.version,
+            package_url: updateInfo.package_url ? 'PROVIDED' : 'MISSING',
+            title: updateInfo.title
+          }
+        });
+        throw new Error(error);
       }
+
+      this.debugLogger.log('info', 'apply_update', 'Update info validated', {
+        version: updateInfo.version,
+        title: updateInfo.title,
+        packageUrlLength: updateInfo.package_url.length
+      });
 
       if (progressCallback) {
         progressCallback('🔍 Checking server capabilities...', 'info');
       }
 
       // Check if endpoint is available
+      this.debugLogger.log('info', 'apply_update', 'Checking server support');
       const isSupported = await this.checkSupport();
+      
       if (!isSupported) {
-        throw new Error('Automatic updates not supported on this server');
+        const error = 'Automatic updates not supported on this server';
+        this.debugLogger.log('error', 'apply_update', error);
+        throw new Error(error);
       }
+
+      this.debugLogger.log('success', 'apply_update', 'Server support confirmed');
 
       if (progressCallback) {
         progressCallback('📦 Initiating automatic update...', 'info');
       }
 
       // Log update attempt
-      await this.logActivity(updateInfo.id, 'auto_update_started');
+      try {
+        this.debugLogger.log('info', 'apply_update', 'Logging update attempt to database');
+        await this.logActivity(updateInfo.id, 'auto_update_started');
+        this.debugLogger.log('success', 'apply_update', 'Update attempt logged to database');
+      } catch (logError) {
+        this.debugLogger.log('warn', 'apply_update', 'Failed to log to database', {
+          error: logError.message
+        });
+      }
+
+      // Prepare update request
+      const requestBody = {
+        api_key: this.apiKey,
+        download_url: updateInfo.package_url,
+        version: updateInfo.version,
+        create_backup: createBackup,
+        client_id: this.clientId
+      };
+
+      this.debugLogger.log('info', 'apply_update', 'Preparing update request', {
+        requestBody: { ...requestBody, api_key: 'REDACTED', download_url: `${updateInfo.package_url.substring(0, 50)}...` },
+        endpoint: this.updateEndpoint
+      });
 
       // Send update request to server
+      if (progressCallback) {
+        progressCallback('🚀 Sending update request to server...', 'info');
+      }
+
+      const updateStartTime = Date.now();
+      this.debugLogger.log('info', 'apply_update', 'Sending update request');
+
       const response = await fetch(this.updateEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          api_key: this.apiKey,
-          download_url: updateInfo.package_url,
-          version: updateInfo.version,
-          create_backup: createBackup,
-          client_id: this.clientId
-        })
+        body: JSON.stringify(requestBody)
       });
 
-      const result = await response.json();
+      const updateDuration = Date.now() - updateStartTime;
+      
+      this.debugLogger.log('info', 'apply_update', 'Update request completed', {
+        status: response.status,
+        statusText: response.statusText,
+        duration: `${updateDuration}ms`,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      if (progressCallback) {
+        progressCallback('📄 Processing server response...', 'info');
+      }
+
+      let result;
+      try {
+        const responseText = await response.text();
+        this.debugLogger.log('info', 'apply_update', 'Response body received', {
+          bodyLength: responseText.length,
+          bodyPreview: responseText.substring(0, 300)
+        });
+        
+        result = JSON.parse(responseText);
+        this.debugLogger.log('info', 'apply_update', 'Response parsed successfully', {
+          success: result.success,
+          hasError: !!result.error,
+          hasMessage: !!result.message
+        });
+      } catch (parseError) {
+        this.debugLogger.log('error', 'apply_update', 'Failed to parse server response', {
+          parseError: parseError.message,
+          responseStatus: response.status,
+          responseText: (await response.text()).substring(0, 500)
+        });
+        throw new Error(`Server response parsing failed: ${parseError.message}`);
+      }
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Update failed');
+        const error = result.error || `Server error: ${response.status} ${response.statusText}`;
+        this.debugLogger.log('error', 'apply_update', 'Update failed on server', {
+          responseOk: response.ok,
+          resultSuccess: result.success,
+          error: result.error,
+          serverMessage: result.message,
+          fullResult: result
+        });
+        throw new Error(error);
       }
+
+      this.debugLogger.log('success', 'apply_update', 'Update completed successfully', {
+        version: updateInfo.version,
+        filesUpdated: result.files_updated?.length || 0,
+        backupCreated: !!result.backup_created,
+        serverMessage: result.message
+      });
 
       if (progressCallback) {
         progressCallback('✅ Update completed successfully!', 'success');
@@ -106,29 +388,55 @@ export class AutomaticUpdateService {
       }
 
       // Log successful update
-      await this.logActivity(updateInfo.id, 'auto_update_completed', {
-        files_updated: result.files_updated?.length || 0,
-        backup_created: !!result.backup_created
-      });
+      try {
+        await this.logActivity(updateInfo.id, 'auto_update_completed', {
+          files_updated: result.files_updated?.length || 0,
+          backup_created: !!result.backup_created,
+          duration_ms: updateDuration
+        });
+        this.debugLogger.log('success', 'apply_update', 'Success logged to database');
+      } catch (logError) {
+        this.debugLogger.log('warn', 'apply_update', 'Failed to log success to database', {
+          error: logError.message
+        });
+      }
 
       // Update local version
       this.updateLocalVersion(updateInfo.version);
+      this.debugLogger.log('info', 'apply_update', 'Local version updated', {
+        newVersion: updateInfo.version
+      });
 
       return {
         success: true,
         message: result.message,
         filesUpdated: result.files_updated?.length || 0,
         backupCreated: result.backup_created,
-        timestamp: result.timestamp
+        timestamp: result.timestamp,
+        duration: updateDuration
       };
 
     } catch (error) {
-      console.error('Automatic update failed:', error);
+      this.debugLogger.log('error', 'apply_update', 'Update process failed', {
+        error: error.message,
+        name: error.name,
+        stack: error.stack,
+        updateId,
+        version: updateInfo.version
+      });
       
       // Log error
-      await this.logActivity(updateInfo.id, 'auto_update_failed', {
-        error: error.message
-      });
+      try {
+        await this.logActivity(updateInfo.id, 'auto_update_failed', {
+          error: error.message,
+          error_type: error.name
+        });
+      } catch (logError) {
+        this.debugLogger.log('error', 'apply_update', 'Failed to log error to database', {
+          logError: logError.message,
+          originalError: error.message
+        });
+      }
 
       if (progressCallback) {
         progressCallback(`❌ Update failed: ${error.message}`, 'error');
@@ -136,7 +444,8 @@ export class AutomaticUpdateService {
 
       return {
         success: false,
-        error: error.message
+        error: error.message,
+        debugReport: this.debugLogger.getDebugReport()
       };
     }
   }
@@ -593,6 +902,30 @@ export class AutomaticUpdateService {
         }
       }, 2000);
     }
+  }
+
+  /**
+   * Get debug logs for troubleshooting
+   */
+  getDebugLogs() {
+    return this.debugLogger.getDebugReport();
+  }
+
+  /**
+   * Export debug logs as downloadable file
+   */
+  exportDebugLogs() {
+    this.debugLogger.exportLogs();
+  }
+
+  /**
+   * Clear debug logs
+   */
+  clearDebugLogs() {
+    this.debugLogger.logs = [];
+    localStorage.removeItem('auto_update_debug_logs');
+    localStorage.removeItem('auto_update_last_session');
+    this.debugLogger.log('info', 'debug', 'Debug logs cleared');
   }
 }
 
