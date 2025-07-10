@@ -21,6 +21,28 @@ if (!supabaseUrl || !supabaseAnonKey || !portfolioOwnerEmail) {
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Function to escape HTML attributes properly
+function escapeHtmlAttribute(value) {
+  if (!value) return '';
+  
+  // Convert to string and remove surrounding quotes if they exist
+  let cleanValue = String(value).trim();
+  
+  // Remove surrounding quotes (both single and double)
+  if ((cleanValue.startsWith('"') && cleanValue.endsWith('"')) ||
+      (cleanValue.startsWith("'") && cleanValue.endsWith("'"))) {
+    cleanValue = cleanValue.slice(1, -1);
+  }
+  
+  // Escape HTML entities for attribute values
+  return cleanValue
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 // Function to check image file size for WhatsApp compliance
 async function checkImageSize(imageUrl) {
   return new Promise((resolve) => {
@@ -114,7 +136,13 @@ async function updateMetaTags() {
     // Convert settings array to object
     const settings = {};
     (settingsData || []).forEach(setting => {
-      settings[setting.key] = setting.value;
+      try {
+        // Try to parse JSON values
+        settings[setting.key] = JSON.parse(setting.value);
+      } catch {
+        // If not JSON, use raw value
+        settings[setting.key] = setting.value;
+      }
     });
 
     console.log('✅ Settings fetched successfully');
@@ -123,34 +151,41 @@ async function updateMetaTags() {
     const indexPath = path.join(__dirname, '..', 'public', 'index.html');
     let html = fs.readFileSync(indexPath, 'utf8');
 
-    // Extract values from settings
-    const bannerName = settings.banner_name || 'Portfolio Owner';
-    const bannerTitle = settings.banner_title || 'Professional Portfolio';
-    const bannerTagline = settings.banner_tagline || 'Welcome to my professional portfolio';
+    // Extract values from settings and escape them properly
+    const bannerName = escapeHtmlAttribute(settings.banner_name || 'Portfolio Owner');
+    const bannerTitle = escapeHtmlAttribute(settings.banner_title || 'Professional Portfolio');
+    const bannerTagline = escapeHtmlAttribute(settings.banner_tagline || 'Welcome to my professional portfolio');
     
     // Prioritize WhatsApp-optimized image, fallback to avatar
     const avatarImage = settings.whatsapp_preview_image || settings.avatar_image || '/images/profile/avatar.jpeg';
-    const currentDomain = settings.site_url || 'https://farid.theexpertways.com';
+    const currentDomain = escapeHtmlAttribute(settings.site_url || 'https://farid.theexpertways.com');
 
-    // Create meta tag values
+    // Create meta tag values (already escaped)
     const pageTitle = `${bannerName} - ${bannerTitle}`;
     const pageDescription = bannerTagline;
     
     // Handle image URL generation properly
     let imageUrl;
-    if (avatarImage.startsWith('http')) {
+    const rawAvatarImage = String(avatarImage).trim();
+    const rawCurrentDomain = String(settings.site_url || 'https://farid.theexpertways.com').trim();
+    
+    if (rawAvatarImage.startsWith('http')) {
       // Already a full URL (from Supabase storage)
-      imageUrl = avatarImage;
-    } else if (avatarImage.startsWith('%PUBLIC_URL%')) {
+      imageUrl = rawAvatarImage;
+    } else if (rawAvatarImage.startsWith('%PUBLIC_URL%')) {
       // Replace %PUBLIC_URL% with domain
-      imageUrl = avatarImage.replace('%PUBLIC_URL%', currentDomain);
-    } else if (avatarImage.startsWith('/')) {
+      imageUrl = rawAvatarImage.replace('%PUBLIC_URL%', rawCurrentDomain);
+    } else if (rawAvatarImage.startsWith('/')) {
       // Relative path starting with /
-      imageUrl = `${currentDomain}${avatarImage}`;
+      imageUrl = `${rawCurrentDomain}${rawAvatarImage}`;
     } else {
       // Fallback
-      imageUrl = `${currentDomain}/${avatarImage}`;
+      imageUrl = `${rawCurrentDomain}/${rawAvatarImage}`;
     }
+    
+    // Escape the final image URL
+    const escapedImageUrl = escapeHtmlAttribute(imageUrl);
+    const escapedDomainUrl = escapeHtmlAttribute(`${rawCurrentDomain}/`);
 
     console.log('📝 Updating meta tags with:');
     console.log(`   Title: ${pageTitle}`);
@@ -177,12 +212,6 @@ async function updateMetaTags() {
     } else {
       console.log('   ✅ Image meets WhatsApp requirements!\n');
     }
-
-    // Get image dimensions for proper meta tags
-    const imageWidth = 400; // Default fallback
-    const imageHeight = 400; // Default fallback
-    
-    // For WhatsApp compliance, we'll use standard dimensions
 
     // Update document title
     html = html.replace(
@@ -211,7 +240,7 @@ async function updateMetaTags() {
     // Update Open Graph image
     html = html.replace(
       /<meta property="og:image" content=".*?" \/>/i,
-      `<meta property="og:image" content="${imageUrl}" />`
+      `<meta property="og:image" content="${escapedImageUrl}" />`
     );
 
     // Add/Update Open Graph image properties required for WhatsApp
@@ -222,13 +251,13 @@ async function updateMetaTags() {
     const ogImageTag = html.match(/<meta property="og:image" content=".*?" \/>/i);
     if (ogImageTag) {
       const imageMetaTags = `
-    <meta property="og:image:width" content="400" />
-    <meta property="og:image:height" content="400" />
-    <meta property="og:image:type" content="image/jpeg" />`;
+      <meta property="og:image:width" content="400" />
+      <meta property="og:image:height" content="400" />
+      <meta property="og:image:type" content="image/jpeg" />`;
       
       // Add secure_url if it's HTTPS
       const secureUrlTag = imageUrl.startsWith('https') ? 
-        `\n    <meta property="og:image:secure_url" content="${imageUrl}" />` : '';
+        `\n      <meta property="og:image:secure_url" content="${escapedImageUrl}" />` : '';
       
       html = html.replace(
         ogImageTag[0],
@@ -239,7 +268,7 @@ async function updateMetaTags() {
     // Update Open Graph URL
     html = html.replace(
       /<meta property="og:url" content=".*?" \/>/i,
-      `<meta property="og:url" content="${currentDomain}/" />`
+      `<meta property="og:url" content="${escapedDomainUrl}" />`
     );
 
     // Update Twitter title
@@ -257,13 +286,13 @@ async function updateMetaTags() {
     // Update Twitter image
     html = html.replace(
       /<meta property="twitter:image" content=".*?" \/>/i,
-      `<meta property="twitter:image" content="${imageUrl}" />`
+      `<meta property="twitter:image" content="${escapedImageUrl}" />`
     );
 
     // Update Twitter URL
     html = html.replace(
       /<meta property="twitter:url" content=".*?" \/>/i,
-      `<meta property="twitter:url" content="${currentDomain}/" />`
+      `<meta property="twitter:url" content="${escapedDomainUrl}" />`
     );
 
     // Write the updated HTML back to the file

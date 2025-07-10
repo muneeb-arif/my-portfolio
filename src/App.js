@@ -100,7 +100,16 @@ function AppContent() {
   const [additionalDataLoading, setAdditionalDataLoading] = useState(false);
   const [showEnvToast, setShowEnvToast] = useState(false);
 
-  const { loading: settingsLoading, initialized: settingsInitialized } = useSettings();
+  const { loading: settingsLoading, initialized: settingsInitialized, settings } = useSettings();
+
+  // Get section visibility settings with defaults
+  const sectionVisibility = {
+    hero: settings.section_hero_visible !== undefined ? settings.section_hero_visible : true,
+    portfolio: settings.section_portfolio_visible !== undefined ? settings.section_portfolio_visible : true,
+    technologies: settings.section_technologies_visible !== undefined ? settings.section_technologies_visible : true,
+    domains: settings.section_domains_visible !== undefined ? settings.section_domains_visible : true,
+    projectCycle: settings.section_project_cycle_visible !== undefined ? settings.section_project_cycle_visible : true,
+  };
 
   // Check for missing environment variables on app load
   useEffect(() => {
@@ -325,31 +334,40 @@ function AppContent() {
         </div>
 
         {/* Hero Section */}
-        <Hero />
+        {sectionVisibility.hero && <Hero />}
 
-        {/* Filter Menu */}
-        <FilterMenu
-          filters={filters}
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-        />
+        {/* Portfolio Section */}
+        {sectionVisibility.portfolio && (
+          <>
+            {/* Filter Menu */}
+            <FilterMenu
+              filters={filters}
+              activeFilter={activeFilter}
+              onFilterChange={handleFilterChange}
+            />
 
-        {/* Portfolio Grid */}
-        <PortfolioGrid
-          projects={filteredProjects}
-          onProjectClick={handleProjectClick}
-          activeFilter={activeFilter}
-          loading={additionalDataLoading}
-        />
+            {/* Portfolio Grid */}
+            <PortfolioGrid
+              projects={filteredProjects}
+              onProjectClick={handleProjectClick}
+              activeFilter={activeFilter}
+              loading={additionalDataLoading}
+            />
+          </>
+        )}
 
         {/* Technologies Section */}
-        <Technologies additionalDataLoading={additionalDataLoading} />
+        {sectionVisibility.technologies && (
+          <Technologies additionalDataLoading={additionalDataLoading} />
+        )}
 
         {/* Domains & Niche Section */}
-        <DomainsNiche additionalDataLoading={additionalDataLoading} />
+        {sectionVisibility.domains && (
+          <DomainsNiche additionalDataLoading={additionalDataLoading} />
+        )}
 
         {/* Project Life Cycle */}
-        <ProjectLifeCycle />
+        {sectionVisibility.projectCycle && <ProjectLifeCycle />}
 
         {/* Footer */}
         <Footer />

@@ -115,131 +115,88 @@ const UpdateNotificationBar = () => {
         status: 'started'
       }));
       
-      // Check if automatic updates are supported
-      console.log('🔍 [UpdateNotificationBar] Checking server support');
+      // Skip the redundant checkSupport() call since applyUpdate() does it internally
+      console.log('🔄 [UpdateNotificationBar] Starting automatic update');
       setProgressDisplay(prev => ({
         ...prev,
-        currentStep: 'Checking server compatibility...',
-        messages: [...prev.messages, '🔍 Checking automatic update support'],
+        currentStep: 'Preparing automatic update...',
+        messages: [...prev.messages, '🔄 Preparing automatic update'],
         progress: 20
       }));
 
-      const supportCheckStart = Date.now();
-      const isSupported = await automaticUpdateService.checkSupport();
-      const supportCheckDuration = Date.now() - supportCheckStart;
+      const updateStart = Date.now();
       
-      console.log('📋 [UpdateNotificationBar] Support check completed', {
-        isSupported,
-        duration: `${supportCheckDuration}ms`,
-        endpoint: automaticUpdateService.updateEndpoint
-      });
-      
-      if (isSupported) {
-        console.log('✅ [UpdateNotificationBar] Server supports automatic updates');
-        setProgressDisplay(prev => ({
-          ...prev,
-          currentStep: 'Downloading update package...',
-          messages: [...prev.messages, '✅ Server supports automatic updates', '📥 Downloading update package'],
-          progress: 40
-        }));
-
-        // Store support confirmation
-        localStorage.setItem('last_update_attempt', JSON.stringify({
-          ...debugData,
-          status: 'supported',
-          supportCheckDuration
-        }));
-
-        // Trigger automatic update
-        console.log('🔄 [UpdateNotificationBar] Starting automatic update');
-        const updateStart = Date.now();
-        
-        let stepCount = 0;
-        const result = await automaticUpdateService.applyUpdate(updateInfo, {
-          createBackup: true,
-          progressCallback: (message, type) => {
-            stepCount++;
-            const stepTime = Date.now();
-            console.log(`[UpdateProgress:${stepCount}] ${type}: ${message}`, {
-              stepNumber: stepCount,
-              stepTime,
-              elapsedTotal: stepTime - startTime
-            });
-            
-            setProgressDisplay(prev => ({
-              ...prev,
-              currentStep: message,
-              messages: [...prev.messages, `${type === 'info' ? '🔄' : type === 'success' ? '✅' : '❌'} ${message}`],
-              progress: Math.min(prev.progress + 8, 90)
-            }));
-          }
-        });
-
-        const updateDuration = Date.now() - updateStart;
-        console.log('📊 [UpdateNotificationBar] Update process completed', {
-          success: result.success,
-          duration: `${updateDuration}ms`,
-          totalSteps: stepCount,
-          hasDebugReport: !!result.debugReport
-        });
-
-        if (result.success) {
-          console.log('🎉 [UpdateNotificationBar] Update successful');
-          setProgressDisplay(prev => ({
-            ...prev,
-            currentStep: 'Update completed successfully!',
-            messages: [...prev.messages, '🎉 Update applied successfully!', '🔄 Preparing to reload...'],
-            progress: 100
-          }));
-
-          // Store success in localStorage
-          localStorage.setItem('last_update_attempt', JSON.stringify({
-            ...debugData,
-            status: 'completed',
-            supportCheckDuration,
-            updateDuration,
-            stepCount,
-            filesUpdated: result.filesUpdated,
-            backupCreated: result.backupCreated
-          }));
-
-          // Update successful
-          localStorage.setItem('theme_version', updateInfo.version);
-          setIsVisible(false);
-          
-          // Show success and reload
-          setTimeout(() => {
-            alert('🎉 Update applied successfully! Reloading page...');
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          }, 2000);
-        } else {
-          console.error('❌ [UpdateNotificationBar] Update failed', {
-            error: result.error,
-            debugReport: result.debugReport
+      let stepCount = 0;
+      const result = await automaticUpdateService.applyUpdate(updateInfo, {
+        createBackup: true,
+        progressCallback: (message, type) => {
+          stepCount++;
+          const stepTime = Date.now();
+          console.log(`[UpdateProgress:${stepCount}] ${type}: ${message}`, {
+            stepNumber: stepCount,
+            stepTime,
+            elapsedTotal: stepTime - startTime
           });
           
-          // Store debug report if available
-          if (result.debugReport) {
-            localStorage.setItem('last_update_debug_report', JSON.stringify(result.debugReport));
-          }
-          
-          throw new Error(result.error || 'Update failed');
+          setProgressDisplay(prev => ({
+            ...prev,
+            currentStep: message,
+            messages: [...prev.messages, `${type === 'info' ? '🔄' : type === 'success' ? '✅' : '❌'} ${message}`],
+            progress: Math.min(prev.progress + 8, 90)
+          }));
         }
-      } else {
+      });
+
+      const updateDuration = Date.now() - updateStart;
+      console.log('📊 [UpdateNotificationBar] Update process completed', {
+        success: result.success,
+        duration: `${updateDuration}ms`,
+        totalSteps: stepCount,
+        hasDebugReport: !!result.debugReport
+      });
+
+      if (result.success) {
+        console.log('🎉 [UpdateNotificationBar] Update successful');
         setProgressDisplay(prev => ({
           ...prev,
-          currentStep: 'Server requires manual update',
-          messages: [...prev.messages, '📋 Automatic updates not supported on this server', '🔄 Switching to manual update...'],
+          currentStep: 'Update completed successfully!',
+          messages: [...prev.messages, '🎉 Update applied successfully!', '🔄 Preparing to reload...'],
           progress: 100
         }));
 
-        // Fallback to manual update
+        // Store success in localStorage
+        localStorage.setItem('last_update_attempt', JSON.stringify({
+          ...debugData,
+          status: 'completed',
+          updateDuration,
+          stepCount,
+          filesUpdated: result.filesUpdated,
+          backupCreated: result.backupCreated
+        }));
+
+        // Update successful
+        localStorage.setItem('theme_version', updateInfo.version);
+        setIsVisible(false);
+        
+        // Show success and reload
         setTimeout(() => {
-          setProgressDisplay({ isVisible: false, currentStep: '', messages: [], progress: 0 });
-          handleManualUpdate();
+          alert('🎉 Update applied successfully! Reloading page...');
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
         }, 2000);
+      } else {
+        console.error('❌ [UpdateNotificationBar] Update failed', {
+          error: result.error,
+          debugReport: result.debugReport
+        });
+        
+        // Store debug report if available
+        if (result.debugReport) {
+          localStorage.setItem('last_update_debug_report', JSON.stringify(result.debugReport));
+        }
+        
+        throw new Error(result.error || 'Update failed');
       }
     } catch (error) {
       const errorTime = Date.now();

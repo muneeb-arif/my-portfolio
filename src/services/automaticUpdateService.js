@@ -98,7 +98,7 @@ class AutoUpdateDebugLogger {
 export class AutomaticUpdateService {
   constructor() {
     this.apiKey = 'sk_update_2024_portfolio_secure_key_255d78d54885303d0fc7564b88b70527'; // Should match PHP endpoint
-    this.updateEndpoint = window.location.origin + '/update-endpoint.php';
+    this.updateEndpoint = this.getUpdateEndpointUrl();
     this.clientId = this.getOrCreateClientId();
     this.debugLogger = new AutoUpdateDebugLogger();
     
@@ -108,6 +108,30 @@ export class AutomaticUpdateService {
       clientId: this.clientId,
       origin: window.location.origin
     });
+  }
+
+  /**
+   * Get the correct update endpoint URL
+   * Handles development vs production environments
+   */
+  getUpdateEndpointUrl() {
+    // Check for environment variable first
+    if (process.env.REACT_APP_UPDATE_ENDPOINT) {
+      return process.env.REACT_APP_UPDATE_ENDPOINT;
+    }
+    
+    // Detect development environment
+    // const isDevelopment = process.env.NODE_ENV === 'development' || 
+    //                       window.location.port === '3000' ||
+    //                       window.location.hostname === 'localhost' && window.location.port;
+    
+    // if (isDevelopment) {
+    //   // For development, use a separate PHP server or configured endpoint
+    //   return process.env.REACT_APP_DEV_UPDATE_ENDPOINT || 'http://localhost:8080/update-endpoint.php';
+    // }
+    
+    // For production, use the same origin
+    return window.location.origin + '/update-endpoint.php';
   }
 
   /**
@@ -338,8 +362,9 @@ export class AutomaticUpdateService {
       }
 
       let result;
+      let responseText;
       try {
-        const responseText = await response.text();
+        responseText = await response.text();
         this.debugLogger.log('info', 'apply_update', 'Response body received', {
           bodyLength: responseText.length,
           bodyPreview: responseText.substring(0, 300)
@@ -355,7 +380,7 @@ export class AutomaticUpdateService {
         this.debugLogger.log('error', 'apply_update', 'Failed to parse server response', {
           parseError: parseError.message,
           responseStatus: response.status,
-          responseText: (await response.text()).substring(0, 500)
+          responseText: responseText ? responseText.substring(0, 500) : 'Unable to read response body'
         });
         throw new Error(`Server response parsing failed: ${parseError.message}`);
       }

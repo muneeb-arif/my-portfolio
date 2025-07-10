@@ -1885,28 +1885,194 @@ const AppearanceSection = () => {
   );
 };
 
-const SettingsSection = ({ user }) => (
-  <div className="dashboard-section">
-    <div className="section-header">
-      <h2>⚙️ Account Settings</h2>
-    </div>
-    <div className="settings-form">
-      <div className="form-group">
-        <label>Email</label>
-        <input type="email" value={user?.email || ''} disabled />
+const SettingsSection = ({ user }) => {
+  const { settings, loading, updateSettings } = useSettings();
+  const [localSettings, setLocalSettings] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  // Initialize local settings from global context
+  useEffect(() => {
+    if (!loading && Object.keys(settings).length > 0) {
+      setLocalSettings({
+        section_hero_visible: settings.section_hero_visible !== undefined ? settings.section_hero_visible : true,
+        section_portfolio_visible: settings.section_portfolio_visible !== undefined ? settings.section_portfolio_visible : true,
+        section_technologies_visible: settings.section_technologies_visible !== undefined ? settings.section_technologies_visible : true,
+        section_domains_visible: settings.section_domains_visible !== undefined ? settings.section_domains_visible : true,
+        section_project_cycle_visible: settings.section_project_cycle_visible !== undefined ? settings.section_project_cycle_visible : true,
+      });
+    }
+  }, [loading, settings]);
+
+  const handleSectionVisibilityChange = (sectionKey, isVisible) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      [sectionKey]: isVisible
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setMessage('Saving settings...');
+
+      const success = await updateSettings(localSettings);
+      
+      if (success) {
+        setMessage('✅ Settings saved successfully!');
+      } else {
+        setMessage('❌ Error saving settings. Please try again.');
+      }
+      
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setMessage('❌ Error saving settings: ' + error.message);
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="dashboard-section">
+      <div className="section-header">
+        <h2>⚙️ Settings</h2>
+        <p>Manage your account and homepage section visibility</p>
       </div>
-      <div className="form-group">
-        <label>Full Name</label>
-        <input 
-          type="text" 
-          value={user?.user_metadata?.full_name || ''} 
-          placeholder="Enter your full name" 
-        />
+
+      {message && (
+        <div className={`message ${message.includes('✅') ? 'success' : 'error'}`} style={{
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          backgroundColor: message.includes('✅') ? '#d4edda' : '#f8d7da',
+          color: message.includes('✅') ? '#155724' : '#721c24',
+          border: message.includes('✅') ? '1px solid #c3e6cb' : '1px solid #f5c6cb'
+        }}>
+          {message}
+        </div>
+      )}
+
+      <div className="settings-form-grid">
+        {/* Left Column - Account Settings */}
+        <div className="settings-column">
+          <div className="settings-group">
+            <h3>👤 Account Information</h3>
+            <div className="form-group">
+              <label>Email</label>
+              <input type="email" value={user?.email || ''} disabled />
+            </div>
+            <div className="form-group">
+              <label>Full Name</label>
+              <input 
+                type="text" 
+                value={user?.user_metadata?.full_name || ''} 
+                placeholder="Enter your full name"
+                disabled
+              />
+              <small className="form-help">Profile updates coming soon</small>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Section Visibility */}
+        <div className="settings-column">
+          <div className="settings-group">
+            <h3>📋 Homepage Section Visibility</h3>
+            <p className="form-help" style={{ marginBottom: '16px', color: '#6b7280' }}>
+              Control which sections appear on your homepage. Unchecked sections will be hidden from visitors.
+            </p>
+            
+            {loading ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                Loading settings...
+              </div>
+            ) : (
+              <div className="section-visibility-controls">
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.section_hero_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('section_hero_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">🎯 Hero Section</span>
+                  </label>
+                  <small className="form-help">Main banner with your name, title, and introduction</small>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.section_portfolio_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('section_portfolio_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">💼 Portfolio Section</span>
+                  </label>
+                  <small className="form-help">Showcase of your projects and work</small>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.section_technologies_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('section_technologies_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">🛠️ Technologies Section</span>
+                  </label>
+                  <small className="form-help">Display of your technical skills and tools</small>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.section_domains_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('section_domains_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">🎯 Domains & Niche Section</span>
+                  </label>
+                  <small className="form-help">Your expertise areas and specializations</small>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.section_project_cycle_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('section_project_cycle_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">⏱️ Project Lifecycle Section</span>
+                  </label>
+                  <small className="form-help">Timeline showing your development process</small>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-      <button className="btn-primary">Update Profile</button>
+
+      <div className="form-actions" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+        <button 
+          className="btn-primary"
+          onClick={handleSave}
+          disabled={saving || loading}
+          style={{ minWidth: '150px' }}
+        >
+          {saving ? '💾 Saving...' : '💾 Save Settings'}
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ExportSection = () => (
   <div className="dashboard-section">

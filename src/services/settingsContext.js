@@ -45,12 +45,20 @@ export const SettingsProvider = ({ children }) => {
     avatar_zoom: 100,
     whatsapp_preview_image: '', // Optimized image for WhatsApp sharing
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
+    show_resume_download: true,
     
     // Social & Contact
     social_email: 'muneeb@example.com',
     social_github: 'https://github.com/muneebarif',
     social_instagram: '',
     social_facebook: '',
+    
+    // Section Visibility (all sections visible by default)
+    section_hero_visible: true,
+    section_portfolio_visible: true,
+    section_technologies_visible: true,
+    section_domains_visible: true,
+    section_project_cycle_visible: true,
     
     // Styling & Theme
     theme_name: 'sand',

@@ -17,8 +17,8 @@ define('UPDATE_API_KEY', 'sk_update_2024_portfolio_secure_key_255d78d54885303d0f
 define('BACKUP_DIR', __DIR__ . '/backups/');
 define('TEMP_DIR', __DIR__ . '/temp/');
 define('SITE_ROOT', __DIR__ . '/');
-define('MAX_DOWNLOAD_SIZE', 25 * 1024 * 1024); // Reduced to 25MB max for shared hosting
-define('SHARED_HOSTING_TIMEOUT', 45); // 45 seconds max execution time for shared hosting
+define('MAX_DOWNLOAD_SIZE', 100 * 1024 * 1024); // Increased to 100MB for larger update packages
+define('SHARED_HOSTING_TIMEOUT', 90); // 90 seconds max execution time for shared hosting
 define('ALLOWED_DOMAINS', [
     'github.com',
     'githubusercontent.com',
@@ -306,15 +306,16 @@ function downloadFile($url, $destination) {
         throw new Exception('cURL is not available');
     }
     
-    // Initialize cURL with shared hosting optimizations
+    // Initialize cURL with optimized timeouts
     $ch = curl_init();
+    $curlTimeout = (int)(SHARED_HOSTING_TIMEOUT * 0.9); // Use 90% of total timeout for cURL
     $curlOptions = [
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_MAXREDIRS => 3,
-        CURLOPT_TIMEOUT => 30, // Reduced to 30 seconds for shared hosting
-        CURLOPT_CONNECTTIMEOUT => 10, // 10 seconds to connect
+        CURLOPT_TIMEOUT => $curlTimeout, // Dynamic timeout based on configuration
+        CURLOPT_CONNECTTIMEOUT => 15, // 15 seconds to connect
         CURLOPT_USERAGENT => 'Portfolio-Update-System/1.0',
         CURLOPT_SSL_VERIFYPEER => false, // Disable SSL verification for shared hosting
         CURLOPT_SSL_VERIFYHOST => false
@@ -325,24 +326,38 @@ function downloadFile($url, $destination) {
     }
     
     logStep('download_config', 'cURL configured', [
-        'timeout' => 30,
-        'connect_timeout' => 10,
+        'timeout' => $curlTimeout,
+        'connect_timeout' => 15,
         'max_redirects' => 3,
-        'ssl_verify' => false
+        'ssl_verify' => false,
+        'max_download_size_mb' => round(MAX_DOWNLOAD_SIZE / 1024 / 1024, 1),
+        'progress_timeout' => (int)(SHARED_HOSTING_TIMEOUT * 0.8)
     ]);
     
     // Progress callback with early termination for large files
     curl_setopt($ch, CURLOPT_NOPROGRESS, false);
     curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, function($resource, $download_size, $downloaded) {
-        // Check execution time limit
+        // Check execution time limit - allow 80% of total timeout for download
         static $start_time;
         if (!$start_time) $start_time = time();
         
-        if ((time() - $start_time) > 25) { // Stop after 25 seconds
-            return 1; // Abort download
+        $max_download_time = (int)(SHARED_HOSTING_TIMEOUT * 0.8); // Use 80% of total timeout
+        if ((time() - $start_time) > $max_download_time) {
+            logStep('download_timeout', 'Download timed out', [
+                'elapsed_time' => (time() - $start_time),
+                'max_allowed' => $max_download_time,
+                'downloaded_bytes' => $downloaded,
+                'total_size' => $download_size
+            ]);
+            return 1; // Abort download due to timeout
         }
         
         if ($download_size > MAX_DOWNLOAD_SIZE || $downloaded > MAX_DOWNLOAD_SIZE) {
+            logStep('download_size_exceeded', 'Download size limit exceeded', [
+                'download_size' => $download_size,
+                'downloaded' => $downloaded,
+                'max_allowed' => MAX_DOWNLOAD_SIZE
+            ]);
             return 1; // Abort download if too large
         }
         return 0;
@@ -380,7 +395,21 @@ function downloadFile($url, $destination) {
             'url' => $url,
             'curl_info' => $curlInfo
         ]);
-        throw new Exception("Failed to download update: HTTP {$httpCode} - {$error}");
+        
+        // Provide specific error messages based on the failure type
+        if ($data === false && (strpos($error, 'Operation was aborted') !== false || strpos($error, 'Callback aborted') !== false)) {
+            throw new Exception("Download aborted: Update package too large or download timed out. Try again or use manual update.");
+        } elseif ($httpCode === 0) {
+            throw new Exception("Connection failed: Unable to reach download server. Check internet connection.");
+        } elseif ($httpCode === 404) {
+            throw new Exception("Update package not found: The update file may have been moved or deleted.");
+        } elseif ($httpCode >= 400 && $httpCode < 500) {
+            throw new Exception("Client error: HTTP {$httpCode} - Check update package URL");
+        } elseif ($httpCode >= 500) {
+            throw new Exception("Server error: HTTP {$httpCode} - Download server is experiencing issues");
+        } else {
+            throw new Exception("Failed to download update: HTTP {$httpCode} - {$error}");
+        }
     }
     
     $dataSize = strlen($data);
