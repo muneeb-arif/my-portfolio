@@ -63,9 +63,9 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
 
   // Detect image aspect ratio for smart layout
   const getImageAspectClass = (image) => {
-    // This would ideally be determined by actual image dimensions
-    // For now, we'll use a more flexible height approach
-    return 'min-h-64 max-h-[70vh]';
+    // Use responsive height constraints that prevent images from overwhelming the content
+    // Smaller max height on mobile, larger on desktop, with reasonable minimums
+    return 'min-h-48 max-h-[45vh] sm:min-h-56 sm:max-h-[50vh] lg:min-h-64 lg:max-h-[55vh]';
   };
 
   useEffect(() => {
@@ -200,7 +200,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
           {/* Project Image Gallery */}
           <div className="relative">
             {/* Main Image - Smart Aspect Ratio */}
-            <div className={`relative ${getImageAspectClass(currentImage)} flex items-center justify-center bg-gray-100`}>
+            <div className={`relative ${getImageAspectClass(currentImage)} flex items-center justify-center bg-gray-100 overflow-hidden`}>
               <img
                 src={currentImage?.url || project.image}
                 alt={currentImage?.caption || project.title}
