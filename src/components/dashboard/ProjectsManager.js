@@ -5,7 +5,7 @@ import { getCurrentUser } from '../../services/authUtils';
 import MediaSelectionModal from './MediaSelectionModal';
 import './ProjectsManager.css';
 
-const ProjectsManager = ({ projects, onProjectsChange }) => {
+const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalEditingProject, onEditingProjectChange }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -38,6 +38,16 @@ const ProjectsManager = ({ projects, onProjectsChange }) => {
   useEffect(() => {
     loadCategories();
   }, []);
+
+  // Handle external editing project from Overview page
+  useEffect(() => {
+    if (externalEditingProject) {
+      setEditingProject(externalEditingProject);
+      if (onEditingProjectChange) {
+        onEditingProjectChange(null); // Clear the external state to prevent re-triggering
+      }
+    }
+  }, [externalEditingProject, onEditingProjectChange]);
 
 
 

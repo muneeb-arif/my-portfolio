@@ -25,6 +25,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projects, setProjects] = useState([]);
   const [isDatabaseEmpty, setIsDatabaseEmpty] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
   const [databaseStatus, setDatabaseStatus] = useState({
     projects: 0,
     technologies: 0,
@@ -424,6 +425,12 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     setSidebarOpen(false); // Close mobile sidebar
   };
 
+  const handleEditProject = (project) => {
+    setEditingProject(project);
+    setActiveSection('projects');
+    setSidebarOpen(false); // Close mobile sidebar
+  };
+
   const closeProgressDisplay = () => {
     setProgressDisplay({
       isVisible: false,
@@ -456,10 +463,11 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
             isResetting={isResetting}
             resetMessage={resetMessage}
             onResetData={handleResetData}
+            onEditProject={handleEditProject}
           />
         );
       case 'projects':
-        return <ProjectsManager projects={projects} onProjectsChange={loadDashboardData} />;
+        return <ProjectsManager projects={projects} onProjectsChange={loadDashboardData} editingProject={editingProject} onEditingProjectChange={setEditingProject} />;
       case 'queries':
         return <QueriesManager />;
       case 'domains-technologies':
@@ -503,6 +511,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
             isResetting={isResetting}
             resetMessage={resetMessage}
             onResetData={handleResetData}
+            onEditProject={handleEditProject}
           />
         );
     }
@@ -604,7 +613,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
 };
 
 // Overview Section Component
-const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isSyncing, syncMessage, onSyncData, isBackingUp, backupMessage, onBackupData, importFile, isImporting, importMessage, onFileSelect, onImportData, isResetting, resetMessage, onResetData }) => {
+const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isSyncing, syncMessage, onSyncData, isBackingUp, backupMessage, onBackupData, importFile, isImporting, importMessage, onFileSelect, onImportData, isResetting, resetMessage, onResetData, onEditProject }) => {
   const recentProjects = projects.slice(0, 5);
 
   return (
@@ -716,7 +725,12 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
                   </span>
                 </div>
                 <div className="project-actions">
-                  <button className="btn-edit">Edit</button>
+                  <button 
+                    className="btn-edit"
+                    onClick={() => onEditProject(project)}
+                  >
+                    Edit
+                  </button>
                 </div>
               </div>
             ))}
