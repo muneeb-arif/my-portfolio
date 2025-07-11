@@ -1,0 +1,23 @@
+{
+  "name": "portfolio-mysql-migration",
+  "version": "1.0.0",
+  "description": "Data migration script from Supabase to MySQL",
+  "main": "migrate-to-mysql.js",
+  "scripts": {
+    "migrate": "node migrate-to-mysql.js",
+    "test-connection": "node test-connections.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.6.5",
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1"
+  },
+  "keywords": [
+    "mysql",
+    "supabase",
+    "migration",
+    "portfolio"
+  ],
+  "author": "Portfolio Migration Tool",
+  "license": "MIT"
+} 

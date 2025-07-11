@@ -1,0 +1,92 @@
+{
+  "name": "muneeb-portfolio-nextjs",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Next.js portfolio with comprehensive dashboard system and MySQL integration",
+  "keywords": ["portfolio", "nextjs", "dashboard", "mysql", "react"],
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "export": "next build && next export",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "update-meta": "node scripts/update-meta-tags.js",
+    "build-production": "npm run update-meta && next build",
+    "build-export": "npm run update-meta && next build && next export",
+    "create-packages": "zip -r build.zip .next/ && npm run create-minimal-update",
+    "create-minimal-update": "mkdir -p minimal-update && cp -r .next/static minimal-update/ && cp -r public minimal-update/ && cd minimal-update && zip -r ../minimal-update.zip . && cd .. && rm -rf minimal-update && echo '✅ Created packages:' && ls -lh build.zip minimal-update.zip",
+    "upload-backup": "node scripts/upload-build-backup.js",
+    "serve-build": "npm run build && npm start",
+    "create-update": "node scripts/create-theme-update.js",
+    "release": "npm run create-update",
+    "upload-package": "node scripts/upload-update-package.js",
+    "list-clients": "node scripts/upload-update-package.js --list-clients",
+    "test-connections": "node scripts/test-connections.js",
+    "migrate-mysql": "node scripts/migrate-to-mysql.js",
+    "check-mysql": "node scripts/check-mysql-status.js"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@next/font": "^15.1.0",
+    "mysql2": "^3.14.2",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.513.0",
+    "sweetalert2": "^11.22.0",
+    "@emailjs/browser": "^4.4.1",
+    "clsx": "^2.1.0",
+    "class-variance-authority": "^0.7.0",
+    "tailwind-merge": "^2.2.0",
+    "framer-motion": "^11.0.0",
+    "next-themes": "^0.2.1",
+    "sharp": "^0.33.0",
+    "jose": "^5.2.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.3.0",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^15.1.0",
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "@tailwindcss/typography": "^0.5.10",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "prettier": "^3.2.0",
+    "prettier-plugin-tailwindcss": "^0.5.11"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muneebarif/portfolio-nextjs"
+  },
+  "author": {
+    "name": "Muneeb Arif",
+    "email": "muneebarif11@gmail.com",
+    "url": "https://muneebarif.com"
+  },
+  "license": "MIT"
+} 
