@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { projectsService } from '../../services/projectsService';
 import { categoriesService } from '../../services/categoriesService';
 import { imageService } from '../../services/imageService';
-import { supabase } from '../../config/supabase';
 import { getCurrentUser } from '../../services/authUtils';
 import MediaSelectionModal from './MediaSelectionModal';
 import './ProjectsManager.css';

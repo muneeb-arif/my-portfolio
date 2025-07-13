@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, Loader2, ArrowUp, ArrowDown, Upload, Image as ImageIcon } from 'lucide-react';
-import { nichesService } from '../../services/nichesService';
-import { imageService } from '../../services/supabaseService';
+import { Plus, Edit, Trash2, Upload, X, Loader2, ArrowUp, ArrowDown, Save } from 'lucide-react';
+import { apiService } from '../../services/apiService';
+import { imageService } from '../../services/imageService';
 import { BUCKETS } from '../../config/supabase';
 import './NicheManager.css';
 
@@ -43,7 +43,7 @@ const NicheManager = () => {
   const loadNiches = async () => {
     try {
       setLoading(true);
-      const data = await nichesService.getNiches();
+      const data = await apiService.getNiches();
       setNiches(data);
     } catch (error) {
       // console.error('Error loading niches:', error);
@@ -87,9 +87,9 @@ const NicheManager = () => {
       setSavingNiche(true);
       
       if (editingNiche) {
-        await nichesService.updateNiche(editingNiche.id, formData);
+        await apiService.updateNiche(editingNiche.id, formData);
       } else {
-        await nichesService.createNiche(formData);
+        await apiService.createNiche(formData);
       }
 
       await loadNiches();
@@ -124,7 +124,7 @@ const NicheManager = () => {
     }
 
     try {
-      await nichesService.deleteNiche(nicheId);
+      await apiService.deleteNiche(nicheId);
       await loadNiches();
     } catch (error) {
       console.error('Error deleting niche:', error);
@@ -155,7 +155,7 @@ const NicheManager = () => {
     try {
       await Promise.all(
         updatedNiches.map(niche => 
-          nichesService.updateNiche(niche.id, { sort_order: niche.sort_order })
+          apiService.updateNiche(niche.id, { sort_order: niche.sort_order })
         )
       );
     } catch (error) {
