@@ -2,60 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Briefcase, Code, Globe, CheckCircle, Mail } from 'lucide-react';
 import ContactForm from './ContactForm';
 import { useSettings } from '../services/settingsContext';
-import portfolioService from '../services/portfolioService';
+import { usePublicData } from '../services/PublicDataContext';
 
 const MobileBottomNav = ({ additionalDataLoading }) => {
   const { loading: settingsLoading, initialized: settingsInitialized } = useSettings();
+  const { projects, technologies, niches, loading: publicLoading } = usePublicData();
   const [activeSection, setActiveSection] = useState('hero');
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   
   // Track which sections have data
-  const [sectionsData, setSectionsData] = useState({
-    hasProjects: false,
-    hasTechnologies: false,
-    hasDomains: false,
-    loading: false
-  });
-
-  // Wait for settings to load, then check data availability for each section
-  useEffect(() => {
-    if (!settingsLoading && settingsInitialized && !additionalDataLoading) {
-      checkSectionsData();
-    }
-  }, [settingsLoading, settingsInitialized, additionalDataLoading]);
-
-  const checkSectionsData = async () => {
-    try {
-      console.log('📊 MobileBottomNav: Checking sections data after settings and portfolio data are ready...');
-      setSectionsData(prev => ({ ...prev, loading: true }));
-      
-      const [projects, technologies, domains] = await Promise.all([
-        portfolioService.getPublishedProjects(),
-        portfolioService.getDomainsTechnologies(),
-        portfolioService.getNiches()
-      ]);
-
-      setSectionsData({
-        hasProjects: projects && projects.length > 0,
-        hasTechnologies: technologies && technologies.length > 0,
-        hasDomains: domains && domains.length > 0,
-        loading: false
-      });
-      
-      console.log('📊 MobileBottomNav: Sections data loaded:', {
-        hasProjects: projects && projects.length > 0,
-        hasTechnologies: technologies && technologies.length > 0,
-        hasDomains: domains && domains.length > 0,
-      });
-    } catch (error) {
-      console.error('Error checking sections data:', error);
-      setSectionsData({
-        hasProjects: false,
-        hasTechnologies: false,
-        hasDomains: false,
-        loading: false
-      });
-    }
+  const sectionsData = {
+    hasProjects: projects && projects.length > 0,
+    hasTechnologies: technologies && technologies.length > 0,
+    hasDomains: niches && niches.length > 0,
+    loading: publicLoading
   };
 
   // Track scroll position to update active section

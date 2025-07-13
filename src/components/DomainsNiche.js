@@ -1,35 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DomainCard from './DomainCard';
 import DomainModal from './DomainModal';
-import portfolioService from '../services/portfolioService';
+import { usePublicData } from '../services/PublicDataContext';
 
 const DomainsNiche = ({ additionalDataLoading }) => {
+  const { niches, loading } = usePublicData();
   const [selectedNiche, setSelectedNiche] = useState(null);
-  const [nichesData, setNichesData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Only load niches after additional data loading is complete
-    if (!additionalDataLoading) {
-      loadNiches();
-    }
-  }, [additionalDataLoading]);
-
-  const loadNiches = async () => {
-    try {
-      console.log('📊 DomainsNiche: Loading niches data...');
-      setLoading(true);
-      const data = await portfolioService.getNiches();
-      setNichesData(data);
-      console.log('📊 DomainsNiche: Loaded', data?.length || 0, 'niches');
-    } catch (error) {
-      console.error('Error loading niches:', error);
-      // Fallback to empty array if there's an error
-      setNichesData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Map icon names to actual icon components
   const getIconComponent = (iconName) => {
@@ -92,7 +68,7 @@ const DomainsNiche = ({ additionalDataLoading }) => {
   const handleNicheNavigation = (direction) => {
     if (!selectedNiche) return;
 
-    const currentIndex = nichesData.findIndex(n => n.id === selectedNiche.id);
+    const currentIndex = niches.findIndex(n => n.id === selectedNiche.id);
     let newIndex;
 
     if (direction === 'next') {
@@ -102,9 +78,9 @@ const DomainsNiche = ({ additionalDataLoading }) => {
     }
 
     // Check bounds
-    if (newIndex >= 0 && newIndex < nichesData.length) {
+    if (newIndex >= 0 && newIndex < niches.length) {
       // Transform the raw niche data to domain format before setting
-      const transformedNiche = transformNicheToDomain(nichesData[newIndex]);
+      const transformedNiche = transformNicheToDomain(niches[newIndex]);
       setSelectedNiche(transformedNiche);
     }
   };
@@ -113,10 +89,10 @@ const DomainsNiche = ({ additionalDataLoading }) => {
   const getNavigationState = () => {
     if (!selectedNiche) return { canNavigateLeft: false, canNavigateRight: false };
 
-    const currentIndex = nichesData.findIndex(n => n.id === selectedNiche.id);
+    const currentIndex = niches.findIndex(n => n.id === selectedNiche.id);
     return {
       canNavigateLeft: currentIndex > 0,
-      canNavigateRight: currentIndex < nichesData.length - 1
+      canNavigateRight: currentIndex < niches.length - 1
     };
   };
 
@@ -141,7 +117,7 @@ const DomainsNiche = ({ additionalDataLoading }) => {
   }
 
   // Hide the entire section if no niches data
-  if (!loading && nichesData.length === 0) {
+  if (!loading && niches.length === 0) {
     return null;
   }
 
@@ -170,9 +146,9 @@ const DomainsNiche = ({ additionalDataLoading }) => {
         </div>
 
         {/* Niches Grid */}
-        {nichesData.length > 0 ? (
+        {niches.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-12">
-            {nichesData.map((niche) => {
+            {niches.map((niche) => {
               const transformedNiche = transformNicheToDomain(niche);
               
               return (

@@ -1,32 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import TechnologyCard from './TechnologyCard';
-import portfolioService from '../services/portfolioService';
+import { usePublicData } from '../services/PublicDataContext';
 
 const Technologies = ({ additionalDataLoading }) => {
-  const [technologies, setTechnologies] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Only load technologies after additional data loading is complete
-    if (!additionalDataLoading) {
-      loadTechnologies();
-    }
-  }, [additionalDataLoading]);
-
-  const loadTechnologies = async () => {
-    try {
-      console.log('📊 Technologies: Loading technologies data...');
-      setLoading(true);
-      const data = await portfolioService.getDomainsTechnologies();
-      setTechnologies(data);
-      console.log('📊 Technologies: Loaded', data?.length || 0, 'technologies');
-    } catch (error) {
-      console.error('Error loading technologies:', error);
-      setTechnologies([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { technologies, loading } = usePublicData();
 
   // Map icon names to actual icon components
   const getIconComponent = (iconName) => {
