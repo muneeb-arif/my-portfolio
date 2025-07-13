@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { apiService } from './apiService';
 import { clearConfigCache } from './portfolioConfigUtils';
 
 // Simple auth utilities with short-term caching to prevent repeated API calls
@@ -33,20 +33,37 @@ export const getCurrentUser = async () => {
   console.log('🔑 AUTH UTILS: Making fresh auth request...');
   authCache.promise = (async () => {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
-      if (error) {
-        console.log('🔑 AUTH UTILS: No active session');
+      // Check if we have a token
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        console.log('🔑 AUTH UTILS: No token found');
         authCache.user = null;
+        authCache.timestamp = now;
+        return null;
+      }
+
+      // Set token in apiService
+      apiService.setToken(token);
+      
+      // Get current user from API
+      const response = await apiService.getCurrentUser();
+      
+      if (response.success && response.user) {
+        console.log('🔑 AUTH UTILS: User found:', response.user.email || 'null');
+        authCache.user = response.user;
       } else {
-        console.log('🔑 AUTH UTILS: User found:', user?.email || 'null');
-        authCache.user = user;
+        console.log('🔑 AUTH UTILS: No active session');
+        // Clear invalid token
+        apiService.clearToken();
+        authCache.user = null;
       }
       
       authCache.timestamp = now;
       return authCache.user;
     } catch (error) {
       console.error('🔑 AUTH UTILS: Error fetching user:', error);
+      // Clear any invalid token
+      apiService.clearToken();
       authCache.user = null;
       authCache.timestamp = now;
       return null;
@@ -58,10 +75,13 @@ export const getCurrentUser = async () => {
   return await authCache.promise;
 };
 
-// Get user ID (convenience function)
-export const getCurrentUserId = async () => {
-  const user = await getCurrentUser();
-  return user?.id || null;
+// Clear auth cache (useful for logout scenarios)
+export const clearAuthCache = () => {
+  authCache = {
+    user: null,
+    timestamp: 0,
+    promise: null
+  };
 };
 
 // Check if user is authenticated
@@ -70,17 +90,10 @@ export const isAuthenticated = async () => {
   return !!user;
 };
 
-// Clear cache (called by AuthContext when auth state changes)
-export const clearAuthCache = () => {
-  console.log('🔑 AUTH UTILS: Clearing cache...');
-  authCache = {
-    user: null,
-    timestamp: 0,
-    promise: null
-  };
-  
-  // Also clear portfolio config cache since auth state affects it
-  clearConfigCache();
+// Get user ID (for backward compatibility)
+export const getCurrentUserId = async () => {
+  const user = await getCurrentUser();
+  return user?.id || null;
 };
 
 export default {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { projectsService } from '../../services/projectsService';
 import { categoriesService } from '../../services/categoriesService';
-import { imageService } from '../../services/supabaseService';
+import { imageService } from '../../services/imageService';
 import { supabase } from '../../config/supabase';
 import { getCurrentUser } from '../../services/authUtils';
 import MediaSelectionModal from './MediaSelectionModal';
@@ -238,67 +238,56 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
         throw new Error('User not authenticated');
       }
 
-      // First, delete all existing project images for this project
-      const { error: deleteError } = await supabase
-        .from('project_images')
-        .delete()
-        .eq('project_id', projectId);
+      // Fetch current images from DB
+      const dbResult = await imageService.getProjectImages(projectId);
+      if (!dbResult.success) throw new Error(dbResult.error);
+      const dbImages = dbResult.data || [];
 
-      if (deleteError) {
-        console.error('Error deleting existing project images:', deleteError);
+      // Compare arrays (by url, name, order_index)
+      const isSame =
+        dbImages.length === currentImages.length &&
+        dbImages.every((img, i) =>
+          img.url === currentImages[i].url &&
+          img.name === currentImages[i].name &&
+          (img.order_index || i + 1) === (currentImages[i].order_index || i + 1)
+        );
+
+      if (isSame) {
+        // No change, skip update
+        return true;
+      }
+
+      // First, delete all existing project images for this project
+      const deleteResult = await imageService.deleteProjectImages(projectId);
+      if (!deleteResult.success) {
+        console.error('Error deleting existing project images:', deleteResult.error);
         // Don't throw here, continue with adding new images
       }
 
       // Then, add all current images to the database in the exact order they appear
       if (currentImages.length > 0) {
-        // First, try with order_index column
-        let imageInserts = currentImages.map((image, index) => ({
-          project_id: projectId,
-          user_id: user.id,
-          url: image.url,
-          path: image.fullPath || image.url, // Use fullPath if available, otherwise url
-          name: image.name || image.original_name,
-          original_name: image.original_name || image.name,
-          bucket: 'images', // Default bucket for project images
-          order_index: index // Preserve the user's selected order
-        }));
+        for (let i = 0; i < currentImages.length; i++) {
+          const image = currentImages[i];
+          
+          const imageData = {
+            url: image.url,
+            path: image.fullPath || image.url, // Use fullPath if available, otherwise url
+            name: image.name || image.original_name,
+            original_name: image.original_name || image.name,
+            size: image.size,
+            type: image.type,
+            bucket: 'images', // Default bucket for project images
+            order_index: i + 1 // Preserve the user's selected order
+          };
 
-        const { error: insertError } = await supabase
-          .from('project_images')
-          .insert(imageInserts);
-
-        if (insertError) {
-          // If order_index column doesn't exist, try without it
-          if (insertError.message?.includes('order_index')) {
-            console.warn('⚠️ order_index column not found, inserting without ordering. Please run the SQL migration.');
-            
-            const fallbackInserts = currentImages.map(image => ({
-              project_id: projectId,
-              user_id: user.id,
-              url: image.url,
-              path: image.fullPath || image.url,
-              name: image.name || image.original_name,
-              original_name: image.original_name || image.name,
-              bucket: 'images'
-            }));
-
-            const { error: fallbackError } = await supabase
-              .from('project_images')
-              .insert(fallbackInserts);
-
-            if (fallbackError) {
-              console.error('Error inserting project images (fallback):', fallbackError);
-              throw new Error(`Failed to save project images: ${fallbackError.message}`);
-            }
-
-            console.log(`✅ Successfully updated ${currentImages.length} project images (without ordering)`);
-          } else {
-            console.error('Error inserting project images:', insertError);
-            throw new Error(`Failed to save project images: ${insertError.message}`);
+          const result = await imageService.saveImageMetadata(projectId, imageData);
+          if (!result.success) {
+            console.error('Error inserting project image:', result.error);
+            throw new Error(`Failed to save project images: ${result.error}`);
           }
-        } else {
-          console.log(`✅ Successfully updated ${currentImages.length} project images with ordering`);
         }
+
+        console.log(`✅ Successfully updated ${currentImages.length} project images`);
       }
 
       return true;

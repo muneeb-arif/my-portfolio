@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../config/supabase';
+import { apiService } from './apiService';
 import { getSiteUrl, clearConfigCache } from './portfolioConfigUtils';
 
 const AuthContext = createContext({
@@ -40,27 +40,37 @@ export const AuthProvider = ({ children }) => {
     }, 2000); // 2 second timeout
     
     try {
-      const authPromise = supabase.auth.getUser();
-      const result = await Promise.race([
-        authPromise,
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Auth timeout')), 1500)
-        )
-      ]);
+      // Check if we have a stored token
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        console.log('🔑 CENTRAL AUTH: No stored token found');
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // Set the token in apiService
+      apiService.setToken(token);
+      
+      // Verify the token by making a request to get current user
+      const response = await apiService.getCurrentUser();
       
       clearTimeout(timeoutId);
       
-      if (result.error) {
-        console.log('🔑 CENTRAL AUTH: No active session found:', result.error.message);
-        setUser(null);
-        setError(null);
+      if (response.success && response.user) {
+        console.log('🔑 CENTRAL AUTH: Active session found for user:', response.user.email || 'null');
+        setUser(response.user);
       } else {
-        console.log('🔑 CENTRAL AUTH: Active session found for user:', result.data?.user?.email || 'null');
-        setUser(result.data?.user || null);
+        console.log('🔑 CENTRAL AUTH: Invalid or expired token');
+        // Clear invalid token
+        apiService.clearToken();
+        setUser(null);
       }
     } catch (err) {
       clearTimeout(timeoutId);
       console.warn('🔑 CENTRAL AUTH: Auth initialization failed or timed out:', err.message);
+      // Clear any invalid token
+      apiService.clearToken();
       setUser(null);
       setError(null); // Don't show errors for timeouts
     } finally {
@@ -72,68 +82,38 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = useCallback(async () => {
     try {
       console.log('🔑 CENTRAL AUTH: Refreshing user data...');
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const response = await apiService.getCurrentUser();
       
-      if (error) {
+      if (response.success && response.user) {
+        setUser(response.user);
+      } else {
         console.log('🔑 CENTRAL AUTH: Session expired during refresh');
+        apiService.clearToken();
         setUser(null);
         setError(null);
-      } else {
-        setUser(user);
       }
     } catch (err) {
       console.error('🔑 CENTRAL AUTH: Error during refresh:', err);
+      apiService.clearToken();
       setError(err);
       setUser(null);
     }
   }, []);
 
-  // Helper function to get site URL from database settings
-  const getSiteUrlFromSettings = async () => {
-    return await getSiteUrl();
-  };
-
   // Sign up new user
   const signUp = useCallback(async (email, password, userData = {}) => {
     try {
-      const siteUrl = await getSiteUrlFromSettings();
+      console.log('🔑 CENTRAL AUTH: Signing up user:', email);
       
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData,
-          emailRedirectTo: `${siteUrl}/dashboard?verified=true`
-        }
-      });
+      const response = await apiService.register(email, password);
       
-      if (error) throw error;
-      
-      // Auto-configure portfolio for new user
-      if (data.user && data.user.id) {
-        try {
-          console.log('🔄 Auto-configuring portfolio for new user:', email);
-          const { error: configError } = await supabase
-            .from('portfolio_config')
-            .insert({
-              owner_email: email,
-              owner_user_id: data.user.id,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-          
-          if (configError) {
-            console.warn('⚠️ Failed to auto-configure portfolio:', configError.message);
-          } else {
-            console.log('✅ Portfolio automatically configured for new user');
-          }
-        } catch (configError) {
-          console.warn('⚠️ Error during portfolio auto-configuration:', configError);
-        }
+      if (response.success) {
+        console.log('✅ User registered successfully');
+        // Don't automatically sign in after registration
+        return { success: true, user: response.user };
+      } else {
+        throw new Error(response.error || 'Registration failed');
       }
-      
-      return { success: true, user: data.user };
     } catch (error) {
       console.error('🔑 CENTRAL AUTH: Sign up error:', error);
       return { success: false, error: error.message };
@@ -143,17 +123,18 @@ export const AuthProvider = ({ children }) => {
   // Sign in user
   const signIn = useCallback(async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      console.log('🔑 CENTRAL AUTH: Signing in user:', email);
       
-      if (error) throw error;
+      const response = await apiService.login(email, password);
       
-      // Update local state immediately
-      setUser(data.user);
-      
-      return { success: true, user: data.user };
+      if (response.success && response.token) {
+        // Token is automatically set in apiService.login()
+        console.log('✅ User signed in successfully');
+        setUser(response.user);
+        return { success: true, user: response.user };
+      } else {
+        throw new Error(response.error || 'Login failed');
+      }
     } catch (error) {
       console.error('🔑 CENTRAL AUTH: Sign in error:', error);
       return { success: false, error: error.message };
@@ -163,12 +144,13 @@ export const AuthProvider = ({ children }) => {
   // Sign out user
   const signOut = useCallback(async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      console.log('🔑 CENTRAL AUTH: Signing out user');
       
-      // Update local state immediately
+      // Clear token and user state
+      apiService.clearToken();
       setUser(null);
       
+      console.log('✅ User signed out successfully');
       return { success: true };
     } catch (error) {
       console.error('🔑 CENTRAL AUTH: Sign out error:', error);
@@ -179,13 +161,16 @@ export const AuthProvider = ({ children }) => {
   // Reset password
   const resetPassword = useCallback(async (email) => {
     try {
-      const siteUrl = await getSiteUrlFromSettings();
+      console.log('🔑 CENTRAL AUTH: Resetting password for:', email);
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${siteUrl}/dashboard?reset=true`
-      });
-      if (error) throw error;
-      return { success: true };
+      const response = await apiService.resetPassword(email);
+      
+      if (response.success) {
+        console.log('✅ Password reset email sent');
+        return { success: true };
+      } else {
+        throw new Error(response.error || 'Password reset failed');
+      }
     } catch (error) {
       console.error('🔑 CENTRAL AUTH: Reset password error:', error);
       return { success: false, error: error.message };
@@ -196,31 +181,25 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     console.log('🔑 CENTRAL AUTH: Setting up auth state listener...');
     
-    // Simple initialization without async complications
+    // Initialize authentication
     initializeAuth();
     
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('🔑 CENTRAL AUTH: Auth state changed:', event);
-        
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          setUser(session?.user || null);
-          setLoading(false);
-          console.log('🔑 CENTRAL AUTH: User signed in');
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setLoading(false);
-          console.log('🔑 CENTRAL AUTH: User signed out');
-        }
+    // Listen for storage changes (for cross-tab logout)
+    const handleStorageChange = (e) => {
+      if (e.key === 'api_token' && !e.newValue) {
+        console.log('🔑 CENTRAL AUTH: Token cleared in another tab');
+        setUser(null);
+        setLoading(false);
       }
-    );
-
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       console.log('🔑 CENTRAL AUTH: Cleaning up auth listener...');
-      subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, []); // Empty dependency array to run only once
+  }, [initializeAuth]);
 
   const value = {
     user,
@@ -238,6 +217,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export default AuthContext; 
+}; 

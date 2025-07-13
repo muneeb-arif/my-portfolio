@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../config/supabase';
+import { imageService } from '../../services/imageService';
 import { getCurrentUser } from '../../services/authUtils';
 import './MediaSelectionModal.css';
 
@@ -26,92 +26,29 @@ const MediaSelectionModal = ({ isOpen, onClose, onSelect, allowMultiple = false 
         throw new Error('User not authenticated');
       }
 
-      const allImageFiles = [];
+      // Use imageService to list user images
+      const result = await imageService.listUserImages();
       
-      // 1. Fetch images from user's specific folder (where project images are stored)
-      try {
-        const { data: userFiles, error: userError } = await supabase.storage
-          .from('images')
-          .list(user.id, {
-            limit: 1000,
-            sortBy: { column: 'created_at', order: 'desc' }
-          });
-
-        if (!userError && userFiles) {
-          // Add user folder prefix to file names and mark as user files
-          const userImageFiles = userFiles
-            .filter(file => 
-              file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
-              !file.name.startsWith('.')
-            )
-            .map(file => ({
-              ...file,
-              fullPath: `${user.id}/${file.name}`,
-              isUserFile: true
-            }));
-          
-          allImageFiles.push(...userImageFiles);
-        }
-      } catch (userFolderError) {
-        console.log('No user folder found or error accessing it:', userFolderError.message);
-      }
-      
-      // 2. Fetch images from root folder (legacy images)
-      try {
-        const { data: rootFiles, error: rootError } = await supabase.storage
-          .from('images')
-          .list('', {
-            limit: 1000,
-            sortBy: { column: 'created_at', order: 'desc' }
-          });
-
-        if (!rootError && rootFiles) {
-          const rootImageFiles = rootFiles
-            .filter(file => 
-              file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
-              !file.name.startsWith('.') &&
-              file.name !== user.id // Exclude the user folder itself
-            )
-            .map(file => ({
-              ...file,
-              fullPath: file.name,
-              isUserFile: false
-            }));
-          
-          allImageFiles.push(...rootImageFiles);
-        }
-      } catch (rootFolderError) {
-        console.log('Error accessing root folder:', rootFolderError.message);
-      }
-
-      if (allImageFiles.length === 0) {
-        setMediaItems([]);
-        return;
-      }
-
-      // Generate public URLs and create image objects
-      const imagesWithUrls = allImageFiles.map(file => {
-        const { data: { publicUrl } } = supabase.storage
-          .from('images')
-          .getPublicUrl(file.fullPath);
-        
-        return {
+      if (result.success) {
+        const mediaItems = result.data.map(file => ({
           id: file.id || file.name,
           name: file.name,
           fullPath: file.fullPath,
-          url: publicUrl,
+          url: file.url,
           original_name: file.name,
           created_at: file.created_at,
           size: file.metadata?.size || 0,
-          isUserFile: file.isUserFile,
+          isUserFile: true,
           isFromMedia: true
-        };
-      });
+        }));
 
-      // Sort by creation date (newest first)
-      imagesWithUrls.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-      setMediaItems(imagesWithUrls);
+        // Sort by creation date (newest first)
+        mediaItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        setMediaItems(mediaItems);
+      } else {
+        setError(result.error || 'Failed to load media items');
+      }
     } catch (error) {
       console.error('Error loading media items:', error);
       setError(error.message);

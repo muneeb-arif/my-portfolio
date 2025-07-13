@@ -77,6 +77,17 @@ class ApiService {
     return response;
   }
 
+  async getCurrentUser() {
+    return await this.makeRequest('/auth/me');
+  }
+
+  async resetPassword(email) {
+    return await this.makeRequest('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+  }
+
   async updatePassword(email, newPassword) {
     return await this.makeRequest('/auth/update-password', {
       method: 'POST',
