@@ -1,3 +1,6 @@
+// FORCE API SERVICE USAGE - Load this first before anything else
+import './initApiService';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';

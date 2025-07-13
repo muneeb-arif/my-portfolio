@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, FileText, CheckCircle, Clock, AlertCircle, Star, MessageSquare } from 'lucide-react';
-import { getContactQueries, updateQueryStatus } from '../../services/supabaseService';
+import { publicPortfolioService } from '../../services/serviceAdapter';
 import './QueriesManager.css';
 
 const QueriesManager = () => {
@@ -18,7 +18,7 @@ const QueriesManager = () => {
   const fetchQueries = async () => {
     try {
       setLoading(true);
-      const result = await getContactQueries();
+      const result = await publicPortfolioService.getContactQueries();
       
       if (result.success) {
         setQueries(result.data);
@@ -35,7 +35,7 @@ const QueriesManager = () => {
 
   const handleStatusUpdate = async (queryId, newStatus) => {
     try {
-      const result = await updateQueryStatus(queryId, newStatus);
+      const result = await publicPortfolioService.updateQueryStatus(queryId, newStatus);
       
       if (result.success) {
         // Update the query in the local state

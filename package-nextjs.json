@@ -34,6 +34,7 @@
     "mysql2": "^3.14.2",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
+    "formidable": "^3.5.1",
     "lucide-react": "^0.513.0",
     "sweetalert2": "^11.22.0",
     "@emailjs/browser": "^4.4.1",

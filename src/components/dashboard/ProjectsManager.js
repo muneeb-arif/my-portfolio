@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { projectService, imageService, metaService } from '../../services/supabaseService';
+import { projectService, metaService } from '../../services/serviceAdapter';
+import { imageService } from '../../services/supabaseService'; // Keep Supabase for image storage
 import { supabase } from '../../config/supabase';
 import { getCurrentUser } from '../../services/authUtils';
 import MediaSelectionModal from './MediaSelectionModal';

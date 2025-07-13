@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { projectService } from '../../services/supabaseService';
+import { projectService } from '../../services/serviceAdapter';
 import { syncService } from '../../services/syncService';
 import { supabase } from '../../config/supabase';
 import { getCurrentUser } from '../../services/authUtils';

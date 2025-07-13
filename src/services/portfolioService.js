@@ -1,8 +1,11 @@
-import { supabase } from '../config/supabase';
+import { publicPortfolioService } from './serviceAdapter';
 import { fallbackDataService } from './fallbackDataService';
-import { fallbackUtils } from '../utils/fallbackUtils';
-import { publicPortfolioService } from './supabaseService';
 import { portfolioConfig } from '../config/portfolio';
+
+// Force service adapter configuration loading
+import '../config/apiConfig';
+
+console.log('📖 PortfolioService initialized with ServiceAdapter');
 
 // ================ PUBLIC PORTFOLIO OPERATIONS ================
 // These functions fetch data for the public portfolio (no authentication required)
@@ -11,6 +14,7 @@ export const portfolioService = {
   // Get all published projects for public display
   async getPublishedProjects() {
     try {
+      console.log('🔍 Fetching published projects via Service Adapter...');
       const data = await publicPortfolioService.getPublishedProjects();
       
       // Transform data to match existing frontend format
@@ -34,8 +38,8 @@ export const portfolioService = {
         }
       })) || [];
     } catch (error) {
-      // console.error('Error fetching published projects:', error);
-      // Return fallback data when Supabase fails
+      console.error('Error fetching published projects via API:', error);
+      // Return fallback data when API fails
       return this.transformFallbackProjects(fallbackDataService.getProjects());
     }
   },
@@ -50,7 +54,7 @@ export const portfolioService = {
       const allProjects = await this.getPublishedProjects();
       return allProjects.filter(project => project.category === category);
     } catch (error) {
-      // console.error('Error fetching projects by category:', error);
+      console.error('Error fetching projects by category:', error);
       return [];
     }
   },
@@ -58,13 +62,14 @@ export const portfolioService = {
   // Get available categories
   async getAvailableCategories() {
     try {
+      console.log('🔍 Fetching categories via Service Adapter...');
       const categories = await publicPortfolioService.getCategories();
       const categoryNames = categories.map(cat => cat.name);
       
       // Always include 'All' as the first option
       return ['All', ...categoryNames];
     } catch (error) {
-      // console.error('Error fetching categories:', error);
+      console.error('Error fetching categories via API:', error);
       // Return fallback categories
       const fallbackCategories = fallbackDataService.getCategories();
       return ['All', ...fallbackCategories];
@@ -74,9 +79,10 @@ export const portfolioService = {
   // Get domains and technologies for public display
   async getDomainsTechnologies() {
     try {
+      console.log('🔍 Fetching domains/technologies via Service Adapter...');
       return await publicPortfolioService.getDomainsTechnologies();
     } catch (error) {
-      // console.error('Error fetching domains/technologies:', error);
+      console.error('Error fetching domains/technologies via API:', error);
       return fallbackDataService.getTechnologies();
     }
   },
@@ -84,9 +90,10 @@ export const portfolioService = {
   // Get niches for public display
   async getNiches() {
     try {
+      console.log('🔍 Fetching niches via Service Adapter...');
       return await publicPortfolioService.getNiches();
     } catch (error) {
-      // console.error('Error fetching niches:', error);
+      console.error('Error fetching niches via API:', error);
       return fallbackDataService.getNiches();
     }
   },
@@ -94,6 +101,7 @@ export const portfolioService = {
   // Get public settings
   async getPublicSettings() {
     try {
+      console.log('🔍 Fetching public settings via Service Adapter...');
       const settings = await publicPortfolioService.getPublicSettings();
       
       // Merge with default settings
@@ -102,7 +110,7 @@ export const portfolioService = {
         ...settings
       };
     } catch (error) {
-      // console.error('Error fetching public settings:', error);
+      console.error('Error fetching public settings via API:', error);
       return portfolioConfig.defaultSettings;
     }
   },

@@ -128,8 +128,8 @@ const Login = () => {
   const fillDemoCredentials = () => {
     setFormData({
       email: 'demo@example.com',
-      password: 'demo123',
-      confirmPassword: 'demo123',
+      password: '11223344',
+      confirmPassword: '11223344',
       fullName: 'Demo User'
     });
     setError('');

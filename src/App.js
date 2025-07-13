@@ -1,3 +1,6 @@
+// FORCE API SERVICE USAGE - Import this first
+import './config/apiConfig';
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';

@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { authService } from './serviceAdapter';
 import { clearConfigCache } from './portfolioConfigUtils';
 
 // Simple auth utilities with short-term caching to prevent repeated API calls
@@ -33,14 +33,14 @@ export const getCurrentUser = async () => {
   console.log('🔑 AUTH UTILS: Making fresh auth request...');
   authCache.promise = (async () => {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const user = await authService.getCurrentUser();
       
-      if (error) {
-        console.log('🔑 AUTH UTILS: No active session');
-        authCache.user = null;
-      } else {
+      if (user) {
         console.log('🔑 AUTH UTILS: User found:', user?.email || 'null');
         authCache.user = user;
+      } else {
+        console.log('🔑 AUTH UTILS: No active session');
+        authCache.user = null;
       }
       
       authCache.timestamp = now;
@@ -58,34 +58,30 @@ export const getCurrentUser = async () => {
   return await authCache.promise;
 };
 
-// Get user ID (convenience function)
-export const getCurrentUserId = async () => {
-  const user = await getCurrentUser();
-  return user?.id || null;
-};
-
-// Check if user is authenticated
-export const isAuthenticated = async () => {
-  const user = await getCurrentUser();
-  return !!user;
-};
-
-// Clear cache (called by AuthContext when auth state changes)
+// Clear the auth cache (useful when auth state changes)
 export const clearAuthCache = () => {
-  console.log('🔑 AUTH UTILS: Clearing cache...');
+  console.log('🔑 AUTH UTILS: Clearing auth cache');
   authCache = {
     user: null,
     timestamp: 0,
     promise: null
   };
-  
-  // Also clear portfolio config cache since auth state affects it
-  clearConfigCache();
 };
 
-export default {
-  getCurrentUser,
-  getCurrentUserId,
-  isAuthenticated,
-  clearAuthCache
+// Helper to check if user is authenticated
+export const isAuthenticated = async () => {
+  const user = await getCurrentUser();
+  return !!user;
+};
+
+// Helper to get user email
+export const getUserEmail = async () => {
+  const user = await getCurrentUser();
+  return user?.email || null;
+};
+
+// Helper to get user ID
+export const getUserId = async () => {
+  const user = await getCurrentUser();
+  return user?.id || null;
 }; 

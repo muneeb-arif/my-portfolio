@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { metaService } from '../../services/supabaseService';
+import { metaService } from '../../services/serviceAdapter';
 
 const CategoriesManager = () => {
   const [categories, setCategories] = useState([]);

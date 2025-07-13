@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { settingsService } from './supabaseService';
+import { settingsService } from './serviceAdapter';
 import portfolioService from './portfolioService';
 import { portfolioConfig } from '../config/portfolio';
 import { loadThemeFromPublicSettings, applyTheme } from '../utils/themeUtils';
 import { updateManifest } from '../utils/manifestUtils';
+
+// Force service adapter configuration loading
+import '../config/apiConfig';
 
 const SettingsContext = createContext();
 

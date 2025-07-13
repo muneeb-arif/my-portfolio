@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Loader2, ArrowUp, ArrowDown, Upload, Image as ImageIcon } from 'lucide-react';
-import { nicheService, imageService } from '../../services/supabaseService';
+import { nicheService } from '../../services/serviceAdapter';
+import { imageService } from '../../services/supabaseService'; // Keep Supabase for image storage
 import { BUCKETS } from '../../config/supabase';
 import './NicheManager.css';
 

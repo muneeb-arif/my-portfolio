@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Star, GripVertical, Loader2 } from 'lucide-react';
-import { domainsTechnologiesService } from '../../services/supabaseService';
+import { domainsTechnologiesService } from '../../services/serviceAdapter';
 import './DomainsTechnologiesManager.css';
 
 const DomainsTechnologiesManager = () => {
