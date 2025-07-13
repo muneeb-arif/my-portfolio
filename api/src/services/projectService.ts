@@ -96,7 +96,7 @@ export class ProjectService {
   // Create new project
   static async createProject(projectData: CreateProjectRequest, userId: string): Promise<DbResult<Project>> {
     const projectId = crypto.randomUUID();
-    const now = new Date().toISOString();
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     
     const query = `
       INSERT INTO projects (
@@ -131,7 +131,7 @@ export class ProjectService {
 
   // Update project
   static async updateProject(projectData: UpdateProjectRequest, userId: string): Promise<DbResult<Project>> {
-    const now = new Date().toISOString();
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     
     const query = `
       UPDATE projects SET

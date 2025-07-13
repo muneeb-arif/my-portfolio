@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { projectService } from '../../services/supabaseService';
+import { projectsService } from '../../services/projectsService';
 import { syncService } from '../../services/syncService';
 import { supabase } from '../../config/supabase';
 import { getCurrentUser } from '../../services/authUtils';
@@ -92,7 +92,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
 
   const loadDashboardData = async () => {
     try {
-      const projectsData = await projectService.getProjects();
+      const projectsData = await projectsService.getProjects();
       setProjects(projectsData);
       
       // Calculate stats

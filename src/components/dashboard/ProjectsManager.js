@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { projectService, imageService, metaService } from '../../services/supabaseService';
+import { projectsService } from '../../services/projectsService';
+import { categoriesService } from '../../services/categoriesService';
+import { imageService } from '../../services/supabaseService';
 import { supabase } from '../../config/supabase';
 import { getCurrentUser } from '../../services/authUtils';
 import MediaSelectionModal from './MediaSelectionModal';
@@ -49,11 +51,9 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
     }
   }, [externalEditingProject, onEditingProjectChange]);
 
-
-
   const loadCategories = async () => {
     try {
-      const categoriesData = await metaService.getCategories();
+      const categoriesData = await categoriesService.getCategories();
       // Extract just the names for the dropdown
       const categoryNames = categoriesData.map(cat => cat.name || cat);
       if (categoryNames.length > 0) {
@@ -382,152 +382,69 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       return;
     }
 
-    setLoading(true);
-    
     try {
+      setLoading(true);
       let projectData;
-      
-      if (editingProject) {
-        // Update existing project
-        projectData = await projectService.updateProject(editingProject.id, formData);
-      } else {
-        // Create new project
-        projectData = await projectService.createProject(formData);
-      }
 
-      // Process images in the exact order they appear in selectedImages array
-      const finalImages = [];
-      let successCount = 0;
-      let failureCount = 0;
-      const failedImages = [];
-      
-      if (selectedImages.length > 0) {
+      // Upload images first if there are new ones
+      if (imageFiles.length > 0) {
         setUploadingImages(true);
+        const uploadedImages = [];
         
-        // Process each image in selectedImages array to maintain order
-        for (let index = 0; index < selectedImages.length; index++) {
-          const image = selectedImages[index];
+        for (let i = 0; i < imageFiles.length; i++) {
+          const file = imageFiles[i];
+          const progressIndex = imageUploadProgress.findIndex(p => p.fileName === file.name);
+          
+          if (progressIndex !== -1) {
+            updateImageProgress(progressIndex, { status: 'uploading', progress: 0 });
+          }
           
           try {
-            if (image.isNew && image.file) {
-              // This is a new file that needs to be uploaded
-              const fileIndex = imageUploadProgress.find(p => p.fileName === image.file.name)?.fileIndex || index;
-              
-              // Update status to uploading
-              updateImageProgress(fileIndex, { 
-                status: 'uploading', 
-                progress: 0,
-                error: null 
-              });
-              
-              // Simulate progressive upload with more realistic increments
-              updateImageProgress(fileIndex, { progress: 20 });
-              await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for visual effect
-              
-              updateImageProgress(fileIndex, { progress: 50 });
-              await new Promise(resolve => setTimeout(resolve, 100));
-              
-              updateImageProgress(fileIndex, { progress: 80 });
-              
-              const result = await imageService.uploadImage(image.file);
-              
-              // Add uploaded image with preserved order
-              finalImages.push({
-                url: result.url,
-                name: result.name,
-                original_name: result.originalName,
-                fullPath: result.path,
-                order_index: index
-              });
-              
-              // Update progress to show completion
-              updateImageProgress(fileIndex, { 
-                status: 'completed', 
-                progress: 100,
-                error: null 
-              });
-              
-              successCount++;
-            } else {
-              // This is either an existing image or one from media library
-              finalImages.push({
-                url: image.url,
-                name: image.name || image.original_name,
-                original_name: image.original_name || image.name,
-                fullPath: image.fullPath || image.url,
-                order_index: index
-              });
+            const imageData = await imageService.uploadProjectImage(file);
+            uploadedImages.push(imageData);
+            
+            if (progressIndex !== -1) {
+              updateImageProgress(progressIndex, { status: 'completed', progress: 100 });
             }
           } catch (error) {
-            console.error(`❌ Failed to process image at position ${index}:`, error);
-            
-            // Capture detailed error information
-            let errorMessage = 'Unknown error occurred';
-            if (error.message) {
-              errorMessage = error.message;
-            } else if (error.error) {
-              errorMessage = error.error.message || error.error;
-            } else if (typeof error === 'string') {
-              errorMessage = error;
+            console.error('Error uploading image:', error);
+            if (progressIndex !== -1) {
+              updateImageProgress(progressIndex, { status: 'failed', error: error.message });
             }
-            
-            if (image.isNew && image.file) {
-              const fileIndex = imageUploadProgress.find(p => p.fileName === image.file.name)?.fileIndex || index;
-              
-              // Update progress to show failure with detailed error
-              updateImageProgress(fileIndex, { 
-                status: 'failed', 
-                progress: 0,
-                error: errorMessage 
-              });
-              
-              failureCount++;
-              failedImages.push({
-                fileName: image.file.name,
-                error: errorMessage
-              });
-            }
+            throw error;
           }
         }
         
-        // Show detailed results for failed uploads
-        if (failureCount > 0) {
-          let alertMessage = `Warning: ${failureCount} out of ${imageFiles.length} images failed to upload:\n\n`;
-          failedImages.forEach(failedImage => {
-            alertMessage += `• ${failedImage.fileName}: ${failedImage.error}\n`;
-          });
-          alertMessage += '\nPlease check the file sizes, formats, and try again.';
-          alert(alertMessage);
-        }
-        
-        if (successCount > 0) {
-          console.log(`✅ Successfully uploaded ${successCount} images`);
-        }
-        
         setUploadingImages(false);
+        
+        // Add uploaded images to selected images
+        setSelectedImages(prev => [...prev, ...uploadedImages]);
       }
 
-      // Update project images in database preserving the exact order
-      try {
-        await updateProjectImages(projectData.id, finalImages);
-        console.log(`✅ Successfully managed ${finalImages.length} project images in user-selected order`);
-      } catch (error) {
-        console.error('❌ Error managing project images:', error);
-        alert(`Warning: Project saved but image management failed: ${error.message}`);
+      // Create or update project
+      if (editingProject) {
+        projectData = await projectsService.updateProject(editingProject.id, formData);
+      } else {
+        projectData = await projectsService.createProject(formData);
+      }
+
+      // Update project images in database
+      if (projectData && projectData.id) {
+        await updateProjectImages(projectData.id, selectedImages);
       }
 
       // Refresh projects list
-      await onProjectsChange();
-      
-      // Close form
-      setShowForm(false);
+      if (onProjectsChange) {
+        onProjectsChange();
+      }
+
+      // Reset form
       resetForm();
-      
-      alert(`Project ${editingProject ? 'updated' : 'created'} successfully!`);
+      setShowForm(false);
       
     } catch (error) {
       console.error('Error saving project:', error);
-      alert(`Error ${editingProject ? 'updating' : 'creating'} project: ${error.message}`);
+      alert('Error saving project: ' + error.message);
     } finally {
       setLoading(false);
       setUploadingImages(false);
@@ -535,17 +452,23 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
   };
 
   const handleDeleteProject = async (projectId) => {
-    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete this project?')) {
       return;
     }
 
     try {
-      await projectService.deleteProject(projectId);
-      await onProjectsChange();
-      alert('Project deleted successfully!');
+      setLoading(true);
+      await projectsService.deleteProject(projectId);
+      
+      // Refresh projects list
+      if (onProjectsChange) {
+        onProjectsChange();
+      }
     } catch (error) {
-      // console.error('Error deleting project:', error);
+      console.error('Error deleting project:', error);
       alert('Error deleting project: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -555,10 +478,14 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
 
   const handleStatusChange = async (projectId, newStatus) => {
     try {
-      await projectService.updateProject(projectId, { status: newStatus });
-      await onProjectsChange();
+      await projectsService.updateProject(projectId, { status: newStatus });
+      
+      // Refresh projects list
+      if (onProjectsChange) {
+        onProjectsChange();
+      }
     } catch (error) {
-      // console.error('Error updating project status:', error);
+      console.error('Error updating project status:', error);
       alert('Error updating project status: ' + error.message);
     }
   };

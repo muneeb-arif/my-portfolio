@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Loader2, ArrowUp, ArrowDown, Upload, Image as ImageIcon } from 'lucide-react';
-import { nicheService, imageService } from '../../services/supabaseService';
+import { nichesService } from '../../services/nichesService';
+import { imageService } from '../../services/supabaseService';
 import { BUCKETS } from '../../config/supabase';
 import './NicheManager.css';
 
@@ -42,7 +43,7 @@ const NicheManager = () => {
   const loadNiches = async () => {
     try {
       setLoading(true);
-      const data = await nicheService.getNiches();
+      const data = await nichesService.getNiches();
       setNiches(data);
     } catch (error) {
       // console.error('Error loading niches:', error);
@@ -76,65 +77,58 @@ const NicheManager = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.title.trim()) {
+      alert('Please enter a title');
+      return;
+    }
+
     try {
       setSavingNiche(true);
       
-      // Convert tools string to comma-separated format
-      const processedData = {
-        ...formData,
-        tools: formData.tools.trim()
-      };
-
       if (editingNiche) {
-        const updatedNiche = await nicheService.updateNiche(editingNiche.id, processedData);
-        setNiches(niches.map(niche => 
-          niche.id === editingNiche.id ? updatedNiche : niche
-        ));
+        await nichesService.updateNiche(editingNiche.id, formData);
       } else {
-        const newNiche = await nicheService.createNiche(processedData);
-        setNiches([...niches, newNiche]);
+        await nichesService.createNiche(formData);
       }
 
+      await loadNiches();
       setShowForm(false);
-      setEditingNiche(null);
-      setFormData({
-        image: 'default.jpeg',
-        title: '',
-        overview: '',
-        tools: '',
-        key_features: '',
-        sort_order: 1,
-        ai_driven: false
-      });
+      resetForm();
+      
     } catch (error) {
-      // console.error('Error saving niche:', error);
+      console.error('Error saving niche:', error);
+      alert('Error saving niche: ' + error.message);
     } finally {
       setSavingNiche(false);
     }
   };
 
-  const handleEdit = (niche) => {
+  const handleEditNiche = (niche) => {
     setEditingNiche(niche);
     setFormData({
-      image: niche.image,
-      title: niche.title,
+      image: niche.image || 'default.jpeg',
+      title: niche.title || '',
       overview: niche.overview || '',
       tools: niche.tools || '',
       key_features: niche.key_features || '',
-      sort_order: niche.sort_order,
-      ai_driven: niche.ai_driven
+      sort_order: niche.sort_order || 1,
+      ai_driven: niche.ai_driven || false
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (niche) => {
-    if (window.confirm(`Are you sure you want to delete "${niche.title}"?`)) {
-      try {
-        await nicheService.deleteNiche(niche.id);
-        setNiches(niches.filter(n => n.id !== niche.id));
-      } catch (error) {
-      // console.error('Error deleting niche:', error);
-      }
+  const handleDeleteNiche = async (nicheId) => {
+    if (!window.confirm('Are you sure you want to delete this niche?')) {
+      return;
+    }
+
+    try {
+      await nichesService.deleteNiche(nicheId);
+      await loadNiches();
+    } catch (error) {
+      console.error('Error deleting niche:', error);
+      alert('Error deleting niche: ' + error.message);
     }
   };
 
@@ -161,13 +155,34 @@ const NicheManager = () => {
     try {
       await Promise.all(
         updatedNiches.map(niche => 
-          nicheService.updateNiche(niche.id, { sort_order: niche.sort_order })
+          nichesService.updateNiche(niche.id, { sort_order: niche.sort_order })
         )
       );
     } catch (error) {
       // console.error('Error reordering niches:', error);
       loadNiches(); // Reload on error
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      image: 'default.jpeg',
+      title: '',
+      overview: '',
+      tools: '',
+      key_features: '',
+      sort_order: 1,
+      ai_driven: false
+    });
+    setEditingNiche(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
   if (loading) {
@@ -440,14 +455,14 @@ const NicheManager = () => {
                     </button>
                     <button
                       className="edit-btn"
-                      onClick={() => handleEdit(niche)}
+                      onClick={() => handleEditNiche(niche)}
                       title="Edit"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       className="delete-btn"
-                      onClick={() => handleDelete(niche)}
+                      onClick={() => handleDeleteNiche(niche.id)}
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />

@@ -91,21 +91,24 @@ export const getSiteUrl = async () => {
       return window.location.origin;
     }
     
-    // Get site_url from settings
-    const { data: settingsData, error: settingsError } = await supabase
-      .from('settings')
-      .select('value')
-      .eq('user_id', portfolioConfig.owner_user_id)
-      .eq('key', 'site_url')
-      .single();
+    // Get site_url from API settings
+    const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+    const response = await fetch(`${API_BASE}/settings`);
+    const data = await response.json();
     
-    if (settingsError || !settingsData?.value) {
+    if (!data.success || !data.data) {
+      console.log('🔧 PORTFOLIO CONFIG: No settings from API, using fallback');
+      return window.location.origin;
+    }
+    
+    const siteUrl = data.data.site_url;
+    if (!siteUrl) {
       console.log('🔧 PORTFOLIO CONFIG: No site_url setting, using fallback');
       return window.location.origin;
     }
     
-    console.log('🔧 PORTFOLIO CONFIG: Using site_url from settings:', settingsData.value);
-    return settingsData.value;
+    console.log('🔧 PORTFOLIO CONFIG: Using site_url from API settings:', siteUrl);
+    return siteUrl;
     
   } catch (error) {
     console.warn('🔧 PORTFOLIO CONFIG: Error getting site URL:', error);

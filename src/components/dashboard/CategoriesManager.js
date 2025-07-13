@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { metaService } from '../../services/supabaseService';
+import { categoriesService } from '../../services/categoriesService';
 
 const CategoriesManager = () => {
   const [categories, setCategories] = useState([]);
@@ -33,7 +33,7 @@ const CategoriesManager = () => {
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const data = await metaService.getCategories();
+      const data = await categoriesService.getCategories();
       setCategories(data);
     } catch (error) {
       // console.error('Error loading categories:', error);
@@ -92,10 +92,10 @@ const CategoriesManager = () => {
     try {
       if (editingCategory) {
         // Update existing category
-        await metaService.updateCategory(editingCategory.id, formData);
+        await categoriesService.updateCategory(editingCategory.id, formData);
       } else {
         // Create new category
-        await metaService.addCategory(formData);
+        await categoriesService.createCategory(formData);
       }
 
       // Refresh categories list
@@ -126,7 +126,7 @@ const CategoriesManager = () => {
 
     try {
       setLoading(true);
-      await metaService.deleteCategory(categoryId);
+      await categoriesService.deleteCategory(categoryId);
       await loadCategories();
       alert('Category deleted successfully!');
     } catch (error) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Star, GripVertical, Loader2 } from 'lucide-react';
-import { domainsTechnologiesService } from '../../services/supabaseService';
+import { technologiesService } from '../../services/technologiesService';
 import './DomainsTechnologiesManager.css';
 
 const DomainsTechnologiesManager = () => {
@@ -39,13 +39,12 @@ const DomainsTechnologiesManager = () => {
   const loadItems = async () => {
     try {
       setLoading(true);
-      const data = await domainsTechnologiesService.getDomainsTechnologies();
-      // console.log('Loaded items:', data);
-      // console.log('Items with skills:', data.filter(item => item.tech_skills && item.tech_skills.length > 0));
+      setError('');
+      const data = await technologiesService.getTechnologies();
       setItems(data);
-    } catch (err) {
-      setError('Failed to load items');
-      // console.error('Error loading items:', err);
+    } catch (error) {
+      console.error('Error loading items:', error);
+      setError('Failed to load items: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -53,67 +52,73 @@ const DomainsTechnologiesManager = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.title.trim()) {
+      alert('Please enter a title');
+      return;
+    }
+
     try {
       setSavingItem(true);
-      if (editingItem) {
-        const updatedItem = await domainsTechnologiesService.updateDomainTechnology(editingItem.id, formData);
-        setItems(prev => prev.map(item => item.id === editingItem.id ? updatedItem : item));
-      } else {
-        const newItem = await domainsTechnologiesService.createDomainTechnology(formData);
-        setItems(prev => [...prev, newItem]);
-      }
       
+      if (editingItem) {
+        await technologiesService.updateTechnology(editingItem.id, formData);
+      } else {
+        await technologiesService.createTechnology(formData);
+      }
+
+      await loadItems();
       setShowForm(false);
-      setEditingItem(null);
-      setFormData({ type: 'technology', title: '', icon: '', sort_order: 1 });
-    } catch (err) {
-      setError('Failed to save item');
-      // console.error('Error saving item:', err);
+      resetForm();
+      
+    } catch (error) {
+      console.error('Error saving item:', error);
+      alert('Error saving item: ' + error.message);
     } finally {
       setSavingItem(false);
     }
   };
 
-  const handleEdit = (item) => {
+  const handleEditItem = (item) => {
     setEditingItem(item);
     setFormData({
-      type: item.type,
-      title: item.title,
+      type: item.type || 'technology',
+      title: item.title || '',
       icon: item.icon || '',
       sort_order: item.sort_order || 1
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      try {
-        setDeletingItems(prev => new Set(prev).add(id));
-        await domainsTechnologiesService.deleteDomainTechnology(id);
-        setItems(prev => prev.filter(item => item.id !== id));
-      } catch (err) {
-        setError('Failed to delete item');
-      // console.error('Error deleting item:', err);
-      } finally {
-        setDeletingItems(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
-      }
+  const handleDeleteItem = async (itemId) => {
+    if (!window.confirm('Are you sure you want to delete this item?')) {
+      return;
+    }
+
+    try {
+      setDeletingItems(prev => new Set([...prev, itemId]));
+      await technologiesService.deleteTechnology(itemId);
+      await loadItems();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Error deleting item: ' + error.message);
+    } finally {
+      setDeletingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
     }
   };
 
-  const handleReorder = async (itemId, newSortOrder) => {
+  const handleReorderItems = async (itemId, newSortOrder) => {
     try {
-      setReorderingItems(prev => new Set(prev).add(itemId));
-      await domainsTechnologiesService.updateDomainTechnology(itemId, { sort_order: newSortOrder });
-      // Update local state instead of reloading
-      const updatedItem = await domainsTechnologiesService.getDomainsTechnologies();
-      setItems(updatedItem);
-    } catch (err) {
-      setError('Failed to reorder item');
-      // console.error('Error reordering item:', err);
+      setReorderingItems(prev => new Set([...prev, itemId]));
+      await technologiesService.updateTechnology(itemId, { sort_order: newSortOrder });
+      await loadItems();
+    } catch (error) {
+      console.error('Error reordering items:', error);
+      alert('Error reordering items: ' + error.message);
     } finally {
       setReorderingItems(prev => {
         const newSet = new Set(prev);
@@ -134,14 +139,14 @@ const DomainsTechnologiesManager = () => {
       const prevItem = items[currentIndex - 1];
       newSortOrder = prevItem.sort_order;
       // Update the previous item's sort order
-      await domainsTechnologiesService.updateDomainTechnology(prevItem.id, { 
+      await technologiesService.updateTechnology(prevItem.id, { 
         sort_order: currentItem.sort_order 
       });
     } else if (direction === 'down' && currentIndex < items.length - 1) {
       const nextItem = items[currentIndex + 1];
       newSortOrder = nextItem.sort_order;
       // Update the next item's sort order
-      await domainsTechnologiesService.updateDomainTechnology(nextItem.id, { 
+      await technologiesService.updateTechnology(nextItem.id, { 
         sort_order: currentItem.sort_order 
       });
     } else {
@@ -149,13 +154,13 @@ const DomainsTechnologiesManager = () => {
     }
 
     // Update the current item's sort order
-    await handleReorder(itemId, newSortOrder);
+    await handleReorderItems(itemId, newSortOrder);
   };
 
   const handleAddSkill = async (techId, skillData) => {
     try {
       setAddingSkills(prev => new Set(prev).add(techId));
-      const newSkill = await domainsTechnologiesService.addSkill(techId, skillData);
+      const newSkill = await technologiesService.addSkill(techId, skillData);
       
       // Update local state
       setItems(prev => prev.map(item => {
@@ -182,7 +187,7 @@ const DomainsTechnologiesManager = () => {
   const handleUpdateSkill = async (skillId, updates) => {
     try {
       setUpdatingSkills(prev => new Set(prev).add(skillId));
-      const updatedSkill = await domainsTechnologiesService.updateSkill(skillId, updates);
+      const updatedSkill = await technologiesService.updateSkill(skillId, updates);
       
       // Update local state
       setItems(prev => prev.map(item => ({
@@ -207,7 +212,7 @@ const DomainsTechnologiesManager = () => {
     if (window.confirm('Are you sure you want to delete this skill?')) {
       try {
         setDeletingSkills(prev => new Set(prev).add(skillId));
-        await domainsTechnologiesService.deleteSkill(skillId);
+        await technologiesService.deleteSkill(skillId);
         
         // Update local state
         setItems(prev => prev.map(item => ({
@@ -238,6 +243,24 @@ const DomainsTechnologiesManager = () => {
       );
     }
     return <div className="flex">{stars}</div>;
+  };
+
+  const resetForm = () => {
+    setFormData({
+      type: 'technology',
+      title: '',
+      icon: '',
+      sort_order: 1
+    });
+    setEditingItem(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   if (loading) {
@@ -403,14 +426,14 @@ const DomainsTechnologiesManager = () => {
                 </div>
                 <button
                   className="edit-btn"
-                  onClick={() => handleEdit(item)}
+                  onClick={() => handleEditItem(item)}
                   title="Edit"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
                   className="delete-btn"
-                  onClick={() => handleDelete(item.id)}
+                  onClick={() => handleDeleteItem(item.id)}
                   title="Delete"
                 >
                   <Trash2 className="w-4 h-4" />

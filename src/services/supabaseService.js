@@ -1607,56 +1607,26 @@ export const publicPortfolioService = {
     return await this._withCache('_settingsCache', async () => {
       try {
         console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
-        console.log('  - process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL:', process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL);
         
-        // Initialize only once
-        await this.initialize();
+        // Use API instead of Supabase for settings
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
         
-        console.log('🔍 publicPortfolioService.getPublicSettings: Getting portfolio config...');
+        console.log('🔍 publicPortfolioService.getPublicSettings: Fetching from API...');
         
-        // Get the user ID for the .env email
-        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        const response = await fetch(`${API_BASE}/settings`);
+        const data = await response.json();
         
-        console.log('📋 publicPortfolioService.getPublicSettings: Portfolio config result:', portfolioConfig);
-        
-        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-          console.log('⚠️ publicPortfolioService.getPublicSettings: No portfolio config found for settings');
-          console.log('   - portfolioConfig exists:', !!portfolioConfig);
-          console.log('   - owner_user_id exists:', portfolioConfig?.owner_user_id);
+        console.log('📊 publicPortfolioService.getPublicSettings: API response:', {
+          success: data.success,
+          dataLength: Object.keys(data.data || {}).length
+        });
+
+        if (!data.success) {
+          console.error('❌ publicPortfolioService.getPublicSettings: API error:', data.error);
           return {};
         }
-
-        console.log('🔍 publicPortfolioService.getPublicSettings: Querying settings table...');
-        console.log('   - Using user_id:', portfolioConfig.owner_user_id);
-        console.log('   - Portfolio config owner_email:', portfolioConfig.owner_email);
-
-        const { data, error } = await supabase
-          .from('settings')
-          .select('*')
-          .eq('user_id', portfolioConfig.owner_user_id);  // ← NOW filtering by correct user!
-
-        console.log('📊 publicPortfolioService.getPublicSettings: Supabase query result:');
-        console.log('   - Error:', error);
-        console.log('   - Data length:', data?.length || 0);
-        console.log('   - Raw data:', data);
-
-        if (error) {
-          console.error('❌ publicPortfolioService.getPublicSettings: Supabase error:', error);
-          throw error;
-        }
         
-        // Convert array to object for easier access and parse JSON values
-        const settingsObj = {};
-        (data || []).forEach(setting => {
-          try {
-            // Try to parse as JSON to restore original data types
-            settingsObj[setting.key] = JSON.parse(setting.value);
-          } catch (error) {
-            // If parsing fails, use the raw value (for backwards compatibility)
-            settingsObj[setting.key] = setting.value;
-          }
-          console.log(`   - Setting: ${setting.key} = ${settingsObj[setting.key]}`);
-        });
+        const settingsObj = data.data || {};
         
         console.log('✅ publicPortfolioService.getPublicSettings: Final settings object:', settingsObj);
         console.log('   - banner_name:', settingsObj.banner_name);

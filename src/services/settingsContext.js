@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { settingsService } from './supabaseService';
+import { settingsService } from './settingsService';
 import portfolioService from './portfolioService';
 import { portfolioConfig } from '../config/portfolio';
 import { loadThemeFromPublicSettings, applyTheme } from '../utils/themeUtils';

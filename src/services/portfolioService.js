@@ -1,8 +1,6 @@
-import { supabase } from '../config/supabase';
 import { fallbackDataService } from './fallbackDataService';
-import { fallbackUtils } from '../utils/fallbackUtils';
-import { publicPortfolioService } from './supabaseService';
 import { portfolioConfig } from '../config/portfolio';
+import { projectsService } from './projectsService';
 
 // ================ PUBLIC PORTFOLIO OPERATIONS ================
 // These functions fetch data for the public portfolio (no authentication required)
@@ -11,7 +9,8 @@ export const portfolioService = {
   // Get all published projects for public display
   async getPublishedProjects() {
     try {
-      const data = await publicPortfolioService.getPublishedProjects();
+      // Use API only
+      const data = await projectsService.getPublishedProjects();
       
       // Transform data to match existing frontend format
       return data?.map(project => ({
@@ -34,8 +33,8 @@ export const portfolioService = {
         }
       })) || [];
     } catch (error) {
-      // console.error('Error fetching published projects:', error);
-      // Return fallback data when Supabase fails
+      console.error('Error fetching published projects from API:', error);
+      // Return fallback data when API fails
       return this.transformFallbackProjects(fallbackDataService.getProjects());
     }
   },
@@ -58,13 +57,23 @@ export const portfolioService = {
   // Get available categories
   async getAvailableCategories() {
     try {
-      const categories = await publicPortfolioService.getCategories();
+      // Use API instead of Supabase
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      
+      const response = await fetch(`${API_BASE}/categories`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch categories');
+      }
+      
+      const categories = data.data || [];
       const categoryNames = categories.map(cat => cat.name);
       
       // Always include 'All' as the first option
       return ['All', ...categoryNames];
     } catch (error) {
-      // console.error('Error fetching categories:', error);
+      console.error('Error fetching categories:', error);
       // Return fallback categories
       const fallbackCategories = fallbackDataService.getCategories();
       return ['All', ...fallbackCategories];
@@ -74,9 +83,19 @@ export const portfolioService = {
   // Get domains and technologies for public display
   async getDomainsTechnologies() {
     try {
-      return await publicPortfolioService.getDomainsTechnologies();
+      // Use API instead of Supabase
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      
+      const response = await fetch(`${API_BASE}/technologies`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch technologies');
+      }
+      
+      return data.data || [];
     } catch (error) {
-      // console.error('Error fetching domains/technologies:', error);
+      console.error('Error fetching domains/technologies:', error);
       return fallbackDataService.getTechnologies();
     }
   },
@@ -84,9 +103,19 @@ export const portfolioService = {
   // Get niches for public display
   async getNiches() {
     try {
-      return await publicPortfolioService.getNiches();
+      // Use API instead of Supabase
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      
+      const response = await fetch(`${API_BASE}/niches`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch niches');
+      }
+      
+      return data.data || [];
     } catch (error) {
-      // console.error('Error fetching niches:', error);
+      console.error('Error fetching niches:', error);
       return fallbackDataService.getNiches();
     }
   },
@@ -94,7 +123,17 @@ export const portfolioService = {
   // Get public settings
   async getPublicSettings() {
     try {
-      const settings = await publicPortfolioService.getPublicSettings();
+      // Use API instead of Supabase
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      
+      const response = await fetch(`${API_BASE}/settings`);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch settings');
+      }
+      
+      const settings = data.data || {};
       
       // Merge with default settings
       return {
@@ -102,7 +141,7 @@ export const portfolioService = {
         ...settings
       };
     } catch (error) {
-      // console.error('Error fetching public settings:', error);
+      console.error('Error fetching public settings:', error);
       return portfolioConfig.defaultSettings;
     }
   },
