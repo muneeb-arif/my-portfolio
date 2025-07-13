@@ -48,5 +48,5 @@ export function extractToken(authHeader: string | undefined): string | null {
 
 // Get portfolio owner email from environment
 export function getPortfolioOwnerEmail(): string {
-  return process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL || '';
+  return process.env.PORTFOLIO_OWNER_EMAIL || '';
 } 

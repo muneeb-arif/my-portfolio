@@ -68,6 +68,6 @@ export function withAuthAndParams<T extends Record<string, string>>(
 
 // Check if user is portfolio owner
 export function isPortfolioOwner(email: string): boolean {
-  const ownerEmail = process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
+      const ownerEmail = process.env.PORTFOLIO_OWNER_EMAIL;
   return email === ownerEmail;
 } 

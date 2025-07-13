@@ -4,7 +4,7 @@ import { executeQuery } from '@/lib/database';
 
 // Utility to get portfolio owner user id
 async function getPortfolioOwnerUserId() {
-  const ownerEmail = process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
+  const ownerEmail = process.env.PORTFOLIO_OWNER_EMAIL;
   if (!ownerEmail) return null;
   const userResult = await executeQuery('SELECT id FROM users WHERE email = ?', [ownerEmail]);
   const userRows = userResult.success && Array.isArray(userResult.data) ? userResult.data as any[] : [];

@@ -2,23 +2,54 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { executeQuery } from '@/lib/database';
 
-// GET /api/niches - Get all niches for authenticated user
-export const GET = withAuth(async (request: AuthenticatedRequest) => {
+// Utility to get portfolio owner user id
+async function getPortfolioOwnerUserId() {
+  const ownerEmail = process.env.PORTFOLIO_OWNER_EMAIL;
+  if (!ownerEmail) return null;
+  const userResult = await executeQuery('SELECT id FROM users WHERE email = ?', [ownerEmail]);
+  const userRows = userResult.success && Array.isArray(userResult.data) ? userResult.data as any[] : [];
+  if (userRows.length > 0) {
+    return userRows[0].id;
+  }
+  return null;
+}
+
+// GET /api/niches - Public (portfolio owner) or dashboard (auth)
+export async function GET(request: NextRequest) {
   try {
+    let userId = null;
+    // Try to get user from auth header
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        if (payload && payload.id) {
+          userId = payload.id;
+        }
+      } catch (e) {}
+    }
+    if (!userId) {
+      userId = await getPortfolioOwnerUserId();
+    }
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'Portfolio owner not configured or not found' },
+        { status: 500 }
+      );
+    }
     const query = `
       SELECT * FROM niche 
       WHERE user_id = ? 
       ORDER BY sort_order ASC
     `;
-    
-    const result = await executeQuery(query, [request.user!.id]);
+    const result = await executeQuery(query, [userId]);
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error },
         { status: 500 }
       );
     }
-
     return NextResponse.json({
       success: true,
       data: result.data
@@ -30,9 +61,9 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       { status: 500 }
     );
   }
-});
+}
 
-// POST /api/niches - Create new niche
+// POST /api/niches - Create new niche (protected)
 export const POST = withAuth(async (request: AuthenticatedRequest) => {
   try {
     const body = await request.json();
