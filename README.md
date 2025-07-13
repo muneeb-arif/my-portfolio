@@ -19,22 +19,22 @@
 
 A comprehensive, modern portfolio website built with React.js and Tailwind CSS, featuring a desert-themed design with professional animations and interactive components.
 
-![Portfolio Homepage](screenshot.png)
+![Portfolio Homepage](./screenshots/screenshot.png)
 
 ## 🎛️ Dashboard Management System
 
 The portfolio includes a comprehensive dashboard for managing all content dynamically:
 
 ### **Dashboard Overview**
-![Dashboard Overview](dashboard1.png)
+![Dashboard Overview](./screenshots/dashboard1.png)
 *Main dashboard interface showing overview statistics and quick access to all management sections*
 
 ### **Content Management**
-![Content Management](dashboard2.png)
+![Content Management](./screenshots/dashboard2.png)
 *Projects, categories, technologies, and domains management with CRUD operations*
 
 ### **Appearance Settings**
-![Appearance Settings](dashboard3.png)
+![Appearance Settings](./screenshots/dashboard3.png)
 *Dynamic appearance customization including logo, banner, avatar, and color scheme settings*
 
 ### **Key Dashboard Features**
@@ -81,7 +81,7 @@ The portfolio includes a comprehensive dashboard for managing all content dynami
 - **Live Demo Links**: Direct links to project demos and source code
 - **Navigation Arrows**: Seamless browsing between projects with keyboard and click support
 
-![Portfolio Modal](portfolio-popup.png)
+![Portfolio Modal](./screenshots/portfolio-popup.png)
 *Interactive portfolio project modal with navigation arrows and detailed project information*
 
 ### 🛠️ **Technologies Section**
@@ -97,7 +97,7 @@ The portfolio includes a comprehensive dashboard for managing all content dynami
 - **Technology Tags**: Relevant tools and technologies per domain
 - **Navigation Support**: Arrow keys and swipe gestures for easy browsing
 
-![Domain Modal](niche-popup.png)
+![Domain Modal](./screenshots/niche-popup.png)
 *Domain expertise modal showcasing detailed capabilities and technologies*
 
 ### ⏱️ **Project Delivery Life Cycle**
@@ -117,11 +117,11 @@ The portfolio includes a comprehensive dashboard for managing all content dynami
 - **Success Notifications**: Beautiful SweetAlert2 popups replace basic browser alerts
 
 #### Contact Form - Quick Inquiries
-![Contact Form](contact-form.png)
+![Contact Form](./screenshots/contact-form.png)
 *Professional contact form with validation for initial project discussions and discovery calls*
 
 #### Client Onboarding - Comprehensive Project Intake
-![Client Onboarding Form](get-started.png)
+![Client Onboarding Form](./screenshots/get-started.png)
 *Detailed client onboarding form with comprehensive validation for complete project requirements gathering*
 
 ## 🛠️ Tech Stack
@@ -148,7 +148,7 @@ The application uses a comprehensive database schema with tables for:
 - **Domains**: Domain expertise areas
 - **Settings**: Dynamic appearance and content settings
 
-For detailed database setup instructions, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
+For detailed database setup instructions, see [SUPABASE_SETUP.md](./markdown/SUPABASE_SETUP.md).
 
 ### **Form Management & Validation**
 - **Real-time Validation** - Field-level validation with immediate feedback
@@ -198,11 +198,11 @@ npm run build
 
 ### **Backend Setup**
 1. **Create a Supabase project** at [supabase.com](https://supabase.com)
-2. **Run the database setup script** from [SUPABASE_SETUP.md](SUPABASE_SETUP.md)
+2. **Run the database setup script** from [SUPABASE_SETUP.md](./markdown/SUPABASE_SETUP.md)
 3. **Configure environment variables** with your Supabase credentials
 4. **Upload images** to the Supabase storage bucket
 
-For complete backend setup instructions, see [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
+For complete backend setup instructions, see [SUPABASE_SETUP.md](./markdown/SUPABASE_SETUP.md).
 
 ### **Portfolio Configuration**
 To configure which user's data displays on the public portfolio:
@@ -211,7 +211,7 @@ To configure which user's data displays on the public portfolio:
 2. **Configure database policies** for public access to published data
 3. **Populate your data** through the dashboard
 
-For detailed configuration instructions, see [PORTFOLIO_CONFIGURATION.md](PORTFOLIO_CONFIGURATION.md).
+For detailed configuration instructions, see [PORTFOLIO_CONFIGURATION.md](./markdown/PORTFOLIO_CONFIGURATION.md).
 
 ### **Dependencies**
 ```json
