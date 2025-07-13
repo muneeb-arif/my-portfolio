@@ -1,101 +1,364 @@
-// Test script to check portfolio data loading in different scenarios
-const https = require('https');
-const fs = require('fs');
+const axios = require('axios');
+const { createClient } = require('@supabase/supabase-js');
 
-// Test configuration
-const BASE_URL = 'http://localhost:3000';
-const TEST_RESULTS = {};
+// Configuration
+const API_BASE_URL = 'http://localhost:3001';
+const SUPABASE_URL = 'https://your-project.supabase.co'; // Update with your actual Supabase URL
+const SUPABASE_ANON_KEY = 'your-anon-key'; // Update with your actual anon key
 
-// Helper function to make HTTP requests
-function makeRequest(endpoint) {
-  return new Promise((resolve, reject) => {
-    const url = `${BASE_URL}${endpoint}`;
-      // console.log(`\n🔍 Testing endpoint: ${endpoint}`);
+// Test user credentials
+const TEST_USER = {
+  email: 'muneebarif11@gmail.com',
+  password: '11223344'
+};
+
+// Initialize Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Utility functions
+const log = (message, type = 'info') => {
+  const timestamp = new Date().toISOString();
+  const color = {
+    info: '\x1b[36m',    // Cyan
+    success: '\x1b[32m', // Green
+    error: '\x1b[31m',   // Red
+    warning: '\x1b[33m', // Yellow
+    reset: '\x1b[0m'     // Reset
+  };
+  console.log(`${color[type]}[${timestamp}] ${message}${color.reset}`);
+};
+
+const logTest = (testName, status, details = '') => {
+  const statusColor = status === 'PASS' ? '\x1b[32m' : '\x1b[31m';
+  console.log(`${statusColor}${status}\x1b[0m | ${testName}${details ? ` - ${details}` : ''}`);
+};
+
+const handleError = (error, context) => {
+  if (error.response) {
+    log(`API Error in ${context}: ${error.response.status} - ${error.response.statusText}`, 'error');
+    if (error.response.data) {
+      log(`Response data: ${JSON.stringify(error.response.data, null, 2)}`, 'error');
+    }
+  } else if (error.request) {
+    log(`Network Error in ${context}: ${error.message}`, 'error');
+  } else {
+    log(`Error in ${context}: ${error.message}`, 'error');
+  }
+  return false;
+};
+
+// Authentication helper
+let authToken = null;
+
+const authenticate = async () => {
+  try {
+    log('Authenticating user...', 'info');
+    const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+      email: TEST_USER.email,
+      password: TEST_USER.password
+    });
     
-    const request = require('http').get(url, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          resolve(data);
-        } else {
-          reject(new Error(`HTTP ${res.statusCode}: ${data}`));
-        }
+    if (response.data.success && response.data.token) {
+      authToken = response.data.token;
+      log('Authentication successful', 'success');
+      return true;
+    } else {
+      log('Authentication failed: Invalid response format', 'error');
+      return false;
+    }
+  } catch (error) {
+    handleError(error, 'authentication');
+    return false;
+  }
+};
+
+// Data integrity verification
+const verifyDataIntegrity = async (entity, localData, supabaseTable) => {
+  try {
+    log(`Verifying data integrity for ${entity}...`, 'info');
+    
+    // Fetch data from Supabase
+    const { data: supabaseData, error } = await supabase
+      .from(supabaseTable)
+      .select('*')
+      .eq('user_id', TEST_USER.email);
+    
+    if (error) {
+      log(`Supabase error for ${entity}: ${error.message}`, 'error');
+      return false;
+    }
+    
+    if (!supabaseData || supabaseData.length === 0) {
+      log(`No Supabase data found for ${entity}`, 'warning');
+      return true; // Not necessarily an error
+    }
+    
+    // Compare data
+    const localCount = localData.length;
+    const supabaseCount = supabaseData.length;
+    
+    log(`Local ${entity}: ${localCount} records, Supabase ${entity}: ${supabaseCount} records`, 'info');
+    
+    if (localCount !== supabaseCount) {
+      log(`Data count mismatch for ${entity}: Local=${localCount}, Supabase=${supabaseCount}`, 'warning');
+    }
+    
+    // Check for matching records (by name/title for most entities)
+    const matchingRecords = localData.filter(localItem => {
+      return supabaseData.some(supabaseItem => {
+        const localKey = localItem.name || localItem.title || localItem.key;
+        const supabaseKey = supabaseItem.name || supabaseItem.title || supabaseItem.key;
+        return localKey === supabaseKey;
       });
     });
     
-    request.on('error', reject);
-    request.setTimeout(10000, () => {
-      request.destroy();
-      reject(new Error('Request timeout'));
-    });
-  });
-}
-
-// Test function to analyze portfolio data
-async function testPortfolioData(scenarioName) {
-      // console.log(`\n🧪 ===== TESTING SCENARIO: ${scenarioName} =====`);
-  
-  try {
-    // Test main portfolio page
-    const homepage = await makeRequest('/');
+    const matchPercentage = (matchingRecords.length / localCount) * 100;
+    log(`Data integrity for ${entity}: ${matchPercentage.toFixed(1)}% matching records`, 
+        matchPercentage > 80 ? 'success' : 'warning');
     
-    // Check if fallback notification is present
-    const hasFallbackNotification = homepage.includes('Demo Mode') || 
-                                   homepage.includes('Pre-filled data');
-    
-    // Check if Supabase data is loaded or fallback data
-    const hasSupabaseData = homepage.includes('supabase') || 
-                           homepage.includes('database');
-    
-    // Check for specific project titles to identify data source
-    const hasEcommerceProject = homepage.includes('E-Commerce Platform');
-    const hasAIProject = homepage.includes('AI-Powered Chatbot');
-    const hasMobileBankingProject = homepage.includes('Mobile Banking App');
-    
-    // Store results
-    TEST_RESULTS[scenarioName] = {
-      timestamp: new Date().toISOString(),
-      hasFallbackNotification,
-      hasSupabaseData,
-      hasEcommerceProject,
-      hasAIProject,
-      hasMobileBankingProject,
-      dataSource: hasFallbackNotification ? 'FALLBACK' : 'SUPABASE'
-    };
-    
-      // console.log(`✅ Results for ${scenarioName}:`);
-      // console.log(`   - Fallback Notification: ${hasFallbackNotification ? '✅' : '❌'}`);
-      // console.log(`   - E-Commerce Project: ${hasEcommerceProject ? '✅' : '❌'}`);
-      // console.log(`   - AI Project: ${hasAIProject ? '✅' : '❌'}`);
-      // console.log(`   - Mobile Banking Project: ${hasMobileBankingProject ? '✅' : '❌'}`);
-      // console.log(`   - Data Source: ${TEST_RESULTS[scenarioName].dataSource}`);
-    
+    return matchPercentage > 80;
   } catch (error) {
-      // console.error(`❌ Error testing ${scenarioName}:`, error.message);
-    TEST_RESULTS[scenarioName] = {
-      timestamp: new Date().toISOString(),
-      error: error.message,
-      dataSource: 'ERROR'
-    };
+    log(`Error verifying data integrity for ${entity}: ${error.message}`, 'error');
+    return false;
   }
-}
+};
 
-// Main test function
-async function runTests() {
-      // console.log('🚀 Starting Portfolio Data Loading Tests...');
+// Test functions
+const testHealthCheck = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/health`);
+    const success = response.status === 200 && response.data.status === 'healthy';
+    logTest('Health Check', success ? 'PASS' : 'FAIL', 
+            success ? '' : `Status: ${response.status}, Data: ${JSON.stringify(response.data)}`);
+    return success;
+  } catch (error) {
+    handleError(error, 'health check');
+    logTest('Health Check', 'FAIL', error.message);
+    return false;
+  }
+};
+
+const testPublicProjects = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/projects`);
+    const success = response.status === 200 && response.data && response.data.success && Array.isArray(response.data.data);
+    logTest('Public Projects', success ? 'PASS' : 'FAIL', 
+            success ? `Found ${response.data.data?.length ?? 0} projects` : `Status: ${response.status}`);
+    return success;
+  } catch (error) {
+    handleError(error, 'public projects');
+    logTest('Public Projects', 'FAIL', error.message);
+    return false;
+  }
+};
+
+const testCategories = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/categories`);
+    const success = response.status === 200 && response.data && response.data.success && Array.isArray(response.data.data);
+    logTest('Categories', success ? 'PASS' : 'FAIL', 
+            success ? `Found ${response.data.data?.length ?? 0} categories` : `Status: ${response.status}`);
+    
+    if (success) {
+      await verifyDataIntegrity('categories', response.data.data, 'categories');
+    }
+    
+    return success;
+  } catch (error) {
+    handleError(error, 'categories');
+    logTest('Categories', 'FAIL', error.message);
+    return false;
+  }
+};
+
+const testTechnologies = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/technologies`, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    const success = response.status === 200 && response.data && response.data.success && Array.isArray(response.data.data);
+    logTest('Technologies', success ? 'PASS' : 'FAIL', 
+            success ? `Found ${response.data.data?.length ?? 0} technologies` : `Status: ${response.status}`);
+    
+    if (success) {
+      await verifyDataIntegrity('technologies', response.data.data, 'technologies');
+    }
+    
+    return success;
+  } catch (error) {
+    handleError(error, 'technologies');
+    logTest('Technologies', 'FAIL', error.message);
+    return false;
+  }
+};
+
+const testSkills = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/skills`, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    const success = response.status === 200 && response.data && response.data.success && Array.isArray(response.data.data);
+    logTest('Skills', success ? 'PASS' : 'FAIL', 
+            success ? `Found ${response.data.data?.length ?? 0} skills` : `Status: ${response.status}`);
+    
+    if (success) {
+      await verifyDataIntegrity('skills', response.data.data, 'skills');
+    }
+    
+    return success;
+  } catch (error) {
+    handleError(error, 'skills');
+    logTest('Skills', 'FAIL', error.message);
+    return false;
+  }
+};
+
+const testNiches = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/niches`, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    const success = response.status === 200 && response.data && response.data.success && Array.isArray(response.data.data);
+    logTest('Niches', success ? 'PASS' : 'FAIL', 
+            success ? `Found ${response.data.data?.length ?? 0} niches` : `Status: ${response.status}`);
+    
+    if (success) {
+      await verifyDataIntegrity('niches', response.data.data, 'niches');
+    }
+    
+    return success;
+  } catch (error) {
+    handleError(error, 'niches');
+    logTest('Niches', 'FAIL', error.message);
+    return false;
+  }
+};
+
+const testSettings = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/settings`, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    // Settings should be an object, not an array
+    const isObject = response.data && typeof response.data.data === 'object' && !Array.isArray(response.data.data) && response.data.data !== null;
+    const success = response.status === 200 && response.data && response.data.success && isObject;
+    logTest('Settings', success ? 'PASS' : 'FAIL', 
+            success ? `Found ${Object.keys(response.data.data || {}).length} settings` : `Status: ${response.status}`);
+    
+    if (success) {
+      // Optionally, verifyDataIntegrity could be skipped or adapted for object
+    }
+    
+    return success;
+  } catch (error) {
+    handleError(error, 'settings');
+    logTest('Settings', 'FAIL', error.message);
+    return false;
+  }
+};
+
+const testContactQueries = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/contact-queries`, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    const success = response.status === 200 && response.data && response.data.success && Array.isArray(response.data.data);
+    logTest('Contact Queries', success ? 'PASS' : 'FAIL', 
+            success ? `Found ${response.data.data?.length ?? 0} queries` : `Status: ${response.status}`);
+    
+    if (success) {
+      await verifyDataIntegrity('contact queries', response.data.data, 'contact_queries');
+    }
+    
+    return success;
+  } catch (error) {
+    handleError(error, 'contact queries');
+    logTest('Contact Queries', 'FAIL', error.message);
+    return false;
+  }
+};
+
+const testProtectedProjects = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/dashboard/projects`, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+    
+    const success = response.status === 200 && response.data && response.data.success && Array.isArray(response.data.data);
+    logTest('Protected Projects', success ? 'PASS' : 'FAIL', 
+            success ? `Found ${response.data.data?.length ?? 0} projects` : `Status: ${response.status}`);
+    
+    if (success) {
+      await verifyDataIntegrity('projects', response.data.data, 'projects');
+    }
+    
+    return success;
+  } catch (error) {
+    handleError(error, 'protected projects');
+    logTest('Protected Projects', 'FAIL', error.message);
+    return false;
+  }
+};
+
+// Main test runner
+const runTests = async () => {
+  log('🚀 Starting Comprehensive API Tests', 'info');
+  log('=====================================', 'info');
   
-  // Test current scenario
-  await testPortfolioData('CURRENT_SCENARIO');
+  const results = [];
   
-  // Save results
-  const resultsFile = 'test-results.json';
-  fs.writeFileSync(resultsFile, JSON.stringify(TEST_RESULTS, null, 2));
+  // Test 1: Health Check
+  results.push(await testHealthCheck());
   
-      // console.log(`\n📊 Test results saved to: ${resultsFile}`);
-      // console.log('\n🎯 Test Summary:');
-      // console.log(JSON.stringify(TEST_RESULTS, null, 2));
-}
+  // Test 2: Public Projects
+  results.push(await testPublicProjects());
+  
+  // Test 3: Authentication
+  const authSuccess = await authenticate();
+  results.push(authSuccess);
+  logTest('Authentication', authSuccess ? 'PASS' : 'FAIL');
+  
+  if (!authSuccess) {
+    log('❌ Authentication failed. Skipping protected endpoint tests.', 'error');
+    log('=====================================', 'info');
+    log(`📊 Test Results: ${results.filter(Boolean).length}/${results.length} passed`, 
+        results.filter(Boolean).length === results.length ? 'success' : 'error');
+    return;
+  }
+  
+  // Protected endpoint tests
+  results.push(await testCategories());
+  results.push(await testTechnologies());
+  results.push(await testSkills());
+  results.push(await testNiches());
+  results.push(await testSettings());
+  results.push(await testContactQueries());
+  results.push(await testProtectedProjects());
+  
+  // Summary
+  log('=====================================', 'info');
+  const passed = results.filter(Boolean).length;
+  const total = results.length;
+  const percentage = (passed / total) * 100;
+  
+  log(`📊 Test Results: ${passed}/${total} passed (${percentage.toFixed(1)}%)`, 
+      percentage >= 80 ? 'success' : percentage >= 60 ? 'warning' : 'error');
+  
+  if (passed === total) {
+    log('🎉 All tests passed! API is working correctly.', 'success');
+  } else {
+    log(`⚠️  ${total - passed} test(s) failed. Check the logs above for details.`, 'warning');
+  }
+  
+  log('=====================================', 'info');
+};
 
 // Run tests
-runTests().catch(console.error); 
+runTests().catch(error => {
+  log(`Fatal error running tests: ${error.message}`, 'error');
+  process.exit(1);
+}); 
