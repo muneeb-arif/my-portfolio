@@ -167,35 +167,69 @@ export class ProjectService {
   static async updateProject(projectData: UpdateProjectRequest, userId: string): Promise<DbResult<Project>> {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     
+    // Build dynamic query based on provided fields
+    const updateFields: string[] = [];
+    const params: any[] = [];
+    
+    // Only include fields that are not undefined
+    if (projectData.title !== undefined) {
+      updateFields.push('title = ?');
+      params.push(projectData.title);
+    }
+    
+    if (projectData.description !== undefined) {
+      updateFields.push('description = ?');
+      params.push(projectData.description);
+    }
+    
+    if (projectData.category !== undefined) {
+      updateFields.push('category = ?');
+      params.push(projectData.category);
+    }
+    
+    if (projectData.overview !== undefined) {
+      updateFields.push('overview = ?');
+      params.push(projectData.overview);
+    }
+    
+    if (projectData.technologies !== undefined) {
+      updateFields.push('technologies = ?');
+      params.push(projectData.technologies ? JSON.stringify(projectData.technologies) : null);
+    }
+    
+    if (projectData.features !== undefined) {
+      updateFields.push('features = ?');
+      params.push(projectData.features ? JSON.stringify(projectData.features) : null);
+    }
+    
+    if (projectData.live_url !== undefined) {
+      updateFields.push('live_url = ?');
+      params.push(projectData.live_url);
+    }
+    
+    if (projectData.github_url !== undefined) {
+      updateFields.push('github_url = ?');
+      params.push(projectData.github_url);
+    }
+    
+    if (projectData.status !== undefined) {
+      updateFields.push('status = ?');
+      params.push(projectData.status);
+    }
+    
+    // Always update the updated_at timestamp
+    updateFields.push('updated_at = ?');
+    params.push(now);
+    
+    // Add WHERE clause parameters
+    params.push(projectData.id);
+    params.push(userId);
+    
     const query = `
       UPDATE projects SET
-        title = COALESCE(?, title),
-        description = ?,
-        category = ?,
-        overview = ?,
-        technologies = ?,
-        features = ?,
-        live_url = ?,
-        github_url = ?,
-        status = COALESCE(?, status),
-        updated_at = ?
+        ${updateFields.join(', ')}
       WHERE id = ? AND user_id = ?
     `;
-    
-    const params = [
-      projectData.title,
-      projectData.description || null,
-      projectData.category || null,
-      projectData.overview || null,
-      projectData.technologies ? JSON.stringify(projectData.technologies) : null,
-      projectData.features ? JSON.stringify(projectData.features) : null,
-      projectData.live_url || null,
-      projectData.github_url || null,
-      projectData.status,
-      now,
-      projectData.id,
-      userId
-    ];
     
     const result = await executeQuery(query, params);
     if (result.success) {

@@ -1,5 +1,4 @@
 import { apiService } from './apiService';
-import { getCurrentUser } from './authUtils';
 
 // ================ PROJECT OPERATIONS ================
 
@@ -7,9 +6,6 @@ export const projectsService = {
   // Get all projects for current user (dashboard)
   async getProjects() {
     try {
-      const user = await getCurrentUser();
-      if (!user) throw new Error('Not authenticated');
-
       const response = await apiService.getUserProjects();
       
       if (!response.success) {
@@ -26,9 +22,6 @@ export const projectsService = {
   // Get single project
   async getProject(id) {
     try {
-      const user = await getCurrentUser();
-      if (!user) throw new Error('Not authenticated');
-
       const response = await apiService.getProject(id);
       
       if (!response.success) {
@@ -45,9 +38,6 @@ export const projectsService = {
   // Create new project
   async createProject(projectData) {
     try {
-      const user = await getCurrentUser();
-      if (!user) throw new Error('Not authenticated');
-
       const response = await apiService.createProject(projectData);
       
       if (!response.success) {
@@ -64,9 +54,6 @@ export const projectsService = {
   // Update project
   async updateProject(id, projectData) {
     try {
-      const user = await getCurrentUser();
-      if (!user) throw new Error('Not authenticated');
-
       const response = await apiService.updateProject(id, projectData);
       
       if (!response.success) {
@@ -83,9 +70,6 @@ export const projectsService = {
   // Delete project
   async deleteProject(id) {
     try {
-      const user = await getCurrentUser();
-      if (!user) throw new Error('Not authenticated');
-
       const response = await apiService.deleteProject(id);
       
       if (!response.success) {

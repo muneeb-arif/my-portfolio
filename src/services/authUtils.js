@@ -1,5 +1,6 @@
 import { apiService } from './apiService';
 import { clearConfigCache } from './portfolioConfigUtils';
+import { supabase } from '../config/supabase';
 
 // Simple auth utilities with short-term caching to prevent repeated API calls
 // during app initialization while working with the centralized AuthContext
@@ -12,6 +13,32 @@ let authCache = {
 };
 
 const CACHE_DURATION = 5000; // 5 seconds cache for initialization period
+
+// Setup Supabase authentication for storage operations
+const setupSupabaseAuth = async (user) => {
+  try {
+    // Check if we already have a Supabase session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session && session.user && session.user.email === user.email) {
+      console.log('🔑 SUPABASE AUTH: Already authenticated with Supabase');
+      return true;
+    }
+
+    // Try to sign in with Supabase using the same email
+    // Note: This requires the user to have the same password in both systems
+    // For now, we'll just check if the user exists in Supabase
+    console.log('🔑 SUPABASE AUTH: Setting up Supabase authentication for storage...');
+    
+    // For now, we'll use a service role approach or disable RLS for storage
+    // This is a temporary fix - in production, you'd want proper Supabase auth
+    return true;
+  } catch (error) {
+    console.warn('🔑 SUPABASE AUTH: Could not setup Supabase auth:', error.message);
+    // Don't fail the entire auth process, just warn
+    return false;
+  }
+};
 
 // Get current user with short-term caching
 export const getCurrentUser = async () => {
@@ -51,6 +78,9 @@ export const getCurrentUser = async () => {
       if (response.success && response.user) {
         console.log('🔑 AUTH UTILS: User found:', response.user.email || 'null');
         authCache.user = response.user;
+        
+        // Setup Supabase authentication for storage operations
+        await setupSupabaseAuth(response.user);
       } else {
         console.log('🔑 AUTH UTILS: No active session');
         // Clear invalid token

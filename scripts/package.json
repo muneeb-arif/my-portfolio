@@ -1,0 +1,16 @@
+{
+  "name": "portfolio-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for portfolio management",
+  "main": "index.js",
+  "scripts": {
+    "update-passwords": "node update-user-passwords.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.6.0",
+    "bcrypt": "^5.1.0"
+  },
+  "keywords": ["portfolio", "database", "scripts"],
+  "author": "Portfolio Admin",
+  "license": "MIT"
+} 

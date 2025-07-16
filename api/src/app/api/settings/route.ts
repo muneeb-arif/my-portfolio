@@ -99,17 +99,17 @@ export const PUT = withAuth(async (request: AuthenticatedRequest) => {
       const jsonValue = JSON.stringify(value);
       
       // Check if setting exists
-      const checkQuery = 'SELECT * FROM settings WHERE user_id = ? AND `key` = ?';
+      const checkQuery = 'SELECT * FROM settings WHERE user_id = ? AND setting_key = ?';
       const checkResult = await executeQuery(checkQuery, [userId, key]);
       
       if (checkResult.success && checkResult.data && (checkResult.data as any[]).length > 0) {
         // Update existing setting
-        const updateQuery = 'UPDATE settings SET value = ?, updated_at = ? WHERE user_id = ? AND `key` = ?';
+        const updateQuery = 'UPDATE settings SET setting_value = ?, updated_at = ? WHERE user_id = ? AND setting_key = ?';
         await executeQuery(updateQuery, [jsonValue, now, userId, key]);
       } else {
         // Insert new setting with UUID
         const id = crypto.randomUUID();
-        const insertQuery = 'INSERT INTO settings (id, user_id, `key`, value, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)';
+        const insertQuery = 'INSERT INTO settings (id, user_id, setting_key, setting_value, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)';
         await executeQuery(insertQuery, [id, userId, key, jsonValue, now, now]);
       }
     }
@@ -122,9 +122,9 @@ export const PUT = withAuth(async (request: AuthenticatedRequest) => {
     const updatedSettings: Record<string, any> = {};
     (getResult.data as any[] || []).forEach(setting => {
       try {
-        updatedSettings[setting.key] = JSON.parse(setting.value);
+        updatedSettings[setting.setting_key] = JSON.parse(setting.setting_value);
       } catch (error) {
-        updatedSettings[setting.key] = setting.value;
+        updatedSettings[setting.setting_key] = setting.setting_value;
       }
     });
 

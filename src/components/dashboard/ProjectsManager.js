@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { projectsService } from '../../services/projectsService';
 import { categoriesService } from '../../services/categoriesService';
 import { imageService } from '../../services/imageService';
-import { getCurrentUser } from '../../services/authUtils';
+import { useAuth } from '../../services/authContext';
 import MediaSelectionModal from './MediaSelectionModal';
 import toastService from '../../services/toastService';
 import './ProjectsManager.css';
 
 const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalEditingProject, onEditingProjectChange }) => {
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -318,7 +319,6 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
   // Helper function to manage project images in database
   const updateProjectImages = async (projectId, currentImages) => {
     try {
-      const user = await getCurrentUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
