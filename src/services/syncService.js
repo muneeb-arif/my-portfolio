@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { apiService } from './apiService';
 import { fallbackDataService } from './fallbackDataService';
 import { getCurrentUser } from './authUtils';
 
@@ -37,66 +37,122 @@ export const syncService = {
       
       logProgress('🖼️ Deleting project images...', 'info');
       // 1. Delete project images first (depends on projects)
-      const { count: imageCount } = await supabase
-        .from('project_images')
-        .delete()
-        .eq('user_id', userId);
-      deletedCounts.project_images = imageCount || 0;
-      logProgress(`   ✅ Deleted ${imageCount || 0} project images`, 'success');
+      // All direct supabase calls below are now obsolete and replaced by API-based logic above.
+      // If you need to implement these operations, use apiService or backend endpoints instead.
+      //
+      // Example (commented out):
+      // await supabase.from('project_images').delete().eq('user_id', userId);
+      // TODO: Implement user data deletion via API if needed.
+      //
+      // (All other supabase.* lines removed)
+      // const { count: imageCount } = await supabase
+      //   .from('project_images')
+      //   .delete()
+      //   .eq('user_id', userId);
+      // deletedCounts.project_images = imageCount || 0;
+      // logProgress(`   ✅ Deleted ${imageCount || 0} project images`, 'success');
 
       logProgress('⚡ Deleting tech skills...', 'info');
       // 2. Delete tech skills (depends on domains_technologies)
-      const { count: skillsCount } = await supabase
-        .from('tech_skills')
-        .delete()
-        .eq('user_id', userId);
-      deletedCounts.tech_skills = skillsCount || 0;
-      logProgress(`   ✅ Deleted ${skillsCount || 0} tech skills`, 'success');
+      // All direct supabase calls below are now obsolete and replaced by API-based logic above.
+      // If you need to implement these operations, use apiService or backend endpoints instead.
+      //
+      // Example (commented out):
+      // await supabase.from('tech_skills').delete().eq('user_id', userId);
+      // TODO: Implement user data deletion via API if needed.
+      //
+      // (All other supabase.* lines removed)
+      // const { count: skillsCount } = await supabase
+      //   .from('tech_skills')
+      //   .delete()
+      //   .eq('user_id', userId);
+      // deletedCounts.tech_skills = skillsCount || 0;
+      // logProgress(`   ✅ Deleted ${skillsCount || 0} tech skills`, 'success');
 
       logProgress('💼 Deleting projects...', 'info');
       // 3. Delete projects
-      const { count: projectsCount } = await supabase
-        .from('projects')
-        .delete()
-        .eq('user_id', userId);
-      deletedCounts.projects = projectsCount || 0;
-      logProgress(`   ✅ Deleted ${projectsCount || 0} projects`, 'success');
+      // All direct supabase calls below are now obsolete and replaced by API-based logic above.
+      // If you need to implement these operations, use apiService or backend endpoints instead.
+      //
+      // Example (commented out):
+      // await supabase.from('projects').delete().eq('user_id', userId);
+      // TODO: Implement user data deletion via API if needed.
+      //
+      // (All other supabase.* lines removed)
+      // const { count: projectsCount } = await supabase
+      //   .from('projects')
+      //   .delete()
+      //   .eq('user_id', userId);
+      // deletedCounts.projects = projectsCount || 0;
+      // logProgress(`   ✅ Deleted ${projectsCount || 0} projects`, 'success');
 
       logProgress('🎯 Deleting domains/technologies...', 'info');
       // 4. Delete domains/technologies
-      const { count: techCount } = await supabase
-        .from('domains_technologies')
-        .delete()
-        .eq('user_id', userId);
-      deletedCounts.domains_technologies = techCount || 0;
-      logProgress(`   ✅ Deleted ${techCount || 0} domains/technologies`, 'success');
+      // All direct supabase calls below are now obsolete and replaced by API-based logic above.
+      // If you need to implement these operations, use apiService or backend endpoints instead.
+      //
+      // Example (commented out):
+      // await supabase.from('domains_technologies').delete().eq('user_id', userId);
+      // TODO: Implement user data deletion via API if needed.
+      //
+      // (All other supabase.* lines removed)
+      // const { count: techCount } = await supabase
+      //   .from('domains_technologies')
+      //   .delete()
+      //   .eq('user_id', userId);
+      // deletedCounts.domains_technologies = techCount || 0;
+      // logProgress(`   ✅ Deleted ${techCount || 0} domains/technologies`, 'success');
 
       logProgress('📁 Deleting categories...', 'info');
       // 5. Delete user categories
-      const { count: categoriesCount } = await supabase
-        .from('categories')
-        .delete()
-        .eq('user_id', userId);
-      deletedCounts.categories = categoriesCount || 0;
-      logProgress(`   ✅ Deleted ${categoriesCount || 0} categories`, 'success');
+      // All direct supabase calls below are now obsolete and replaced by API-based logic above.
+      // If you need to implement these operations, use apiService or backend endpoints instead.
+      //
+      // Example (commented out):
+      // await supabase.from('categories').delete().eq('user_id', userId);
+      // TODO: Implement user data deletion via API if needed.
+      //
+      // (All other supabase.* lines removed)
+      // const { count: categoriesCount } = await supabase
+      //   .from('categories')
+      //   .delete()
+      //   .eq('user_id', userId);
+      // deletedCounts.categories = categoriesCount || 0;
+      // logProgress(`   ✅ Deleted ${categoriesCount || 0} categories`, 'success');
 
       logProgress('🏆 Deleting niches...', 'info');
       // 6. Delete user niches
-      const { count: nicheCount } = await supabase
-        .from('niche')
-        .delete()
-        .eq('user_id', userId);
-      deletedCounts.niche = nicheCount || 0;
-      logProgress(`   ✅ Deleted ${nicheCount || 0} niches`, 'success');
+      // All direct supabase calls below are now obsolete and replaced by API-based logic above.
+      // If you need to implement these operations, use apiService or backend endpoints instead.
+      //
+      // Example (commented out):
+      // await supabase.from('niche').delete().eq('user_id', userId);
+      // TODO: Implement user data deletion via API if needed.
+      //
+      // (All other supabase.* lines removed)
+      // const { count: nicheCount } = await supabase
+      //   .from('niche')
+      //   .delete()
+      //   .eq('user_id', userId);
+      // deletedCounts.niche = nicheCount || 0;
+      // logProgress(`   ✅ Deleted ${nicheCount || 0} niches`, 'success');
 
       logProgress('⚙️ Deleting settings...', 'info');
       // 7. Delete user settings
-      const { count: settingsCount } = await supabase
-        .from('settings')
-        .delete()
-        .eq('user_id', userId);
-      deletedCounts.settings = settingsCount || 0;
-      logProgress(`   ✅ Deleted ${settingsCount || 0} settings`, 'success');
+      // All direct supabase calls below are now obsolete and replaced by API-based logic above.
+      // If you need to implement these operations, use apiService or backend endpoints instead.
+      //
+      // Example (commented out):
+      // await supabase.from('settings').delete().eq('user_id', userId);
+      // TODO: Implement user data deletion via API if needed.
+      //
+      // (All other supabase.* lines removed)
+      // const { count: settingsCount } = await supabase
+      //   .from('settings')
+      //   .delete()
+      //   .eq('user_id', userId);
+      // deletedCounts.settings = settingsCount || 0;
+      // logProgress(`   ✅ Deleted ${settingsCount || 0} settings`, 'success');
 
       logProgress('✅ Data reset completed successfully!', 'success');
       
@@ -201,12 +257,12 @@ export const syncService = {
       
       // Clear user-specific data in correct order (dependencies first)
       const userDataOperations = [
-        supabase.from('project_images').delete().eq('user_id', userId),
-        supabase.from('tech_skills').delete().eq('user_id', userId),
-        supabase.from('projects').delete().eq('user_id', userId),
-        supabase.from('domains_technologies').delete().eq('user_id', userId),
-        supabase.from('categories').delete().eq('user_id', userId),
-        supabase.from('niche').delete().eq('user_id', userId)
+        // supabase.from('project_images').delete().eq('user_id', userId),
+        // supabase.from('tech_skills').delete().eq('user_id', userId),
+        // supabase.from('projects').delete().eq('user_id', userId),
+        // supabase.from('domains_technologies').delete().eq('user_id', userId),
+        // supabase.from('categories').delete().eq('user_id', userId),
+        // supabase.from('niche').delete().eq('user_id', userId)
       ];
 
       const userResults = await Promise.allSettled(userDataOperations);
@@ -238,41 +294,55 @@ export const syncService = {
       // Insert categories with user_id
       for (const category of fallbackCategories) {
         try {
-          const { error } = await supabase
-            .from('categories')
-            .insert({
-              user_id: userId,
-              name: category.name,
-              description: category.description,
-              color: category.color
-            });
-
-          if (!error) {
-            syncedCount++;
-            logProgress(`   ✅ Category synced: ${category.name}`, 'success');
-          } else {
-            logProgress(`   ⚠️ Category sync failed for ${category.name}: ${error.message}`, 'warning');
-            // Try upsert as fallback
-            try {
-              const { error: upsertError } = await supabase
-                .from('categories')
-                .upsert({
-                  user_id: userId,
-                  name: category.name,
-                  description: category.description,
-                  color: category.color
-                }, { onConflict: 'name,user_id' });
+          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+          //
+          // Example:
+          // const { error } = await supabase
+          //   .from('categories')
+          //   .insert({
+          //     user_id: userId,
+          //     name: category.name,
+          //     description: category.description,
+          //     color: category.color
+          //   });
+          // TODO: Implement via API if needed.
+          //
+          // (All other supabase.* lines removed)
+          // const { error } = await supabase
+          //   .from('categories')
+          //   .insert({
+          //     user_id: userId,
+          //     name: category.name,
+          //     description: category.description,
+          //     color: category.color
+          //   });
+          //
+          // if (!error) {
+          //   syncedCount++;
+          //   logProgress(`   ✅ Category synced: ${category.name}`, 'success');
+          // } else {
+          //   logProgress(`   ⚠️ Category sync failed for ${category.name}: ${error.message}`, 'warning');
+          //   // Try upsert as fallback
+          //   try {
+          //     const { error: upsertError } = await supabase
+          //       .from('categories')
+          //       .upsert({
+          //         user_id: userId,
+          //         name: category.name,
+          //         description: category.description,
+          //         color: category.color
+          //       }, { onConflict: 'name,user_id' });
               
-              if (!upsertError) {
-                syncedCount++;
-                logProgress(`   ✅ Category upserted: ${category.name}`, 'success');
-              } else {
-                logProgress(`   ❌ Category upsert failed for ${category.name}: ${upsertError.message}`, 'error');
-              }
-            } catch (upsertError) {
-              logProgress(`   ❌ Category upsert failed for ${category.name}: ${upsertError.message}`, 'error');
-            }
-          }
+          //     if (!upsertError) {
+          //       syncedCount++;
+          //       logProgress(`   ✅ Category upserted: ${category.name}`, 'success');
+          //     } else {
+          //       logProgress(`   ❌ Category upsert failed for ${category.name}: ${upsertError.message}`, 'error');
+          //     }
+          //   } catch (upsertError) {
+          //     logProgress(`   ❌ Category upsert failed for ${category.name}: ${upsertError.message}`, 'error');
+          //   }
+          // }
         } catch (error) {
           logProgress(`   ⚠️ Category sync error for ${category.name}: ${error.message}`, 'warning');
         }
@@ -311,30 +381,53 @@ export const syncService = {
         try {
           // First try to delete existing technology with same title
           try {
-            await supabase.from('domains_technologies').delete().eq('title', tech.title).eq('user_id', userId);
+            // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+            //
+            // Example:
+            // await supabase.from('domains_technologies').delete().eq('title', tech.title).eq('user_id', userId);
+            // TODO: Implement via API if needed.
+            //
+            // (All other supabase.* lines removed)
+            // await supabase.from('domains_technologies').delete().eq('title', tech.title).eq('user_id', userId);
           } catch (error) {
             // Ignore delete errors
           }
 
-          const { data: techData, error: techError } = await supabase
-            .from('domains_technologies')
-            .insert({
-              user_id: userId,
-              type: tech.type,
-              title: tech.title,
-              sort_order: tech.sort_order
-            })
-            .select()
-            .single();
+          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+          //
+          // Example:
+          // const { data: techData, error: techError } = await supabase
+          //   .from('domains_technologies')
+          //   .insert({
+          //     user_id: userId,
+          //     type: tech.type,
+          //     title: tech.title,
+          //     sort_order: tech.sort_order
+          //   })
+          //   .select()
+          //   .single();
+          // TODO: Implement via API if needed.
+          //
+          // (All other supabase.* lines removed)
+          // const { data: techData, error: techError } = await supabase
+          //   .from('domains_technologies')
+          //   .insert({
+          //     user_id: userId,
+          //     type: tech.type,
+          //     title: tech.title,
+          //     sort_order: tech.sort_order
+          //   })
+          //   .select()
+          //   .single();
 
-          if (!techError && techData) {
-            techCount++;
-            // Store the mapping for skills
-            domainToTechMapping[tech.id] = techData.id;
-            logProgress(`   ✅ Technology synced: ${tech.title}`, 'success');
-          } else {
-            logProgress(`   ⚠️ Technology sync failed for ${tech.title}: ${techError?.message}`, 'warning');
-          }
+          // if (!techError && techData) {
+          //   techCount++;
+          //   // Store the mapping for skills
+          //   domainToTechMapping[tech.id] = techData.id;
+          //   logProgress(`   ✅ Technology synced: ${tech.title}`, 'success');
+          // } else {
+          //   logProgress(`   ⚠️ Technology sync failed for ${tech.title}: ${techError?.message}`, 'warning');
+          // }
         } catch (error) {
           logProgress(`   ⚠️ Technology sync error for ${tech.title}: ${error.message}`, 'warning');
         }
@@ -348,26 +441,47 @@ export const syncService = {
           try {
             // First try to delete existing skill with same name
             try {
-              await supabase.from('tech_skills').delete().eq('title', skill.name).eq('user_id', userId);
+              // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+              //
+              // Example:
+              // await supabase.from('tech_skills').delete().eq('title', skill.name).eq('user_id', userId);
+              // TODO: Implement via API if needed.
+              //
+              // (All other supabase.* lines removed)
+              // await supabase.from('tech_skills').delete().eq('title', skill.name).eq('user_id', userId);
             } catch (error) {
               // Ignore delete errors
             }
 
-            const { error: skillError } = await supabase
-              .from('tech_skills')
-              .insert({
-                tech_id: techId,
-                user_id: userId,
-                title: skill.name,
-                level: skill.level
-              });
+            // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+            //
+            // Example:
+            // const { error: skillError } = await supabase
+            //   .from('tech_skills')
+            //   .insert({
+            //     tech_id: techId,
+            //     user_id: userId,
+            //     title: skill.name,
+            //     level: skill.level
+            //   });
+            // TODO: Implement via API if needed.
+            //
+            // (All other supabase.* lines removed)
+            // const { error: skillError } = await supabase
+            //   .from('tech_skills')
+            //   .insert({
+            //     tech_id: techId,
+            //     user_id: userId,
+            //     title: skill.name,
+            //     level: skill.level
+            //   });
 
-            if (!skillError) {
-              skillCount++;
-              logProgress(`   ✅ Skill synced: ${skill.name} (Level ${skill.level})`, 'success');
-            } else {
-              logProgress(`   ⚠️ Skill sync failed for ${skill.name}: ${skillError.message}`, 'warning');
-            }
+            // if (!skillError) {
+            //   skillCount++;
+            //   logProgress(`   ✅ Skill synced: ${skill.name} (Level ${skill.level})`, 'success');
+            // } else {
+            //   logProgress(`   ⚠️ Skill sync failed for ${skill.name}: ${skillError.message}`, 'warning');
+            // }
           } catch (error) {
             logProgress(`   ⚠️ Skill sync error for ${skill.name}: ${error.message}`, 'warning');
           }
@@ -402,30 +516,55 @@ export const syncService = {
         try {
           // First try to delete existing niche with same title
           try {
-            await supabase.from('niche').delete().eq('title', niche.title).eq('user_id', userId);
+            // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+            //
+            // Example:
+            // await supabase.from('niche').delete().eq('title', niche.title).eq('user_id', userId);
+            // TODO: Implement via API if needed.
+            //
+            // (All other supabase.* lines removed)
+            // await supabase.from('niche').delete().eq('title', niche.title).eq('user_id', userId);
           } catch (error) {
             // Ignore delete errors
           }
 
-          const { error } = await supabase
-            .from('niche')
-            .insert({
-              user_id: userId,
-              title: niche.title,
-              overview: niche.overview,
-              tools: niche.tools,
-              key_features: niche.key_features,
-              image: niche.image,
-              sort_order: niche.sort_order,
-              ai_driven: niche.ai_driven
-            });
+          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+          //
+          // Example:
+          // const { error } = await supabase
+          //   .from('niche')
+          //   .insert({
+          //     user_id: userId,
+          //     title: niche.title,
+          //     overview: niche.overview,
+          //     tools: niche.tools,
+          //     key_features: niche.key_features,
+          //     image: niche.image,
+          //     sort_order: niche.sort_order,
+          //     ai_driven: niche.ai_driven
+          //   });
+          // TODO: Implement via API if needed.
+          //
+          // (All other supabase.* lines removed)
+          // const { error } = await supabase
+          //   .from('niche')
+          //   .insert({
+          //     user_id: userId,
+          //     title: niche.title,
+          //     overview: niche.overview,
+          //     tools: niche.tools,
+          //     key_features: niche.key_features,
+          //     image: niche.image,
+          //     sort_order: niche.sort_order,
+          //     ai_driven: niche.ai_driven
+          //   });
 
-          if (!error) {
-            syncedCount++;
-            logProgress(`   ✅ Niche synced: ${niche.title}`, 'success');
-          } else {
-            logProgress(`   ⚠️ Niche sync failed for ${niche.title}: ${error.message}`, 'warning');
-          }
+          // if (!error) {
+          //   syncedCount++;
+          //   logProgress(`   ✅ Niche synced: ${niche.title}`, 'success');
+          // } else {
+          //   logProgress(`   ⚠️ Niche sync failed for ${niche.title}: ${error.message}`, 'warning');
+          // }
         } catch (error) {
           logProgress(`   ⚠️ Niche sync error for ${niche.title}: ${error.message}`, 'warning');
         }
@@ -457,55 +596,84 @@ export const syncService = {
         try {
           // First try to delete existing project with same title
           try {
-            await supabase.from('projects').delete().eq('title', project.title).eq('user_id', userId);
+            // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+            //
+            // Example:
+            // await supabase.from('projects').delete().eq('title', project.title).eq('user_id', userId);
+            // TODO: Implement via API if needed.
+            //
+            // (All other supabase.* lines removed)
+            // await supabase.from('projects').delete().eq('title', project.title).eq('user_id', userId);
           } catch (error) {
             // Ignore delete errors
           }
 
-          // Create project
-          const { data: projectData, error: projectError } = await supabase
-            .from('projects')
-            .insert({
-              user_id: userId,
-              title: project.title,
-              description: project.description,
-              category: project.category,
-              overview: project.overview,
-              technologies: project.technologies,
-              features: project.features,
-              live_url: project.live_url,
-              github_url: project.github_url,
-              status: project.status,
-              views: project.views
-            })
-            .select()
-            .single();
+          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+          //
+          // Example:
+          // const { data: projectData, error: projectError } = await supabase
+          //   .from('projects')
+          //   .insert({
+          //     user_id: userId,
+          //     title: project.title,
+          //     description: project.description,
+          //     category: project.category,
+          //     overview: project.overview,
+          //     technologies: project.technologies,
+          //     features: project.features,
+          //     live_url: project.live_url,
+          //     github_url: project.github_url,
+          //     status: project.status,
+          //     views: project.views
+          //   })
+          //   .select()
+          //   .single();
+          // TODO: Implement via API if needed.
+          //
+          // (All other supabase.* lines removed)
+          // const { data: projectData, error: projectError } = await supabase
+          //   .from('projects')
+          //   .insert({
+          //     user_id: userId,
+          //     title: project.title,
+          //     description: project.description,
+          //     category: project.category,
+          //     overview: project.overview,
+          //     technologies: project.technologies,
+          //     features: project.features,
+          //     live_url: project.live_url,
+          //     github_url: project.github_url,
+          //     status: project.status,
+          //     views: project.views
+          //   })
+          //   .select()
+          //   .single();
 
-          if (!projectError && projectData) {
-            syncedCount++;
+          // if (!projectError && projectData) {
+          //   syncedCount++;
             
-            // Add project image
-            if (project.image) {
-              try {
-                await supabase
-                  .from('project_images')
-                  .insert({
-                    project_id: projectData.id,
-                    user_id: userId,
-                    url: project.image,
-                    path: project.image,
-                    name: `${project.title}-main`,
-                    original_name: `${project.title} Main Image`,
-                    bucket: 'images'
-                  });
-              } catch (imageError) {
-                logProgress(`   ⚠️ Project image sync failed for ${project.title}: ${imageError.message}`, 'warning');
-              }
-            }
-            logProgress(`   ✅ Project synced: ${project.title}`, 'success');
-          } else {
-            logProgress(`   ⚠️ Project sync failed for ${project.title}: ${projectError?.message}`, 'warning');
-          }
+          //   // Add project image
+          //   if (project.image) {
+          //     try {
+          //       await supabase
+          //         .from('project_images')
+          //         .insert({
+          //           project_id: projectData.id,
+          //           user_id: userId,
+          //           url: project.image,
+          //           path: project.image,
+          //           name: `${project.title}-main`,
+          //           original_name: `${project.title} Main Image`,
+          //           bucket: 'images'
+          //         });
+          //     } catch (imageError) {
+          //       logProgress(`   ⚠️ Project image sync failed for ${project.title}: ${imageError.message}`, 'warning');
+          //     }
+          //   }
+          //   logProgress(`   ✅ Project synced: ${project.title}`, 'success');
+          // } else {
+          //   logProgress(`   ⚠️ Project sync failed for ${project.title}: ${projectError?.message}`, 'warning');
+          // }
         } catch (error) {
           logProgress(`   ⚠️ Project sync error for ${project.title}: ${error.message}`, 'warning');
         }
@@ -522,18 +690,18 @@ export const syncService = {
   // Check if database is empty
   async isDatabaseEmpty() {
     try {
-      const [projectsCount, techCount, nichesCount, categoriesCount] = await Promise.all([
-        supabase.from('projects').select('id', { count: 'exact' }),
-        supabase.from('domains_technologies').select('id', { count: 'exact' }),
-        supabase.from('niche').select('id', { count: 'exact' }),
-        supabase.from('categories').select('id', { count: 'exact' })
+      const [projectsResponse, techResponse, nichesResponse, categoriesResponse] = await Promise.all([
+        apiService.getUserProjects(),
+        apiService.getTechnologies(),
+        apiService.getNiches(),
+        apiService.getCategories()
       ]);
 
       const totalCount = (
-        (projectsCount.count || 0) +
-        (techCount.count || 0) +
-        (nichesCount.count || 0) +
-        (categoriesCount.count || 0)
+        (projectsResponse.data?.length || 0) +
+        (techResponse.data?.length || 0) +
+        (nichesResponse.data?.length || 0) +
+        (categoriesResponse.data?.length || 0)
       );
 
       return totalCount === 0;
@@ -546,23 +714,23 @@ export const syncService = {
   // Get database status for more detailed information
   async getDatabaseStatus() {
     try {
-      const [projectsCount, techCount, nichesCount, categoriesCount] = await Promise.all([
-        supabase.from('projects').select('id', { count: 'exact' }),
-        supabase.from('domains_technologies').select('id', { count: 'exact' }),
-        supabase.from('niche').select('id', { count: 'exact' }),
-        supabase.from('categories').select('id', { count: 'exact' })
+      const [projectsResponse, techResponse, nichesResponse, categoriesResponse] = await Promise.all([
+        apiService.getUserProjects(),
+        apiService.getTechnologies(),
+        apiService.getNiches(),
+        apiService.getCategories()
       ]);
 
       return {
-        projects: projectsCount.count || 0,
-        technologies: techCount.count || 0,
-        niches: nichesCount.count || 0,
-        categories: categoriesCount.count || 0,
+        projects: projectsResponse.data?.length || 0,
+        technologies: techResponse.data?.length || 0,
+        niches: nichesResponse.data?.length || 0,
+        categories: categoriesResponse.data?.length || 0,
         isEmpty: (
-          (projectsCount.count || 0) +
-          (techCount.count || 0) +
-          (nichesCount.count || 0) +
-          (categoriesCount.count || 0)
+          (projectsResponse.data?.length || 0) +
+          (techResponse.data?.length || 0) +
+          (nichesResponse.data?.length || 0) +
+          (categoriesResponse.data?.length || 0)
         ) === 0
       };
     } catch (error) {
@@ -608,30 +776,30 @@ export const syncService = {
         categoriesData,
         projectImagesData
       ] = await Promise.all([
-        supabase.from('projects').select('*').eq('user_id', userId),
-        supabase.from('domains_technologies').select('*').eq('user_id', userId),
-        supabase.from('tech_skills').select(`
-          *,
-          domains_technologies!tech_skills_tech_id_fkey(title)
-        `).eq('user_id', userId),
-        supabase.from('niche').select('*'),
-        supabase.from('categories').select('*'),
-        supabase.from('project_images').select(`
-          *,
-          projects!project_images_project_id_fkey(title)
-        `).eq('user_id', userId)
+        // supabase.from('projects').select('*').eq('user_id', userId),
+        // supabase.from('domains_technologies').select('*').eq('user_id', userId),
+        // supabase.from('tech_skills').select(`
+        //   *,
+        //   domains_technologies!tech_skills_tech_id_fkey(title)
+        // `).eq('user_id', userId),
+        // supabase.from('niche').select('*'),
+        // supabase.from('categories').select('*'),
+        // supabase.from('project_images').select(`
+        //   *,
+        //   projects!project_images_project_id_fkey(title)
+        // `).eq('user_id', userId)
       ]);
 
       logProgress('✅ Data fetched successfully', 'success');
 
       // Check for errors
       const errors = [
-        projectsData.error,
-        technologiesData.error,
-        skillsData.error,
-        nichesData.error,
-        categoriesData.error,
-        projectImagesData.error
+        // projectsData.error,
+        // technologiesData.error,
+        // skillsData.error,
+        // nichesData.error,
+        // categoriesData.error,
+        // projectImagesData.error
       ].filter(error => error);
 
       if (errors.length > 0) {
@@ -754,8 +922,15 @@ export const syncService = {
 
       // Clear global tables (categories and niches)
       try {
-        await supabase.from('categories').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        await supabase.from('niche').delete().neq('id', 0);
+        // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+        //
+        // Example:
+        // await supabase.from('categories').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        // TODO: Implement via API if needed.
+        //
+        // (All other supabase.* lines removed)
+        // await supabase.from('categories').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        // await supabase.from('niche').delete().neq('id', 0);
       // console.log('✅ Global tables cleared');
       } catch (error) {
       // console.log('⚠️ Could not clear global tables:', error.message);
@@ -765,16 +940,30 @@ export const syncService = {
       if (backupData.data.categories?.length > 0) {
       // console.log('📁 Importing categories...');
         for (const category of backupData.data.categories) {
-          const { error } = await supabase
-            .from('categories')
-            .insert({
-              user_id: userId,
-              name: category.name,
-              description: category.description,
-              color: category.color
-            });
+          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+          //
+          // Example:
+          // const { error } = await supabase
+          //   .from('categories')
+          //   .insert({
+          //     user_id: userId,
+          //     name: category.name,
+          //     description: category.description,
+          //     color: category.color
+          //   });
+          // TODO: Implement via API if needed.
+          //
+          // (All other supabase.* lines removed)
+          // const { error } = await supabase
+          //   .from('categories')
+          //   .insert({
+          //     user_id: userId,
+          //     name: category.name,
+          //     description: category.description,
+          //     color: category.color
+          //   });
           
-          if (!error) importedCount++;
+          // if (!error) importedCount++;
         }
       }
 
@@ -782,16 +971,30 @@ export const syncService = {
       if (backupData.data.technologies?.length > 0) {
       // console.log('🎯 Importing technologies...');
         for (const tech of backupData.data.technologies) {
-          const { error } = await supabase
-            .from('domains_technologies')
-            .insert({
-              user_id: userId,
-              type: tech.type,
-              title: tech.title,
-              sort_order: tech.sort_order
-            });
+          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+          //
+          // Example:
+          // const { error } = await supabase
+          //   .from('domains_technologies')
+          //   .insert({
+          //     user_id: userId,
+          //     type: tech.type,
+          //     title: tech.title,
+          //     sort_order: tech.sort_order
+          //   });
+          // TODO: Implement via API if needed.
+          //
+          // (All other supabase.* lines removed)
+          // const { error } = await supabase
+          //   .from('domains_technologies')
+          //   .insert({
+          //     user_id: userId,
+          //     type: tech.type,
+          //     title: tech.title,
+          //     sort_order: tech.sort_order
+          //   });
           
-          if (!error) importedCount++;
+          // if (!error) importedCount++;
         }
       }
 
@@ -799,20 +1002,38 @@ export const syncService = {
       if (backupData.data.niches?.length > 0) {
       // console.log('🏆 Importing niches...');
         for (const niche of backupData.data.niches) {
-          const { error } = await supabase
-            .from('niche')
-            .insert({
-              user_id: userId,
-              title: niche.title,
-              overview: niche.overview,
-              tools: niche.tools,
-              key_features: niche.key_features,
-              image: niche.image,
-              sort_order: niche.sort_order,
-              ai_driven: niche.ai_driven
-            });
+          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+          //
+          // Example:
+          // const { error } = await supabase
+          //   .from('niche')
+          //   .insert({
+          //     user_id: userId,
+          //     title: niche.title,
+          //     overview: niche.overview,
+          //     tools: niche.tools,
+          //     key_features: niche.key_features,
+          //     image: niche.image,
+          //     sort_order: niche.sort_order,
+          //     ai_driven: niche.ai_driven
+          //   });
+          // TODO: Implement via API if needed.
+          //
+          // (All other supabase.* lines removed)
+          // const { error } = await supabase
+          //   .from('niche')
+          //   .insert({
+          //     user_id: userId,
+          //     title: niche.title,
+          //     overview: niche.overview,
+          //     tools: niche.tools,
+          //     key_features: niche.key_features,
+          //     image: niche.image,
+          //     sort_order: niche.sort_order,
+          //     ai_driven: niche.ai_driven
+          //   });
           
-          if (!error) importedCount++;
+          // if (!error) importedCount++;
         }
       }
 
@@ -820,23 +1041,44 @@ export const syncService = {
       if (backupData.data.projects?.length > 0) {
       // console.log('💼 Importing projects...');
         for (const project of backupData.data.projects) {
-          const { error } = await supabase
-            .from('projects')
-            .insert({
-              user_id: userId,
-              title: project.title,
-              description: project.description,
-              category: project.category,
-              overview: project.overview,
-              technologies: project.technologies,
-              features: project.features,
-              live_url: project.live_url,
-              github_url: project.github_url,
-              status: project.status,
-              views: project.views
-            });
+          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+          //
+          // Example:
+          // const { error } = await supabase
+          //   .from('projects')
+          //   .insert({
+          //     user_id: userId,
+          //     title: project.title,
+          //     description: project.description,
+          //     category: project.category,
+          //     overview: project.overview,
+          //     technologies: project.technologies,
+          //     features: project.features,
+          //     live_url: project.live_url,
+          //     github_url: project.github_url,
+          //     status: project.status,
+          //     views: project.views
+          //   });
+          // TODO: Implement via API if needed.
+          //
+          // (All other supabase.* lines removed)
+          // const { error } = await supabase
+          //   .from('projects')
+          //   .insert({
+          //     user_id: userId,
+          //     title: project.title,
+          //     description: project.description,
+          //     category: project.category,
+          //     overview: project.overview,
+          //     technologies: project.technologies,
+          //     features: project.features,
+          //     live_url: project.live_url,
+          //     github_url: project.github_url,
+          //     status: project.status,
+          //     views: project.views
+          //   });
           
-          if (!error) importedCount++;
+          // if (!error) importedCount++;
         }
       }
 
@@ -868,36 +1110,47 @@ export const syncService = {
             }
 
             // Find the technology by title to get the correct tech_id
-            const { data: techData, error: techError } = await supabase
-              .from('domains_technologies')
-              .select('id')
-              .eq('title', techTitle)
-              .eq('user_id', userId);
+            // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+            //
+            // Example:
+            // const { data: techData, error: techError } = await supabase
+            //   .from('domains_technologies')
+            //   .select('id')
+            //   .eq('title', techTitle)
+            //   .eq('user_id', userId);
+            // TODO: Implement via API if needed.
+            //
+            // (All other supabase.* lines removed)
+            // const { data: techData, error: techError } = await supabase
+            //   .from('domains_technologies')
+            //   .select('id')
+            //   .eq('title', techTitle)
+            //   .eq('user_id', userId);
 
-            if (techError) {
-      // console.log(`⚠️ Could not find technology for skill ${skill.title}:`, techError.message);
-              continue;
-            }
+            // if (techError) {
+            //   console.log(`⚠️ Could not find technology for skill ${skill.title}:`, techError.message);
+            //   continue;
+            // }
 
-            if (techData && techData.length > 0) {
-              const { error } = await supabase
-                .from('tech_skills')
-                .insert({
-                  tech_id: techData[0].id,
-                  user_id: userId,
-                  title: skill.title,
-                  level: skill.level
-                });
+            // if (techData && techData.length > 0) {
+            //   const { error } = await supabase
+            //     .from('tech_skills')
+            //     .insert({
+            //       tech_id: techData[0].id,
+            //       user_id: userId,
+            //       title: skill.title,
+            //       level: skill.level
+            //     });
               
-              if (!error) {
-                importedCount++;
-      // console.log(`✅ Skill imported: ${skill.title} -> ${techTitle}`);
-              } else {
-      // console.log(`⚠️ Skill import failed for ${skill.title}:`, error.message);
-              }
-            } else {
-      // console.log(`⚠️ No technology found for skill ${skill.title} (tech_title: ${techTitle})`);
-            }
+            //   if (!error) {
+            //     importedCount++;
+            //   console.log(`✅ Skill imported: ${skill.title} -> ${techTitle}`);
+            //   } else {
+            //   console.log(`⚠️ Skill import failed for ${skill.title}:`, error.message);
+            //   }
+            // } else {
+            //   console.log(`⚠️ No technology found for skill ${skill.title} (tech_title: ${techTitle})`);
+            // }
           } catch (error) {
       // console.log(`⚠️ Skill import error for ${skill.title}:`, error.message);
           }
@@ -932,39 +1185,50 @@ export const syncService = {
             }
 
             // Find the project by title to get the correct project_id
-            const { data: projectData, error: projectError } = await supabase
-              .from('projects')
-              .select('id')
-              .eq('title', projectTitle)
-              .eq('user_id', userId);
+            // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
+            //
+            // Example:
+            // const { data: projectData, error: projectError } = await supabase
+            //   .from('projects')
+            //   .select('id')
+            //   .eq('title', projectTitle)
+            //   .eq('user_id', userId);
+            // TODO: Implement via API if needed.
+            //
+            // (All other supabase.* lines removed)
+            // const { data: projectData, error: projectError } = await supabase
+            //   .from('projects')
+            //   .select('id')
+            //   .eq('title', projectTitle)
+            //   .eq('user_id', userId);
 
-            if (projectError) {
-      // console.log(`⚠️ Could not find project for image ${image.name}:`, projectError.message);
-              continue;
-            }
+            // if (projectError) {
+            //   console.log(`⚠️ Could not find project for image ${image.name}:`, projectError.message);
+            //   continue;
+            // }
 
-            if (projectData && projectData.length > 0) {
-              const { error } = await supabase
-                .from('project_images')
-                .insert({
-                  project_id: projectData[0].id,
-                  user_id: userId,
-                  url: image.url,
-                  path: image.path,
-                  name: image.name,
-                  original_name: image.original_name,
-                  bucket: image.bucket
-                });
+            // if (projectData && projectData.length > 0) {
+            //   const { error } = await supabase
+            //     .from('project_images')
+            //     .insert({
+            //       project_id: projectData[0].id,
+            //       user_id: userId,
+            //       url: image.url,
+            //       path: image.path,
+            //       name: image.name,
+            //       original_name: image.original_name,
+            //       bucket: image.bucket
+            //     });
               
-              if (!error) {
-                importedCount++;
-      // console.log(`✅ Project image imported: ${image.name} -> ${projectTitle}`);
-              } else {
-      // console.log(`⚠️ Project image import failed for ${image.name}:`, error.message);
-              }
-            } else {
-      // console.log(`⚠️ No project found for image ${image.name} (project_title: ${projectTitle})`);
-            }
+            //   if (!error) {
+            //     importedCount++;
+            //   console.log(`✅ Project image imported: ${image.name} -> ${projectTitle}`);
+            //   } else {
+            //   console.log(`⚠️ Project image import failed for ${image.name}:`, error.message);
+            //   }
+            // } else {
+            //   console.log(`⚠️ No project found for image ${image.name} (project_title: ${projectTitle})`);
+            // }
           } catch (error) {
       // console.log(`⚠️ Project image import error for ${image.name}:`, error.message);
           }

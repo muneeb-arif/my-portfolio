@@ -21,10 +21,13 @@ export const PublicDataProvider = ({ children }) => {
         setData(d => ({ ...d, loading: true, error: null }));
         const [projects, technologies, niches] = await Promise.all([
           portfolioService.getPublishedProjects(),
-          portfolioService.getDomainsTechnologies(),
+          portfolioService.getTechnologies(), // Fixed: was getDomainsTechnologies()
           portfolioService.getNiches(),
         ]);
         if (isMounted) {
+          console.log('[PublicDataProvider] Loaded projects:', projects);
+          console.log('[PublicDataProvider] Loaded technologies:', technologies);
+          console.log('[PublicDataProvider] Loaded niches:', niches);
           setData({ projects, technologies, niches, loading: false, error: null });
         }
       } catch (error) {

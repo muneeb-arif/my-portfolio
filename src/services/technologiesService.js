@@ -94,5 +94,62 @@ export const technologiesService = {
       console.error('Error deleting technology:', error);
       throw error;
     }
+  },
+
+  // Add skill to technology
+  async addSkill(techId, skillData) {
+    try {
+      const user = await getCurrentUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const response = await apiService.addSkill(techId, skillData);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to add skill');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error adding skill:', error);
+      throw error;
+    }
+  },
+
+  // Update skill
+  async updateSkill(skillId, skillData) {
+    try {
+      const user = await getCurrentUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const response = await apiService.updateSkill(skillId, skillData);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update skill');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error updating skill:', error);
+      throw error;
+    }
+  },
+
+  // Delete skill
+  async deleteSkill(skillId) {
+    try {
+      const user = await getCurrentUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const response = await apiService.deleteSkill(skillId);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to delete skill');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting skill:', error);
+      throw error;
+    }
   }
 }; 

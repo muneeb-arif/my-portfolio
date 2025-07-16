@@ -1,6 +1,8 @@
 import { fallbackDataService } from './fallbackDataService';
+import { fallbackUtils } from '../utils/fallbackUtils';
 import { portfolioConfig } from '../config/portfolio';
 import { projectsService } from './projectsService';
+import { apiService } from './apiService';
 
 // ================ PUBLIC PORTFOLIO OPERATIONS ================
 // These functions fetch data for the public portfolio (no authentication required)
@@ -9,11 +11,23 @@ export const portfolioService = {
   // Get all published projects for public display
   async getPublishedProjects() {
     try {
-      // Use API only
-      const data = await projectsService.getPublishedProjects();
+      // Use API with fallback
+      const response = await apiService.getPublishedProjects();
+      
+      console.log('[portfolioService] API response:', response);
+      
+      // Use fallback if API fails OR returns empty data
+      if (!response.success || !response.data || response.data.length === 0) {
+        console.log('📊 No projects from API, using fallback data');
+        fallbackUtils.showFallbackNotification();
+        return this.transformFallbackProjects(fallbackDataService.getProjects());
+      }
+      
+      const data = response.data || [];
+      console.log('[portfolioService] Raw API data:', data);
       
       // Transform data to match existing frontend format
-      return data?.map(project => ({
+      const transformedData = data?.map(project => ({
         id: project.id,
         title: project.title,
         description: project.description,
@@ -32,70 +46,82 @@ export const portfolioService = {
           })) || []
         }
       })) || [];
+      
+      console.log('[portfolioService] Transformed projects:', transformedData);
+      return transformedData;
     } catch (error) {
       console.error('Error fetching published projects from API:', error);
       // Return fallback data when API fails
+      fallbackUtils.showFallbackNotification();
       return this.transformFallbackProjects(fallbackDataService.getProjects());
     }
   },
 
-  // Get published projects by category
-  async getPublishedProjectsByCategory(category) {
-    try {
-      if (category === 'All') {
-        return this.getPublishedProjects();
+  // Transform fallback projects to match frontend format
+  transformFallbackProjects(projects) {
+    return projects.map(project => ({
+      id: project.id,
+      title: project.title,
+      description: project.description,
+      category: project.category || 'Web Development',
+      image: project.image || '/images/domains/default.jpeg',
+      buttonText: 'View Details',
+      details: {
+        overview: project.overview || project.description,
+        technologies: Array.isArray(project.technologies) ? project.technologies : [],
+        features: Array.isArray(project.features) ? project.features : [],
+        liveUrl: project.live_url || '#',
+        githubUrl: project.github_url || '#',
+        images: [{
+          url: project.image || '/images/domains/default.jpeg',
+          caption: null
+        }]
       }
-
-      const allProjects = await this.getPublishedProjects();
-      return allProjects.filter(project => project.category === category);
-    } catch (error) {
-      // console.error('Error fetching projects by category:', error);
-      return [];
-    }
+    }));
   },
 
-  // Get available categories
-  async getAvailableCategories() {
+  // Get categories for public display
+  async getCategories() {
     try {
-      // Use API instead of Supabase
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      // Use API with fallback
+      const response = await apiService.getCategories();
       
-      const response = await fetch(`${API_BASE}/categories`);
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch categories');
+      // Use fallback if API fails OR returns empty data
+      if (!response.success || !response.data || response.data.length === 0) {
+        console.log('📁 No categories from API, using fallback data');
+        fallbackUtils.showFallbackNotification();
+        return fallbackDataService.getCategories();
       }
       
-      const categories = data.data || [];
-      const categoryNames = categories.map(cat => cat.name);
-      
-      // Always include 'All' as the first option
-      return ['All', ...categoryNames];
+      return response.data || [];
     } catch (error) {
       console.error('Error fetching categories:', error);
-      // Return fallback categories
-      const fallbackCategories = fallbackDataService.getCategories();
-      return ['All', ...fallbackCategories];
+      fallbackUtils.showFallbackNotification();
+      return fallbackDataService.getCategories();
     }
   },
 
-  // Get domains and technologies for public display
-  async getDomainsTechnologies() {
+  // Get technologies for public display
+  async getTechnologies() {
     try {
-      // Use API instead of Supabase
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      // Use API with fallback
+      const response = await apiService.getTechnologies();
       
-      const response = await fetch(`${API_BASE}/technologies`);
-      const data = await response.json();
+      console.log('[portfolioService] Technologies API response:', response);
       
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch technologies');
+      // Use fallback if API fails OR returns empty data
+      if (!response.success || !response.data || response.data.length === 0) {
+        console.log('🎯 No technologies from API, using fallback data');
+        fallbackUtils.showFallbackNotification();
+        return fallbackDataService.getTechnologies();
       }
       
-      return data.data || [];
+      const data = response.data || [];
+      console.log('[portfolioService] Raw technologies data:', data);
+      return data;
     } catch (error) {
-      console.error('Error fetching domains/technologies:', error);
+      console.error('Error fetching technologies:', error);
+      fallbackUtils.showFallbackNotification();
       return fallbackDataService.getTechnologies();
     }
   },
@@ -103,19 +129,24 @@ export const portfolioService = {
   // Get niches for public display
   async getNiches() {
     try {
-      // Use API instead of Supabase
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      // Use API with fallback
+      const response = await apiService.getNiches();
       
-      const response = await fetch(`${API_BASE}/niches`);
-      const data = await response.json();
+      console.log('[portfolioService] Niches API response:', response);
       
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch niches');
+      // Use fallback if API fails OR returns empty data
+      if (!response.success || !response.data || response.data.length === 0) {
+        console.log('🏆 No niches from API, using fallback data');
+        fallbackUtils.showFallbackNotification();
+        return fallbackDataService.getNiches();
       }
       
-      return data.data || [];
+      const data = response.data || [];
+      console.log('[portfolioService] Raw niches data:', data);
+      return data;
     } catch (error) {
       console.error('Error fetching niches:', error);
+      fallbackUtils.showFallbackNotification();
       return fallbackDataService.getNiches();
     }
   },
@@ -123,47 +154,19 @@ export const portfolioService = {
   // Get public settings
   async getPublicSettings() {
     try {
-      // Use API instead of Supabase
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      // Use API with fallback
+      const response = await apiService.getSettings();
       
-      const response = await fetch(`${API_BASE}/settings`);
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch settings');
+      if (!response.success) {
+        throw new Error('Failed to fetch settings from API');
       }
       
-      const settings = data.data || {};
-      
-      // Merge with default settings
-      return {
-        ...portfolioConfig.defaultSettings,
-        ...settings
-      };
+      return response.data || {};
     } catch (error) {
       console.error('Error fetching public settings:', error);
-      return portfolioConfig.defaultSettings;
+      // Return empty object as fallback for settings
+      return {};
     }
-  },
-
-  // Transform fallback projects to match expected format
-  transformFallbackProjects(fallbackProjects) {
-    return fallbackProjects.map(project => ({
-      id: project.id,
-      title: project.title,
-      description: project.description,
-      category: project.category,
-      image: project.image,
-      buttonText: 'View Details',
-      details: {
-        overview: project.overview,
-        technologies: project.technologies || [],
-        features: project.features || [],
-        liveUrl: project.live_url || '#',
-        githubUrl: project.github_url || '#',
-        images: project.image ? [{ url: project.image, caption: project.title }] : []
-      }
-    }));
   }
 };
 

@@ -10,6 +10,8 @@ export async function GET(
   try {
     const projectId = params.id;
     
+    console.log('📥 GET /api/projects/[id]/images - Fetching images for project:', projectId);
+    
     const query = `
       SELECT * FROM project_images 
       WHERE project_id = ? 
@@ -19,15 +21,22 @@ export async function GET(
     const result = await executeQuery(query, [projectId]);
     
     if (!result.success) {
+      console.error('❌ Failed to fetch project images:', result.error);
       return NextResponse.json(
         { success: false, error: result.error },
         { status: 500 }
       );
     }
 
+    const images = result.data || [];
+    console.log('📊 Retrieved project images:', (images as any[]).map((img: any) => ({
+      name: img.name,
+      order_index: img.order_index
+    })));
+
     return NextResponse.json({
       success: true,
-      data: result.data || []
+      data: images
     });
   } catch (error) {
     console.error('Get project images error:', error);
@@ -41,7 +50,8 @@ export async function GET(
 // POST /api/projects/[id]/images - Add image to project
 export const POST = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    const projectId = request.nextUrl.pathname.split('/')[4]; // /api/projects/[id]/images
+    const pathSegments = request.nextUrl.pathname.split('/');
+    const projectId = pathSegments[pathSegments.length - 2]; // /api/projects/[id]/images -> [id] is second to last
     if (!projectId) {
       return NextResponse.json(
         { success: false, error: 'Project ID is required' },
@@ -51,6 +61,13 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
 
     const body = await request.json();
     const { url, path, name, original_name, size, type, bucket, order_index } = body;
+
+    console.log('📥 POST /api/projects/[id]/images - Received request:', {
+      projectId,
+      imageName: name,
+      order_index,
+      url: url?.substring(0, 50) + '...'
+    });
 
     // Validate input
     if (!url || !path || !name) {
@@ -81,6 +98,8 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     
+    console.log('💾 Inserting image with order_index:', order_index);
+    
     const result = await executeQuery(query, [
       imageId,
       projectId,
@@ -98,6 +117,7 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     ]);
 
     if (!result.success) {
+      console.error('❌ Failed to insert image:', result.error);
       return NextResponse.json(
         { success: false, error: result.error },
         { status: 500 }
@@ -108,9 +128,16 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     const getQuery = 'SELECT * FROM project_images WHERE id = ?';
     const getResult = await executeQuery(getQuery, [imageId]);
 
+    const createdImage = (getResult.data as any[])?.[0];
+    console.log('✅ Image created successfully:', {
+      id: createdImage?.id,
+      name: createdImage?.name,
+      order_index: createdImage?.order_index
+    });
+
     return NextResponse.json({
       success: true,
-      data: (getResult.data as any[])?.[0],
+      data: createdImage,
       message: 'Project image added successfully'
     }, { status: 201 });
   } catch (error) {
@@ -125,13 +152,16 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
 // DELETE /api/projects/[id]/images - Delete all project images
 export const DELETE = withAuth(async (request: AuthenticatedRequest) => {
   try {
-    const projectId = request.nextUrl.pathname.split('/')[4]; // /api/projects/[id]/images
+    const pathSegments = request.nextUrl.pathname.split('/');
+    const projectId = pathSegments[pathSegments.length - 2]; // /api/projects/[id]/images -> [id] is second to last
     if (!projectId) {
       return NextResponse.json(
         { success: false, error: 'Project ID is required' },
         { status: 400 }
       );
     }
+
+    console.log('🗑️ DELETE /api/projects/[id]/images - Deleting all images for project:', projectId);
 
     // Verify project belongs to user
     const projectQuery = 'SELECT id FROM projects WHERE id = ? AND user_id = ?';
@@ -148,11 +178,14 @@ export const DELETE = withAuth(async (request: AuthenticatedRequest) => {
     const result = await executeQuery(query, [projectId]);
 
     if (!result.success) {
+      console.error('❌ Failed to delete project images:', result.error);
       return NextResponse.json(
         { success: false, error: result.error },
         { status: 500 }
       );
     }
+
+    console.log('✅ Successfully deleted all images for project:', projectId);
 
     return NextResponse.json({
       success: true,

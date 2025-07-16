@@ -18,6 +18,7 @@ export class ProjectService {
                  'size', pi.size,
                  'type', pi.type,
                  'bucket', pi.bucket,
+                 'order_index', pi.order_index,
                  'created_at', pi.created_at
                )
              ) as project_images
@@ -28,7 +29,19 @@ export class ProjectService {
       ORDER BY p.created_at DESC
     `;
     
-    return executeQuery(query, [userId]);
+    const result = await executeQuery(query, [userId]);
+    
+    // Sort project_images by order_index in the frontend
+    if (result.success && result.data) {
+      const projects = result.data as Project[];
+      projects.forEach(project => {
+        if (project.project_images && Array.isArray(project.project_images)) {
+          project.project_images.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+        }
+      });
+    }
+    
+    return result;
   }
 
   // Get published projects for portfolio owner (public)
@@ -47,6 +60,7 @@ export class ProjectService {
                  'size', pi.size,
                  'type', pi.type,
                  'bucket', pi.bucket,
+                 'order_index', pi.order_index,
                  'created_at', pi.created_at
                )
              ) as project_images
@@ -58,7 +72,19 @@ export class ProjectService {
       ORDER BY p.created_at DESC
     `;
     
-    return executeQuery(query, [ownerEmail]);
+    const result = await executeQuery(query, [ownerEmail]);
+    
+    // Sort project_images by order_index in the frontend
+    if (result.success && result.data) {
+      const projects = result.data as Project[];
+      projects.forEach(project => {
+        if (project.project_images && Array.isArray(project.project_images)) {
+          project.project_images.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+        }
+      });
+    }
+    
+    return result;
   }
 
   // Get project by ID
@@ -77,6 +103,7 @@ export class ProjectService {
                  'size', pi.size,
                  'type', pi.type,
                  'bucket', pi.bucket,
+                 'order_index', pi.order_index,
                  'created_at', pi.created_at
                )
              ) as project_images
@@ -88,7 +115,14 @@ export class ProjectService {
     
     const result = await executeQuery(query, [projectId, userId]);
     if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
-      return { success: true, data: result.data[0] as Project };
+      const project = result.data[0] as Project;
+      
+      // Sort project_images by order_index
+      if (project.project_images && Array.isArray(project.project_images)) {
+        project.project_images.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      }
+      
+      return { success: true, data: project };
     }
     return { success: false, error: 'Project not found' };
   }

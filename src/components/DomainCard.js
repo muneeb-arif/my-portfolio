@@ -44,7 +44,7 @@ const DomainCard = ({ domain, onClick, isSelected }) => {
       )}
 
       {/* AI-Driven Badge */}
-      {ai_driven && (
+      {Boolean(ai_driven) && (
         <div className="absolute top-4 left-4 z-10">
           <span className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
             🤖 AI-Driven

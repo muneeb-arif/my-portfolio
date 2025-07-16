@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Save, X, Star, GripVertical, Loader2 } from 'lucide-react';
 import { technologiesService } from '../../services/technologiesService';
+import toastService from '../../services/toastService';
 import './DomainsTechnologiesManager.css';
 
 const DomainsTechnologiesManager = () => {
@@ -71,9 +72,13 @@ const DomainsTechnologiesManager = () => {
       setShowForm(false);
       resetForm();
       
+      // Show success toast
+      const action = editingItem ? 'updated' : 'created';
+      toastService.success(`Technology ${action} successfully! 🎯`);
+      
     } catch (error) {
       console.error('Error saving item:', error);
-      alert('Error saving item: ' + error.message);
+      toastService.error(`Error saving technology: ${error.message}`);
     } finally {
       setSavingItem(false);
     }
@@ -99,9 +104,12 @@ const DomainsTechnologiesManager = () => {
       setDeletingItems(prev => new Set([...prev, itemId]));
       await technologiesService.deleteTechnology(itemId);
       await loadItems();
+      
+      // Show success toast
+      toastService.success('Technology deleted successfully! 🗑️');
     } catch (error) {
       console.error('Error deleting item:', error);
-      alert('Error deleting item: ' + error.message);
+      toastService.error(`Error deleting technology: ${error.message}`);
     } finally {
       setDeletingItems(prev => {
         const newSet = new Set(prev);
@@ -116,9 +124,12 @@ const DomainsTechnologiesManager = () => {
       setReorderingItems(prev => new Set([...prev, itemId]));
       await technologiesService.updateTechnology(itemId, { sort_order: newSortOrder });
       await loadItems();
+      
+      // Show success toast
+      toastService.success('Technology reordered successfully! 🔄');
     } catch (error) {
       console.error('Error reordering items:', error);
-      alert('Error reordering items: ' + error.message);
+      toastService.error(`Error reordering technology: ${error.message}`);
     } finally {
       setReorderingItems(prev => {
         const newSet = new Set(prev);
@@ -129,32 +140,37 @@ const DomainsTechnologiesManager = () => {
   };
 
   const moveItem = async (itemId, direction) => {
-    const currentItem = items.find(item => item.id === itemId);
-    if (!currentItem) return;
+    try {
+      const currentItem = items.find(item => item.id === itemId);
+      if (!currentItem) return;
 
-    const currentIndex = items.findIndex(item => item.id === itemId);
-    let newSortOrder;
+      const currentIndex = items.findIndex(item => item.id === itemId);
+      let newSortOrder;
 
-    if (direction === 'up' && currentIndex > 0) {
-      const prevItem = items[currentIndex - 1];
-      newSortOrder = prevItem.sort_order;
-      // Update the previous item's sort order
-      await technologiesService.updateTechnology(prevItem.id, { 
-        sort_order: currentItem.sort_order 
-      });
-    } else if (direction === 'down' && currentIndex < items.length - 1) {
-      const nextItem = items[currentIndex + 1];
-      newSortOrder = nextItem.sort_order;
-      // Update the next item's sort order
-      await technologiesService.updateTechnology(nextItem.id, { 
-        sort_order: currentItem.sort_order 
-      });
-    } else {
-      return; // Can't move further
+      if (direction === 'up' && currentIndex > 0) {
+        const prevItem = items[currentIndex - 1];
+        newSortOrder = prevItem.sort_order;
+        // Update the previous item's sort order
+        await technologiesService.updateTechnology(prevItem.id, { 
+          sort_order: currentItem.sort_order 
+        });
+      } else if (direction === 'down' && currentIndex < items.length - 1) {
+        const nextItem = items[currentIndex + 1];
+        newSortOrder = nextItem.sort_order;
+        // Update the next item's sort order
+        await technologiesService.updateTechnology(nextItem.id, { 
+          sort_order: currentItem.sort_order 
+        });
+      } else {
+        return; // Can't move further
+      }
+
+      // Update the current item's sort order
+      await handleReorderItems(itemId, newSortOrder);
+    } catch (error) {
+      console.error('Error moving item:', error);
+      toastService.error(`Error reordering technology: ${error.message}`);
     }
-
-    // Update the current item's sort order
-    await handleReorderItems(itemId, newSortOrder);
   };
 
   const handleAddSkill = async (techId, skillData) => {
@@ -172,8 +188,12 @@ const DomainsTechnologiesManager = () => {
         }
         return item;
       }));
+      
+      // Show success toast
+      toastService.success(`Skill "${skillData.name}" added successfully! ⭐`);
     } catch (err) {
       setError('Failed to add skill');
+      toastService.error(`Error adding skill: ${err.message}`);
       // console.error('Error adding skill:', err);
     } finally {
       setAddingSkills(prev => {
@@ -196,8 +216,12 @@ const DomainsTechnologiesManager = () => {
           skill.id === skillId ? updatedSkill : skill
         ) || []
       })));
+      
+      // Show success toast
+      toastService.success(`Skill level updated successfully! 📊`);
     } catch (err) {
       setError('Failed to update skill');
+      toastService.error(`Error updating skill: ${err.message}`);
       // console.error('Error updating skill:', err);
     } finally {
       setUpdatingSkills(prev => {
@@ -214,13 +238,17 @@ const DomainsTechnologiesManager = () => {
         setDeletingSkills(prev => new Set(prev).add(skillId));
         await technologiesService.deleteSkill(skillId);
         
-        // Update local state
-        setItems(prev => prev.map(item => ({
-          ...item,
-          tech_skills: item.tech_skills?.filter(skill => skill.id !== skillId) || []
-        })));
-      } catch (err) {
-        setError('Failed to delete skill');
+              // Update local state
+      setItems(prev => prev.map(item => ({
+        ...item,
+        tech_skills: item.tech_skills?.filter(skill => skill.id !== skillId) || []
+      })));
+      
+      // Show success toast
+      toastService.success('Skill deleted successfully! 🗑️');
+    } catch (err) {
+      setError('Failed to delete skill');
+      toastService.error(`Error deleting skill: ${err.message}`);
       // console.error('Error deleting skill:', err);
       } finally {
         setDeletingSkills(prev => {
@@ -451,7 +479,7 @@ const DomainsTechnologiesManager = () => {
                     .map((skill) => (
                       <div key={skill.id} className="skill-item">
                         <div className="skill-info">
-                          <span className="skill-name">{skill.title}</span>
+                          <span className="skill-name">{skill.name}</span>
                           {renderSkillLevel(skill.level)}
                         </div>
                         <div className="skill-actions">
@@ -508,7 +536,7 @@ const DomainsTechnologiesManager = () => {
                     const level = parseFloat(levelInput.value);
                     
                     if (name) {
-                      handleAddSkill(item.id, { title: name, level });
+                      handleAddSkill(item.id, { name: name, level });
                       nameInput.value = '';
                       levelInput.value = '3';
                     }

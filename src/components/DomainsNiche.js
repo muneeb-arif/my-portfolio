@@ -117,9 +117,9 @@ const DomainsNiche = ({ additionalDataLoading }) => {
   }
 
   // Hide the entire section if no niches data
-  if (!loading && niches.length === 0) {
-    return null;
-  }
+  // if (!loading && niches.length === 0) {
+  //   return null;
+  // }
 
   return (
     <section id="domains" className="bg-[#F5F1EB] py-20 relative overflow-hidden">
@@ -148,18 +148,14 @@ const DomainsNiche = ({ additionalDataLoading }) => {
         {/* Niches Grid */}
         {niches.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-12">
-            {niches.map((niche) => {
-              const transformedNiche = transformNicheToDomain(niche);
-              
-              return (
-                <DomainCard
-                  key={niche.id}
-                  domain={transformedNiche}
-                  onClick={handleCardClick}
-                  isSelected={selectedNiche?.id === niche.id}
-                />
-              );
-            })}
+            {niches.map((niche) => (
+              <DomainCard
+                key={niche.id}
+                domain={transformNicheToDomain(niche)}
+                onClick={handleCardClick}
+                isSelected={selectedNiche?.id === niche.id}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-20">

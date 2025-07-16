@@ -3,6 +3,7 @@ import { Plus, Edit, Trash2, Upload, X, Loader2, ArrowUp, ArrowDown, Save } from
 import { apiService } from '../../services/apiService';
 import { imageService } from '../../services/imageService';
 import { BUCKETS } from '../../config/supabase';
+import toastService from '../../services/toastService';
 import './NicheManager.css';
 
 const NicheManager = () => {
@@ -43,10 +44,16 @@ const NicheManager = () => {
   const loadNiches = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getNiches();
-      setNiches(data);
+      const response = await apiService.getNiches();
+      if (response.success) {
+        setNiches(response.data || []);
+      } else {
+        console.error('Error loading niches:', response.error);
+        setNiches([]);
+      }
     } catch (error) {
-      // console.error('Error loading niches:', error);
+      console.error('Error loading niches:', error);
+      setNiches([]);
     } finally {
       setLoading(false);
     }
@@ -96,9 +103,13 @@ const NicheManager = () => {
       setShowForm(false);
       resetForm();
       
+      // Show success toast
+      const action = editingNiche ? 'updated' : 'created';
+      toastService.success(`Niche ${action} successfully! 🎯`);
+      
     } catch (error) {
       console.error('Error saving niche:', error);
-      alert('Error saving niche: ' + error.message);
+      toastService.error(`Error saving niche: ${error.message}`);
     } finally {
       setSavingNiche(false);
     }
@@ -126,9 +137,12 @@ const NicheManager = () => {
     try {
       await apiService.deleteNiche(nicheId);
       await loadNiches();
+      
+      // Show success toast
+      toastService.success('Niche deleted successfully! 🗑️');
     } catch (error) {
       console.error('Error deleting niche:', error);
-      alert('Error deleting niche: ' + error.message);
+      toastService.error(`Error deleting niche: ${error.message}`);
     }
   };
 
@@ -158,8 +172,12 @@ const NicheManager = () => {
           apiService.updateNiche(niche.id, { sort_order: niche.sort_order })
         )
       );
+      
+      // Show success toast
+      toastService.success('Niche reordered successfully! 🔄');
     } catch (error) {
-      // console.error('Error reordering niches:', error);
+      console.error('Error reordering niches:', error);
+      toastService.error(`Error reordering niche: ${error.message}`);
       loadNiches(); // Reload on error
     }
   };
@@ -411,7 +429,7 @@ const NicheManager = () => {
         )}
 
         <div className="niches-list">
-          {niches.length === 0 ? (
+          {(!niches || niches.length === 0) ? (
             <div className="empty-state">
               <p>No niches added yet. Click "Add New Niche" to get started.</p>
             </div>
@@ -431,7 +449,7 @@ const NicheManager = () => {
                     <div className="niche-details">
                       <h4>{niche.title}</h4>
                       <p className="niche-overview">{niche.overview}</p>
-                      {niche.ai_driven && (
+                      {Boolean(niche.ai_driven) && (
                         <span className="ai-badge">🤖 AI-Driven</span>
                       )}
                     </div>

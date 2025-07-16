@@ -5,6 +5,8 @@ import { usePublicData } from '../services/PublicDataContext';
 const Technologies = ({ additionalDataLoading }) => {
   const { technologies, loading } = usePublicData();
 
+  console.log('[Technologies] Received technologies:', technologies);
+
   // Map icon names to actual icon components
   const getIconComponent = (iconName) => {
     const iconMap = {
@@ -54,9 +56,9 @@ const Technologies = ({ additionalDataLoading }) => {
   }
 
   // Hide the entire section if no technologies data
-  if (!loading && technologies.length === 0) {
-    return null;
-  }
+  // if (!loading && technologies.length === 0) {
+  //   return null;
+  // }
 
   return (
     <section id="technologies" className="bg-sand-light py-20 relative overflow-hidden">
@@ -111,7 +113,7 @@ const Technologies = ({ additionalDataLoading }) => {
                     tech.tech_skills 
                       ? tech.tech_skills
                           .sort((a, b) => (b.level || 0) - (a.level || 0)) // Sort by skill level descending
-                          .map(skill => ({ name: skill.title, level: skill.level }))
+                          .map(skill => ({ name: skill.name || skill.title, level: skill.level }))
                       : []
                   }
                   backgroundImage={backgroundImage}

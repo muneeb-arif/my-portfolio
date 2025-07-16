@@ -9,10 +9,17 @@ export const PUT = withAuthAndParams(async (request: AuthenticatedRequest, param
     const body = await request.json();
     const { type, title, icon, sort_order } = body;
 
-    // Validate input
-    if (!title || !type) {
+    // Validate input - only require title and type if they are being updated
+    if (title !== undefined && !title) {
       return NextResponse.json(
-        { success: false, error: 'Title and type are required' },
+        { success: false, error: 'Title cannot be empty' },
+        { status: 400 }
+      );
+    }
+    
+    if (type !== undefined && !type) {
+      return NextResponse.json(
+        { success: false, error: 'Type cannot be empty' },
         { status: 400 }
       );
     }
@@ -30,21 +37,44 @@ export const PUT = withAuthAndParams(async (request: AuthenticatedRequest, param
 
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     
+    // Build dynamic query for partial updates
+    const updateFields = [];
+    const updateValues = [];
+    
+    if (type !== undefined) {
+      updateFields.push('type = ?');
+      updateValues.push(type);
+    }
+    
+    if (title !== undefined) {
+      updateFields.push('title = ?');
+      updateValues.push(title);
+    }
+    
+    if (icon !== undefined) {
+      updateFields.push('icon = ?');
+      updateValues.push(icon || null);
+    }
+    
+    if (sort_order !== undefined) {
+      updateFields.push('sort_order = ?');
+      updateValues.push(sort_order || 1);
+    }
+    
+    // Always update the updated_at timestamp
+    updateFields.push('updated_at = ?');
+    updateValues.push(now);
+    
+    // Add WHERE clause values
+    updateValues.push(id, request.user!.id);
+    
     const query = `
       UPDATE domains_technologies 
-      SET type = ?, title = ?, icon = ?, sort_order = ?, updated_at = ? 
+      SET ${updateFields.join(', ')}
       WHERE id = ? AND user_id = ?
     `;
     
-    const result = await executeQuery(query, [
-      type, 
-      title, 
-      icon || null, 
-      sort_order || 1,
-      now,
-      id,
-      request.user!.id
-    ]);
+    const result = await executeQuery(query, updateValues);
 
     if (!result.success) {
       return NextResponse.json(

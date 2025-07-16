@@ -24,7 +24,7 @@ export const settingsService = {
       }
       
       const settingsData = response.data || {};
-      console.log('📊 Raw settings data:', settingsData);
+      // console.log('📊 Raw settings data:', settingsData);
       
       // The API returns settings as an object, so no conversion needed
       console.log('🔧 Processed settings object:', settingsData);

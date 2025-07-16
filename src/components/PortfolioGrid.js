@@ -3,6 +3,7 @@ import Card from './Card';
 import SkeletonLoader from './SkeletonLoader';
 
 const PortfolioGrid = ({ projects, onProjectClick, activeFilter, loading }) => {
+  console.log('[PortfolioGrid] Received projects:', projects);
   if (loading) {
     return (
       <section id="portfolio" className="py-20 bg-white relative overflow-hidden">
@@ -27,9 +28,9 @@ const PortfolioGrid = ({ projects, onProjectClick, activeFilter, loading }) => {
   }
 
   // Hide the entire section if no projects data
-  if (!loading && projects.length === 0) {
-    return null;
-  }
+  // if (!loading && projects.length === 0) {
+  //   return null;
+  // }
 
   return (
     <section id="portfolio" className="py-20 bg-white relative overflow-hidden">

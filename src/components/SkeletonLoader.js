@@ -46,8 +46,7 @@ const SkeletonLoader = ({ type = 'project', count = 1 }) => {
         </div>
       )}
 
-      case 'settings':
-        return (
+      {type === 'settings' && (
           <div className="settings-skeleton">
             {[...Array(3)].map((_, groupIndex) => (
               <div key={groupIndex} className="settings-group-skeleton">
@@ -61,7 +60,7 @@ const SkeletonLoader = ({ type = 'project', count = 1 }) => {
               </div>
             ))}
           </div>
-        );
+      )}
     </div>
   ));
 

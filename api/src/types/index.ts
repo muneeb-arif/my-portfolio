@@ -48,6 +48,7 @@ export interface ProjectImage {
   size?: number;
   type?: string;
   bucket?: string;
+  order_index?: number;
   created_at: Date;
 }
 

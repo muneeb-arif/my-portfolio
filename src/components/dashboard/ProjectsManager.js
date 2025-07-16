@@ -4,6 +4,7 @@ import { categoriesService } from '../../services/categoriesService';
 import { imageService } from '../../services/imageService';
 import { getCurrentUser } from '../../services/authUtils';
 import MediaSelectionModal from './MediaSelectionModal';
+import toastService from '../../services/toastService';
 import './ProjectsManager.css';
 
 const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalEditingProject, onEditingProjectChange }) => {
@@ -15,6 +16,11 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
   const [imageUploadProgress, setImageUploadProgress] = useState([]);
   // Media selection modal state
   const [showMediaModal, setShowMediaModal] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -40,6 +46,19 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
     loadCategories();
   }, []);
 
+  // Reset to first page when projects change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [projects]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(projects.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProjects = projects.slice(startIndex, endIndex);
+  
+
+
   // Handle external editing project from Overview page
   useEffect(() => {
     if (externalEditingProject) {
@@ -60,10 +79,8 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       } else {
         // If no categories exist, provide basic default for the dropdown
         setCategories(['Web Development']);
-      // console.log('📁 No categories found, using basic default for dropdown');
       }
     } catch (error) {
-      // console.error('Error loading categories:', error);
       // On error, provide basic default for the dropdown to work
       setCategories(['Web Development']);
     }
@@ -90,10 +107,55 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
         live_url: editingProject.live_url || '',
         github_url: editingProject.github_url || ''
       });
-      setSelectedImages(editingProject.project_images || []);
+      
+
+      
+      console.log('🔍 Loading project images for editing:', {
+        projectTitle: editingProject.title,
+        projectId: editingProject.id,
+        projectImages: editingProject.project_images?.map(img => ({
+          name: img.name,
+          order_index: img.order_index
+        })) || []
+      });
+      
+      // Ensure images are sorted by order_index and have required properties
+      const sortedImages = editingProject.project_images 
+        ? [...editingProject.project_images]
+            .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+            .map(img => ({
+              ...img,
+              isNew: false, // Mark as existing image from database
+              isFromMedia: false // Mark as not from media library
+            }))
+        : [];
+      
+      console.log('📊 Sorted images:', sortedImages.map(img => ({
+        name: img.name,
+        order_index: img.order_index,
+        isNew: img.isNew
+      })));
+      
+      setSelectedImages(sortedImages);
       setShowForm(true);
     }
   }, [editingProject]);
+
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    const newItemsPerPage = parseInt(e.target.value);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
 
   const resetForm = () => {
     setFormData({
@@ -190,19 +252,38 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       const newImages = [...prev];
       const removedImage = newImages[index];
       
+      // Safety check: ensure removedImage exists
+      if (!removedImage) {
+        newImages.splice(index, 1);
+        return newImages;
+      }
+      
+      // Ensure removedImage has required properties
+      const safeRemovedImage = {
+        ...removedImage,
+        isNew: removedImage.isNew || false,
+        isFromMedia: removedImage.isFromMedia || false,
+        url: removedImage.url || '',
+        name: removedImage.name || removedImage.original_name || 'unknown',
+        original_name: removedImage.original_name || removedImage.name || 'unknown',
+        size: removedImage.size || 0,
+        type: removedImage.type || 'image/jpeg',
+        order_index: removedImage.order_index || 0
+      };
+      
       // Clean up blob URL
-      if (removedImage.url.startsWith('blob:')) {
-        URL.revokeObjectURL(removedImage.url);
+      if (safeRemovedImage.url && safeRemovedImage.url.startsWith('blob:')) {
+        URL.revokeObjectURL(safeRemovedImage.url);
         
         // Also remove from imageFiles array and progress tracking if it's a new image
-        if (removedImage.isNew) {
+        if (safeRemovedImage.isNew === true) {
           setImageFiles(prevFiles => {
-            return prevFiles.filter(file => file !== removedImage.file);
+            return prevFiles.filter(file => file !== safeRemovedImage.file);
           });
           
           // Remove from progress tracking
           setImageUploadProgress(prevProgress => {
-            return prevProgress.filter(progress => progress.fileIndex !== removedImage.uploadIndex);
+            return prevProgress.filter(progress => progress.fileIndex !== safeRemovedImage.uploadIndex);
           });
         }
       }
@@ -225,8 +306,13 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
 
   // Handle media selection from existing library
   const handleMediaSelection = (selectedMediaImages) => {
-    // Add selected media images to the selectedImages array
-    setSelectedImages(prev => [...prev, ...selectedMediaImages]);
+    // Add selected media images to the selectedImages array with proper properties
+    const mediaImagesWithProps = selectedMediaImages.map(img => ({
+      ...img,
+      isNew: false, // Not a new upload
+      isFromMedia: true // Mark as from media library
+    }));
+    setSelectedImages(prev => [...prev, ...mediaImagesWithProps]);
   };
 
   // Helper function to manage project images in database
@@ -241,32 +327,55 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       const dbResult = await imageService.getProjectImages(projectId);
       if (!dbResult.success) throw new Error(dbResult.error);
       const dbImages = dbResult.data || [];
-
+      
       // Compare arrays (by url, name, order_index)
+      // First, ensure currentImages have order_index set and all required properties
+      const normalizedCurrentImages = currentImages
+        .filter(img => img && img.url) // Remove any undefined/null images
+        .map((img, index) => {
+          // Ensure all required properties exist with safe defaults
+          const safeImg = {
+            ...img,
+            isNew: img.isNew || false,
+            isFromMedia: img.isFromMedia || false,
+            order_index: img.order_index || index + 1,
+            url: img.url || '',
+            name: img.name || img.original_name || `image_${index + 1}`,
+            original_name: img.original_name || img.name || `image_${index + 1}`,
+            size: img.size || 0,
+            type: img.type || 'image/jpeg'
+          };
+          return safeImg;
+        });
+      
       const isSame =
-        dbImages.length === currentImages.length &&
-        dbImages.every((img, i) =>
-          img.url === currentImages[i].url &&
-          img.name === currentImages[i].name &&
-          (img.order_index || i + 1) === (currentImages[i].order_index || i + 1)
-        );
+        dbImages.length === normalizedCurrentImages.length &&
+        dbImages.every((dbImg, i) => {
+          const currentImg = normalizedCurrentImages[i];
+          return dbImg.url === currentImg.url &&
+                 dbImg.name === currentImg.name &&
+                 (dbImg.order_index || i + 1) === (currentImg.order_index || i + 1);
+        });
 
       if (isSame) {
         // No change, skip update
         return true;
       }
-
+      
       // First, delete all existing project images for this project
       const deleteResult = await imageService.deleteProjectImages(projectId);
       if (!deleteResult.success) {
         console.error('Error deleting existing project images:', deleteResult.error);
         // Don't throw here, continue with adding new images
+      } else {
+        console.log('✅ Successfully deleted existing project images');
       }
 
       // Then, add all current images to the database in the exact order they appear
-      if (currentImages.length > 0) {
-        for (let i = 0; i < currentImages.length; i++) {
-          const image = currentImages[i];
+      if (normalizedCurrentImages.length > 0) {
+        
+        for (let i = 0; i < normalizedCurrentImages.length; i++) {
+          const image = normalizedCurrentImages[i];
           
           const imageData = {
             url: image.url,
@@ -284,9 +393,21 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
             console.error('Error inserting project image:', result.error);
             throw new Error(`Failed to save project images: ${result.error}`);
           }
+          
         }
 
-        console.log(`✅ Successfully updated ${currentImages.length} project images`);
+        console.log(`✅ Successfully updated ${normalizedCurrentImages.length} project images`);
+        
+        // Verify the save by fetching images again
+        const verifyResult = await imageService.getProjectImages(projectId);
+        if (verifyResult.success) {
+          console.log('📊 Verified saved images:', verifyResult.data.map(img => ({
+            name: img.name,
+            order_index: img.order_index
+          })));
+        } else {
+          console.error('❌ Failed to verify saved images:', verifyResult.error);
+        }
       }
 
       return true;
@@ -349,12 +470,23 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
     // Insert dragged item at new position
     newSelectedImages.splice(dropIndex, 0, draggedItem);
     
+    // Update order_index for all images to reflect new order
+    newSelectedImages.forEach((image, index) => {
+      // Ensure image has required properties
+      const safeImage = {
+        ...image,
+        isNew: image.isNew || false,
+        isFromMedia: image.isFromMedia || false,
+        order_index: index + 1
+      };
+      Object.assign(image, safeImage);
+    });
+    
     // Update state
     setSelectedImages(newSelectedImages);
     setDraggedIndex(null);
     setDragOverIndex(null);
 
-    console.log(`✅ Image reordered: moved from position ${draggedIndex} to ${dropIndex}`);
   };
 
   const handleDragEnd = () => {
@@ -374,8 +506,15 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       setLoading(true);
       let projectData;
 
-      // Upload images first if there are new ones
-      if (imageFiles.length > 0) {
+      // Create or update project first
+      if (editingProject) {
+        projectData = await projectsService.updateProject(editingProject.id, formData);
+      } else {
+        projectData = await projectsService.createProject(formData);
+      }
+
+      // Upload images after project is created/updated
+      if (imageFiles.length > 0 && projectData && projectData.id) {
         setUploadingImages(true);
         const uploadedImages = [];
         
@@ -388,8 +527,8 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
           }
           
           try {
-            const imageData = await imageService.uploadProjectImage(file);
-            uploadedImages.push(imageData);
+            const imageData = await imageService.uploadProjectImage(projectData.id, file);
+            uploadedImages.push(imageData.data);
             
             if (progressIndex !== -1) {
               updateImageProgress(progressIndex, { status: 'completed', progress: 100 });
@@ -405,26 +544,59 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
         
         setUploadingImages(false);
         
-        // Add uploaded images to selected images
-        setSelectedImages(prev => [...prev, ...uploadedImages]);
-      }
-
-      // Create or update project
-      if (editingProject) {
-        projectData = await projectsService.updateProject(editingProject.id, formData);
-      } else {
-        projectData = await projectsService.createProject(formData);
+        // Add uploaded images to selected images with proper properties
+        const uploadedImagesWithProps = uploadedImages.map(img => ({
+          ...img,
+          isNew: false, // These are now saved images
+          isFromMedia: false // Not from media library
+        }));
+        setSelectedImages(prev => [...prev, ...uploadedImagesWithProps]);
+        
+        // Show success toast for image uploads
+        if (uploadedImages.length > 0) {
+          const imageText = uploadedImages.length === 1 ? 'image' : 'images';
+          toastService.success(`${uploadedImages.length} ${imageText} uploaded successfully! 📸`);
+        }
       }
 
       // Update project images in database
       if (projectData && projectData.id) {
-        await updateProjectImages(projectData.id, selectedImages);
+        // Filter out any undefined or null images and ensure all images have required properties
+        const safeSelectedImages = selectedImages
+          .filter(img => img && img.url) // Remove any undefined/null images
+          .map((img, index) => {
+            // Ensure all required properties exist with safe defaults
+            return {
+              ...img,
+              isNew: img.isNew || false,
+              isFromMedia: img.isFromMedia || false,
+              order_index: img.order_index || index + 1,
+              url: img.url || '',
+              name: img.name || img.original_name || `image_${index + 1}`,
+              original_name: img.original_name || img.name || `image_${index + 1}`,
+              size: img.size || 0,
+              type: img.type || 'image/jpeg'
+            };
+          });
+        
+        await updateProjectImages(projectData.id, safeSelectedImages);
+        
+        // Show success toast for image updates
+        if (safeSelectedImages.length > 0) {
+          const imageText = safeSelectedImages.length === 1 ? 'image' : 'images';
+          toastService.success(`Project ${imageText} updated successfully! 🖼️`);
+        }
       }
 
       // Refresh projects list
       if (onProjectsChange) {
         onProjectsChange();
       }
+      console.log('✅ Projects list refreshed');
+
+      // Show success toast
+      const action = editingProject ? 'updated' : 'created';
+      toastService.success(`Project successfully ${action}! 🎉`);
 
       // Reset form
       resetForm();
@@ -432,7 +604,7 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       
     } catch (error) {
       console.error('Error saving project:', error);
-      alert('Error saving project: ' + error.message);
+      toastService.error(`Error saving project: ${error.message}`);
     } finally {
       setLoading(false);
       setUploadingImages(false);
@@ -452,9 +624,12 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       if (onProjectsChange) {
         onProjectsChange();
       }
+      
+      // Show success toast
+      toastService.success('Project deleted successfully! 🗑️');
     } catch (error) {
       console.error('Error deleting project:', error);
-      alert('Error deleting project: ' + error.message);
+      toastService.error(`Error deleting project: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -472,9 +647,13 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       if (onProjectsChange) {
         onProjectsChange();
       }
+      
+      // Show success toast
+      const statusText = newStatus === 'published' ? 'published' : 'moved to draft';
+      toastService.success(`Project ${statusText} successfully! 📝`);
     } catch (error) {
       console.error('Error updating project status:', error);
-      alert('Error updating project status: ' + error.message);
+      toastService.error(`Error updating project status: ${error.message}`);
     }
   };
 
@@ -664,9 +843,22 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
             
             <div className="images-preview">
               {selectedImages.map((image, index) => {
+                // Ensure image has required properties
+                const safeImage = {
+                  ...image,
+                  isNew: image.isNew || false,
+                  isFromMedia: image.isFromMedia || false,
+                  url: image.url || '',
+                  name: image.name || image.original_name || `image_${index + 1}`,
+                  original_name: image.original_name || image.name || `image_${index + 1}`,
+                  size: image.size || 0,
+                  type: image.type || 'image/jpeg',
+                  order_index: image.order_index || index + 1
+                };
+                
                 // Find the corresponding progress entry for new images
-                const progressEntry = image.isNew 
-                  ? imageUploadProgress.find(p => p.fileIndex === image.uploadIndex)
+                const progressEntry = safeImage.isNew 
+                  ? imageUploadProgress.find(p => p.fileIndex === safeImage.uploadIndex)
                   : null;
                 
                 const isDragging = draggedIndex === index;
@@ -697,7 +889,7 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
                     </div>
                     
                     {/* Show progress and status for new images */}
-                    {image.isNew && progressEntry && (
+                    {safeImage.isNew && progressEntry && (
                       <div className="upload-status">
                         {/* Progress bar */}
                         {progressEntry.status === 'uploading' && (
@@ -738,7 +930,7 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
                     )}
                     
                     {/* Status for images from media library */}
-                    {image.isFromMedia && (
+                    {safeImage.isFromMedia && (
                       <div className="upload-status">
                         <div className="status-indicator status-from-media">
                           <span className="status-text">📁 From Media</span>
@@ -747,7 +939,7 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
                     )}
                     
                     {/* Simple label for existing images */}
-                    {!image.isNew && !image.isFromMedia && (
+                    {!safeImage.isNew && !safeImage.isFromMedia && (
                       <div className="upload-status">
                         <div className="status-indicator status-existing">
                           <span className="status-text">💾 Saved</span>
@@ -830,50 +1022,144 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       </div>
 
       {projects.length > 0 ? (
-        <div className="projects-table">
-          <div className="table-header">
-            <span>Project</span>
-            <span>Category</span>
-            <span>Status</span>
-            <span>Actions</span>
+        <>
+          {/* Pagination Info and Controls */}
+          <div className="pagination-header">
+            <div className="pagination-info">
+              <span>Showing {startIndex + 1}-{Math.min(endIndex, projects.length)} of {projects.length} projects</span>
+            </div>
+            <div className="pagination-settings">
+              <label htmlFor="itemsPerPage">Items per page:</label>
+              <select
+                id="itemsPerPage"
+                value={itemsPerPage}
+                onChange={handleItemsPerPageChange}
+                className="items-per-page-select"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="projects-table">
+            <div className="table-header">
+              <span>Project</span>
+              <span>Category</span>
+              <span>Status</span>
+              <span>Actions</span>
+            </div>
+            
+            {currentProjects.map(project => (
+              <div key={project.id} className="table-row">
+                <div className="project-info">
+                  <h4>{project.title}</h4>
+                  <p>{project.description}</p>
+                </div>
+                <div className="project-category">
+                  <span className="category-tag">{project.category}</span>
+                </div>
+                <div className="project-status">
+                  <select
+                    value={project.status}
+                    onChange={(e) => handleStatusChange(project.id, e.target.value)}
+                    className={`status-select ${project.status}`}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                  </select>
+                </div>
+                <div className="project-actions">
+                  <button
+                    className="btn-edit"
+                    onClick={() => handleEditProject(project)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn-delete"
+                    onClick={() => handleDeleteProject(project.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
           
-          {projects.map(project => (
-            <div key={project.id} className="table-row">
-              <div className="project-info">
-                <h4>{project.title}</h4>
-                <p>{project.description}</p>
-              </div>
-              <div className="project-category">
-                <span className="category-tag">{project.category}</span>
-              </div>
-              <div className="project-status">
-                <select
-                  value={project.status}
-                  onChange={(e) => handleStatusChange(project.id, e.target.value)}
-                  className={`status-select ${project.status}`}
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <div className="pagination-buttons">
+                <button 
+                  className="pagination-btn"
+                  onClick={goToFirstPage} 
+                  disabled={currentPage === 1}
+                  title="First Page"
                 >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
-              </div>
-              <div className="project-actions">
-                <button
-                  className="btn-edit"
-                  onClick={() => handleEditProject(project)}
-                >
-                  Edit
+                  ⏮️
                 </button>
-                <button
-                  className="btn-delete"
-                  onClick={() => handleDeleteProject(project.id)}
+                <button 
+                  className="pagination-btn"
+                  onClick={goToPreviousPage} 
+                  disabled={currentPage === 1}
+                  title="Previous Page"
                 >
-                  Delete
+                  ◀️
                 </button>
+                
+                {/* Page Numbers */}
+                <div className="page-numbers">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`page-number ${currentPage === pageNum ? 'active' : ''}`}
+                        onClick={() => handlePageChange(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button 
+                  className="pagination-btn"
+                  onClick={goToNextPage} 
+                  disabled={currentPage === totalPages}
+                  title="Next Page"
+                >
+                  ▶️
+                </button>
+                <button 
+                  className="pagination-btn"
+                  onClick={goToLastPage} 
+                  disabled={currentPage === totalPages}
+                  title="Last Page"
+                >
+                  ⏭️
+                </button>
+              </div>
+              
+              <div className="pagination-summary">
+                <span>Page {currentPage} of {totalPages}</span>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       ) : (
         <div className="empty-state">
           <div className="empty-icon">📝</div>
@@ -887,7 +1173,7 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
           </button>
         </div>
       )}
-      
+
       {/* Media Selection Modal */}
       <MediaSelectionModal
         isOpen={showMediaModal}

@@ -1,5 +1,9 @@
 // API Service for Portfolio Data Management
 // Handles all data operations through the API while keeping images with Supabase
+// Includes fallback mechanisms for when API server fails
+
+import { fallbackDataService } from './fallbackDataService';
+import { fallbackUtils } from '../utils/fallbackUtils';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -7,6 +11,8 @@ class ApiService {
   constructor() {
     this.baseUrl = API_BASE;
     this.token = null;
+    this.isApiAvailable = true; // Track API availability
+    this.fallbackMode = false; // Track if we're in fallback mode
   }
 
   // Set authentication token
@@ -29,8 +35,44 @@ class ApiService {
     localStorage.removeItem('api_token');
   }
 
-  // Make authenticated request
+  // Check API health
+  async checkApiHealth() {
+    try {
+      const response = await fetch(`${this.baseUrl}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        this.isApiAvailable = data.status === 'healthy';
+        return this.isApiAvailable;
+      } else {
+        this.isApiAvailable = false;
+        return false;
+      }
+    } catch (error) {
+      console.warn('API health check failed:', error.message);
+      this.isApiAvailable = false;
+      return false;
+    }
+  }
+
+  // Make authenticated request with fallback
   async makeRequest(endpoint, options = {}) {
+    // console.log(`🔍 API SERVICE: Making request to ${endpoint}`);
+    
+    // Check API health first if we haven't already
+    if (this.isApiAvailable) {
+      await this.checkApiHealth();
+    }
+
+    // If API is not available, throw error to trigger fallback
+    if (!this.isApiAvailable) {
+      // console.log(`🔍 API SERVICE: API not available, throwing error for ${endpoint}`);
+      throw new Error('API server is not available');
+    }
+
     const token = this.getToken();
     const headers = {
       'Content-Type': 'application/json',
@@ -39,20 +81,57 @@ class ApiService {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+      console.log(`🔍 API SERVICE: Using token for ${endpoint}: ${token.substring(0, 20)}...`);
+    } else {
+      console.log(`🔍 API SERVICE: No token for ${endpoint}`);
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers
-    });
+    try {
+      // console.log(`🔍 API SERVICE: Fetching ${this.baseUrl}${endpoint}`);
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers
+      });
 
-    const data = await response.json();
+      // console.log(`🔍 API SERVICE: Response status for ${endpoint}: ${response.status}`);
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.error || `HTTP ${response.status}`);
+      if (!response.ok) {
+        // console.log(`🔍 API SERVICE: Request failed for ${endpoint}: ${data.error || response.status}`);
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+
+      // console.log(`🔍 API SERVICE: Request successful for ${endpoint}, data length: ${data.data?.length || 0}`);
+      return data;
+    } catch (error) {
+      // console.error(`🔍 API SERVICE: Request failed for ${endpoint}:`, error.message);
+      
+      // Mark API as unavailable for future requests
+      this.isApiAvailable = false;
+      
+      // Show fallback notification if not already shown
+      if (!this.fallbackMode) {
+        this.fallbackMode = true;
+        fallbackUtils.showFallbackNotification();
+      }
+      
+      throw error;
     }
+  }
 
-    return data;
+  // Enhanced request with automatic fallback
+  async makeRequestWithFallback(endpoint, options = {}, fallbackData = null) {
+    try {
+      return await this.makeRequest(endpoint, options);
+    } catch (error) {
+      console.warn(`API request failed, using fallback data for ${endpoint}:`, error.message);
+      
+      if (fallbackData) {
+        return { success: true, data: fallbackData };
+      }
+      
+      throw error;
+    }
   }
 
   // ================ AUTHENTICATION ================
@@ -97,14 +176,29 @@ class ApiService {
 
   // ================ PROJECTS ================
 
-  // Get published projects (public)
+  // Get published projects (public) with fallback
   async getPublishedProjects() {
-    return await this.makeRequest('/projects');
+    return await this.makeRequestWithFallback(
+      '/projects', 
+      {}, 
+      fallbackDataService.getProjects()
+    );
   }
 
-  // Get user's projects (dashboard)
+  // Get user's projects (dashboard) with fallback
   async getUserProjects() {
-    return await this.makeRequest('/dashboard/projects');
+    // console.log('🔍 API SERVICE: Getting user projects...');
+    const result = await this.makeRequestWithFallback(
+      '/dashboard/projects', 
+      {}, 
+      fallbackDataService.getProjects()
+    );
+    console.log('🔍 API SERVICE: User projects result:', {
+      success: result.success,
+      dataLength: result.data?.length || 0,
+      isFallback: !result.success
+    });
+    return result;
   }
 
   // Create new project
@@ -138,7 +232,11 @@ class ApiService {
   // ================ CATEGORIES ================
 
   async getCategories() {
-    return await this.makeRequest('/categories');
+    return await this.makeRequestWithFallback(
+      '/categories', 
+      {}, 
+      fallbackDataService.getCategories()
+    );
   }
 
   async createCategory(categoryData) {
@@ -164,7 +262,11 @@ class ApiService {
   // ================ TECHNOLOGIES ================
 
   async getTechnologies() {
-    return await this.makeRequest('/technologies');
+    return await this.makeRequestWithFallback(
+      '/technologies', 
+      {}, 
+      fallbackDataService.getTechnologies()
+    );
   }
 
   async createTechnology(techData) {
@@ -190,7 +292,11 @@ class ApiService {
   // ================ SKILLS ================
 
   async getSkills() {
-    return await this.makeRequest('/skills');
+    return await this.makeRequestWithFallback(
+      '/skills', 
+      {}, 
+      fallbackDataService.getSkills()
+    );
   }
 
   async createSkill(skillData) {
@@ -213,10 +319,25 @@ class ApiService {
     });
   }
 
+  // Add skill to specific technology
+  async addSkill(techId, skillData) {
+    return await this.makeRequest('/skills', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...skillData,
+        tech_id: techId
+      })
+    });
+  }
+
   // ================ NICHES ================
 
   async getNiches() {
-    return await this.makeRequest('/niches');
+    return await this.makeRequestWithFallback(
+      '/niches', 
+      {}, 
+      fallbackDataService.getNiches()
+    );
   }
 
   async createNiche(nicheData) {
@@ -242,7 +363,11 @@ class ApiService {
   // ================ SETTINGS ================
 
   async getSettings() {
-    return await this.makeRequest('/settings');
+    return await this.makeRequestWithFallback(
+      '/settings', 
+      {}, 
+      {} // Empty object as fallback for settings
+    );
   }
 
   async updateSettings(settingsData) {
@@ -278,31 +403,58 @@ class ApiService {
     });
   }
 
+  // ================ SHARED HOSTING UPDATES ================
+
+  async getSharedHostingUpdates(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.is_active !== undefined) queryParams.append('is_active', params.is_active);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.order) queryParams.append('order', params.order);
+    
+    const queryString = queryParams.toString();
+    const endpoint = `/shared-hosting-updates${queryString ? `?${queryString}` : ''}`;
+    
+    return await this.makeRequest(endpoint);
+  }
+
+  async createSharedHostingUpdate(updateData) {
+    return await this.makeRequest('/shared-hosting-updates', {
+      method: 'POST',
+      body: JSON.stringify(updateData)
+    });
+  }
+
+  async updateSharedHostingUpdate(updateId, updateData) {
+    return await this.makeRequest(`/shared-hosting-updates/${updateId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData)
+    });
+  }
+
+  async deleteSharedHostingUpdate(updateId) {
+    return await this.makeRequest(`/shared-hosting-updates/${updateId}`, {
+      method: 'DELETE'
+    });
+  }
+
   // ================ UTILITY METHODS ================
 
   // Check if API is available
-  async checkApiHealth() {
-    try {
-      await this.makeRequest('/health');
-      return true;
-    } catch (error) {
-      return false;
-    }
+  isApiServerAvailable() {
+    return this.isApiAvailable;
   }
 
-  // Test connection
-  async testConnection() {
-    try {
-      const response = await this.makeRequest('/projects');
-      return response.success;
-    } catch (error) {
-      return false;
-    }
+  // Reset API availability (useful for testing)
+  resetApiAvailability() {
+    this.isApiAvailable = true;
+    this.fallbackMode = false;
+  }
+
+  // Get current fallback mode status
+  isInFallbackMode() {
+    return this.fallbackMode;
   }
 }
 
-// Create singleton instance
-export const apiService = new ApiService();
-
-// Export for use in other services
-export default apiService; 
+// Create and export singleton instance
+export const apiService = new ApiService(); 

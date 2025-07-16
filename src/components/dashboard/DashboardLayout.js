@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { projectsService } from '../../services/projectsService';
 import { syncService } from '../../services/syncService';
+import { dashboardService } from '../../services/dashboardService';
 import { imageService } from '../../services/imageService';
-import { supabase } from '../../config/supabase';
+import { supabase } from '../../config/supabase'; // Keep for storage operations
 import { getCurrentUser } from '../../services/authUtils';
 import { useSettings } from '../../services/settingsContext';
 import ProjectsManager from './ProjectsManager';
@@ -93,19 +94,26 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
 
   const loadDashboardData = async () => {
     try {
-      const projectsData = await projectsService.getProjects();
-      setProjects(projectsData);
-      
-      // Calculate stats
-      const published = projectsData.filter(p => p.status === 'published').length;
-      const drafts = projectsData.filter(p => p.status === 'draft').length;
-      
-      setStats({
-        totalProjects: projectsData.length,
-        publishedProjects: published,
-        draftProjects: drafts,
-        totalViews: projectsData.reduce((sum, p) => sum + (p.views || 0), 0)
-      });
+      const dashboardData = await dashboardService.getDashboardData();
+      if (dashboardData.success) {
+        setProjects(dashboardData.data.projects);
+        setStats(dashboardData.data.stats);
+      } else {
+        // Fallback to individual service calls
+        const projectsData = await projectsService.getProjects();
+        setProjects(projectsData);
+        
+        // Calculate stats
+        const published = projectsData.filter(p => p.status === 'published').length;
+        const drafts = projectsData.filter(p => p.status === 'draft').length;
+        
+        setStats({
+          totalProjects: projectsData.length,
+          publishedProjects: published,
+          draftProjects: drafts,
+          totalViews: projectsData.reduce((sum, p) => sum + (p.views || 0), 0)
+        });
+      }
     } catch (error) {
       // console.error('Error loading dashboard data:', error);
     }
@@ -113,7 +121,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
 
   const checkDatabaseStatus = async () => {
     try {
-      const status = await syncService.getDatabaseStatus();
+      const status = await dashboardService.getDatabaseStatus();
       setDatabaseStatus(status);
       setIsDatabaseEmpty(status.isEmpty);
     } catch (error) {
@@ -615,7 +623,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
 
 // Overview Section Component
 const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isSyncing, syncMessage, onSyncData, isBackingUp, backupMessage, onBackupData, importFile, isImporting, importMessage, onFileSelect, onImportData, isResetting, resetMessage, onResetData, onEditProject }) => {
-  const recentProjects = projects.slice(0, 5);
+  const recentProjects = projects.slice(0, 5); // Only for overview display
 
   return (
     <div className="dashboard-section">

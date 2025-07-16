@@ -109,11 +109,12 @@ export const fallbackUtils = {
     fallbackNotificationShown = false;
   },
 
-  // Check if Supabase is available
-  async checkSupabaseConnection() {
+  // Check if API is available
+  async checkApiConnection() {
     try {
-      const { data, error } = await supabase.from('projects').select('count').limit(1);
-      return !error;
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/health`);
+      const data = await response.json();
+      return data.status === 'healthy';
     } catch (error) {
       return false;
     }

@@ -14,6 +14,7 @@ import ScrollToTop from './components/ScrollToTop';
 import Dashboard from './components/dashboard/Dashboard';
 import DynamicHead from './components/DynamicHead';
 import Toast from './components/Toast';
+import ToastContainer from './components/ToastContainer';
 import RainLoader from './components/RainLoader';
 import portfolioService from './services/portfolioService';
 import { SettingsProvider, useSettings } from './services/settingsContext';
@@ -132,15 +133,20 @@ function AppContent() {
       // Load different sections with staggered timing for better UX
       const [projectsData, categoriesData] = await Promise.all([
         portfolioService.getPublishedProjects(),
-        portfolioService.getAvailableCategories()
+        portfolioService.getCategories()
       ]);
 
       // Always use the actual data from the database (even if empty)
       setProjects(projectsData || []);
-      setFilters(categoriesData || ['All']);
+      
+      // Transform categories to filter format: ['All', 'Category1', 'Category2', ...]
+      const categoryNames = categoriesData?.map(cat => cat.name || cat) || [];
+      const filters = ['All', ...categoryNames];
+      setFilters(filters);
 
       console.log(`📊 Loaded ${projectsData?.length || 0} published projects`);
-      console.log(`📁 Loaded ${(categoriesData?.length || 1) - 1} categories`); // -1 for 'All'
+      console.log(`📁 Loaded ${categoryNames.length} categories:`, categoryNames);
+      console.log(`🔍 Filters set to:`, filters);
       
     } catch (error) {
       console.error('Error loading portfolio data:', error);
@@ -180,6 +186,7 @@ function AppContent() {
     
     try {
       const filteredProjects = await portfolioService.getPublishedProjectsByCategory(newFilter);
+      console.log('📊 Filtered projects:', filteredProjects);
       setProjects(filteredProjects);
     } catch (error) {
       console.error('Error filtering projects:', error);
@@ -293,6 +300,7 @@ function AppContent() {
   return (
     <>
       <DynamicHead />
+      <ToastContainer />
       <div className="App">
         {/* iOS-style Full Screen Loading - Hide as soon as settings load */}
         <RainLoader 

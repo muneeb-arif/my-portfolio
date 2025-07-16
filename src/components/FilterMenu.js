@@ -1,6 +1,7 @@
 import React from 'react';
 
 const FilterMenu = ({ filters, activeFilter, onFilterChange }) => {
+  console.log('[FilterMenu] Received filters:', filters);
   return (
     <div id="portfolio" className="mt-5 mb-12">
       <div className="flex flex-wrap justify-center gap-4 md:gap-8">

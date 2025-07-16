@@ -132,6 +132,12 @@ export const imageService = {
   // Save image metadata to database (for project images) - Now uses local API
   async saveImageMetadata(projectId, imageData) {
     try {
+      console.log('📤 imageService.saveImageMetadata called:', {
+        projectId,
+        imageName: imageData.name,
+        order_index: imageData.order_index
+      });
+
       const user = await getCurrentUser();
       if (!user) {
         throw new Error('User not authenticated');
@@ -147,13 +153,19 @@ export const imageService = {
           original_name: imageData.original_name,
           size: imageData.size,
           type: imageData.type,
-          bucket: BUCKETS.IMAGES
+          bucket: BUCKETS.IMAGES,
+          order_index: imageData.order_index
         })
       });
 
       if (response.success) {
+        console.log('✅ imageService.saveImageMetadata success:', {
+          imageName: imageData.name,
+          order_index: response.data?.order_index
+        });
         return { success: true, data: response.data };
       } else {
+        console.error('❌ imageService.saveImageMetadata failed:', response.error);
         throw new Error(response.error || 'Failed to save image metadata');
       }
     } catch (error) {
@@ -189,11 +201,22 @@ export const imageService = {
   // Get project images from local API
   async getProjectImages(projectId) {
     try {
+      console.log('📥 imageService.getProjectImages called for project:', projectId);
+      
       const response = await apiService.makeRequest(`/projects/${projectId}/images`);
       
       if (response.success) {
+        console.log('📊 imageService.getProjectImages success:', {
+          projectId,
+          imageCount: response.data?.length || 0,
+          images: response.data?.map(img => ({
+            name: img.name,
+            order_index: img.order_index
+          })) || []
+        });
         return { success: true, data: response.data || [] };
       } else {
+        console.error('❌ imageService.getProjectImages failed:', response.error);
         throw new Error(response.error || 'Failed to get project images');
       }
     } catch (error) {
@@ -205,13 +228,17 @@ export const imageService = {
   // Delete all project images from local API
   async deleteProjectImages(projectId) {
     try {
+      console.log('🗑️ imageService.deleteProjectImages called for project:', projectId);
+      
       const response = await apiService.makeRequest(`/projects/${projectId}/images`, {
         method: 'DELETE'
       });
       
       if (response.success) {
+        console.log('✅ imageService.deleteProjectImages success for project:', projectId);
         return { success: true };
       } else {
+        console.error('❌ imageService.deleteProjectImages failed:', response.error);
         throw new Error(response.error || 'Failed to delete project images');
       }
     } catch (error) {
