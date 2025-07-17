@@ -242,7 +242,7 @@ export async function GET(request: NextRequest) {
 export const POST = withAuth(async (request: AuthenticatedRequest) => {
   try {
     const body = await request.json();
-    const { title, description, category, overview, technologies, features, live_url, github_url, status } = body;
+    const { title, description, category, overview, technologies, features, live_url, github_url, status, is_prompt } = body;
 
     if (!title) {
       return NextResponse.json(
@@ -260,7 +260,8 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       features,
       live_url,
       github_url,
-      status: status || 'draft'
+      status: status || 'draft',
+      is_prompt: is_prompt || 0
     };
 
     const result = await ProjectService.createProject(projectData, request.user!.id);

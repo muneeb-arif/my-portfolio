@@ -241,6 +241,8 @@ class PortfolioService {
       category: project.category || 'Web Development',
       image: project.project_images?.[0]?.url || '/images/domains/default.jpeg',
       buttonText: 'View Details',
+      is_prompt: project.is_prompt || 0, // Preserve the is_prompt field
+      status: project.status || 'draft',
       details: {
         overview: project.overview || project.description,
         technologies: Array.isArray(project.technologies) ? project.technologies : [],

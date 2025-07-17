@@ -66,6 +66,7 @@ export interface Project {
   live_url?: string;
   github_url?: string;
   status: 'draft' | 'published';
+  is_prompt?: number;
   views: number;
   created_at: Date;
   updated_at: Date;
@@ -97,6 +98,7 @@ export interface CreateProjectRequest {
   live_url?: string;
   github_url?: string;
   status?: 'draft' | 'published';
+  is_prompt?: number;
 }
 
 export interface UpdateProjectRequest extends Partial<CreateProjectRequest> {

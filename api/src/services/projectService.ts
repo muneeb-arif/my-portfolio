@@ -136,8 +136,8 @@ export class ProjectService {
       INSERT INTO projects (
         id, user_id, title, description, category, overview, 
         technologies, features, live_url, github_url, status, 
-        views, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+        is_prompt, views, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
     `;
     
     const params = [
@@ -152,6 +152,7 @@ export class ProjectService {
       projectData.live_url || null,
       projectData.github_url || null,
       projectData.status || 'draft',
+      projectData.is_prompt || 0,
       now,
       now
     ];
@@ -215,6 +216,11 @@ export class ProjectService {
     if (projectData.status !== undefined) {
       updateFields.push('status = ?');
       params.push(projectData.status);
+    }
+    
+    if (projectData.is_prompt !== undefined) {
+      updateFields.push('is_prompt = ?');
+      params.push(projectData.is_prompt);
     }
     
     // Always update the updated_at timestamp

@@ -8,6 +8,7 @@ import { getCurrentUser } from '../../services/authUtils';
 import { useSettings } from '../../services/settingsContext';
 import { adminService } from '../../services/adminService';
 import ProjectsManager from './ProjectsManager';
+import PromptsManager from './PromptsManager';
 import CategoriesManager from './CategoriesManager';
 import DomainsTechnologiesManager from './DomainsTechnologiesManager';
 import NicheManager from './NicheManager';
@@ -27,8 +28,10 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
   const [activeSection, setActiveSection] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projects, setProjects] = useState([]);
+  const [prompts, setPrompts] = useState([]);
   const [isDatabaseEmpty, setIsDatabaseEmpty] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [editingPrompt, setEditingPrompt] = useState(null);
   const [databaseStatus, setDatabaseStatus] = useState({
     projects: 0,
     technologies: 0,
@@ -119,6 +122,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     const allNavItems = [
       { id: 'overview', label: 'Overview', icon: '📊', adminOnly: false },
       { id: 'projects', label: 'Projects', icon: '💼', adminOnly: false },
+      { id: 'prompts', label: 'Prompts', icon: '💡', adminOnly: false },
       { id: 'queries', label: 'Contact Queries', icon: '📨', adminOnly: false },
       { id: 'domains-technologies', label: 'Technologies', icon: '🎯', adminOnly: false },
       { id: 'niche', label: 'Domains / Niche', icon: '🏆', adminOnly: false },
@@ -158,24 +162,33 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     try {
       const dashboardData = await dashboardService.getDashboardData();
       if (dashboardData.success) {
-        setProjects(dashboardData.data.projects);
+        // Filter out prompts from projects (only show regular projects)
+        const regularProjects = dashboardData.data.projects.filter(p => p.is_prompt !== 1);
+        setProjects(regularProjects);
         setStats(dashboardData.data.stats);
       } else {
         // Fallback to individual service calls
         const projectsData = await projectsService.getProjects();
-        setProjects(projectsData);
+        // Filter out prompts from projects (only show regular projects)
+        const regularProjects = projectsData.filter(p => p.is_prompt !== 1);
+        setProjects(regularProjects);
         
-        // Calculate stats
-        const published = projectsData.filter(p => p.status === 'published').length;
-        const drafts = projectsData.filter(p => p.status === 'draft').length;
+        // Calculate stats for regular projects only
+        const published = regularProjects.filter(p => p.status === 'published').length;
+        const drafts = regularProjects.filter(p => p.status === 'draft').length;
         
         setStats({
-          totalProjects: projectsData.length,
+          totalProjects: regularProjects.length,
           publishedProjects: published,
           draftProjects: drafts,
-          totalViews: projectsData.reduce((sum, p) => sum + (p.views || 0), 0)
+          totalViews: regularProjects.reduce((sum, p) => sum + (p.views || 0), 0)
         });
       }
+      
+      // Load prompts (projects with is_prompt = 1)
+      const promptsData = await projectsService.getProjects();
+      const filteredPrompts = promptsData.filter(p => p.is_prompt === 1);
+      setPrompts(filteredPrompts);
     } catch (error) {
       // console.error('Error loading dashboard data:', error);
     }
@@ -573,6 +586,8 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
         );
       case 'projects':
         return <ProjectsManager projects={projects} onProjectsChange={loadDashboardData} editingProject={editingProject} onEditingProjectChange={setEditingProject} />;
+      case 'prompts':
+        return <PromptsManager prompts={prompts} onPromptsChange={loadDashboardData} editingPrompt={editingPrompt} onEditingPromptChange={setEditingPrompt} />;
       case 'queries':
         return <QueriesManager />;
       case 'domains-technologies':
@@ -1938,6 +1953,7 @@ const SettingsSection = ({ user }) => {
         section_technologies_visible: settings.section_technologies_visible !== undefined ? settings.section_technologies_visible : true,
         section_domains_visible: settings.section_domains_visible !== undefined ? settings.section_domains_visible : true,
         section_project_cycle_visible: settings.section_project_cycle_visible !== undefined ? settings.section_project_cycle_visible : true,
+        section_prompts_visible: settings.section_prompts_visible !== undefined ? settings.section_prompts_visible : false,
       });
     }
   }, [loading, settings]);
@@ -2091,6 +2107,19 @@ const SettingsSection = ({ user }) => {
                     <span className="section-title">⏱️ Project Lifecycle Section</span>
                   </label>
                   <small className="form-help">Timeline showing your development process</small>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.section_prompts_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('section_prompts_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">💡 Prompts Section</span>
+                  </label>
+                  <small className="form-help">AI prompts and templates showcase</small>
                 </div>
               </div>
             )}

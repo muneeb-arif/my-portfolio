@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, X, Expand } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Expand, Copy, Check } from 'lucide-react';
 import ImageLightbox from './ImageLightbox';
 
 // Utility function to render text with line breaks
@@ -14,12 +14,13 @@ const renderTextWithLineBreaks = (text) => {
   ));
 };
 
-const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight }) => {
+const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight, isPrompt = false }) => {
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
@@ -59,6 +60,18 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
 
   const navigateLightbox = (newIndex) => {
     setLightboxImageIndex(newIndex);
+  };
+
+  // Copy prompt text to clipboard
+  const copyPromptText = async () => {
+    const textToCopy = project?.details?.overview || project?.description || '';
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy text:', error);
+    }
   };
 
   // Detect image aspect ratio for smart layout
@@ -328,43 +341,76 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
             )}
           </div>
 
-          {/* Project Details */}
+          {/* Project/Prompt Details */}
           <div className="p-6 space-y-8">
-            {/* Overview */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-800">Project Overview</h3>
-              <p className="text-gray-600 leading-relaxed">
-                {renderTextWithLineBreaks(project?.details?.overview || project?.description || 'No overview available.')}
-              </p>
-            </div>
-
-            {/* Technologies */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-800">Technologies Used</h3>
-              <div className="flex flex-wrap gap-2">
-                {(project?.details?.technologies || []).map((tech, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-sand-light text-sand-dark rounded-full text-sm font-medium"
+            {isPrompt ? (
+              /* Prompt Content */
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-gray-800">Prompt Content</h3>
+                  <button
+                    onClick={copyPromptText}
+                    className="flex items-center gap-2 px-4 py-2 bg-sand-dark text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
                   >
-                    {tech}
-                  </span>
-                ))}
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {renderTextWithLineBreaks(project?.details?.overview || project?.description || 'No prompt content available.')}
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Project Content */
+              <>
+                {/* Overview */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-gray-800">Project Overview</h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    {renderTextWithLineBreaks(project?.details?.overview || project?.description || 'No overview available.')}
+                  </p>
+                </div>
 
-            {/* Features */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-800">Key Features</h3>
-              <ul className="space-y-2">
-                {(project?.details?.features || []).map((feature, index) => (
-                  <li key={index} className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-sand-dark rounded-full mt-2 flex-shrink-0" />
-                    <span className="text-gray-600">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                {/* Technologies */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-gray-800">Technologies Used</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(project?.details?.technologies || []).map((tech, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-sand-light text-sand-dark rounded-full text-sm font-medium"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Features */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-gray-800">Key Features</h3>
+                  <ul className="space-y-2">
+                    {(project?.details?.features || []).map((feature, index) => (
+                      <li key={index} className="flex items-start space-x-3">
+                        <div className="w-2 h-2 bg-sand-dark rounded-full mt-2 flex-shrink-0" />
+                        <span className="text-gray-600">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

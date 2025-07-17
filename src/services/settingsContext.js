@@ -59,6 +59,7 @@ export const SettingsProvider = ({ children }) => {
     section_technologies_visible: true,
     section_domains_visible: true,
     section_project_cycle_visible: true,
+    section_prompts_visible: false,
     
     // Styling & Theme
     theme_name: 'sand',

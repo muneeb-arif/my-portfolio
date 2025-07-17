@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProjectService } from '@/services/projectService';
 import { withAuth, AuthenticatedRequest } from '@/middleware/auth';
 
+// Transform projects to include image field for dashboard
+function transformProjectsForDashboard(projects: any[]) {
+  return projects.map(project => ({
+    ...project,
+    image: project.project_images?.[0]?.url || '/images/domains/default.jpeg'
+  }));
+}
+
 // GET /api/dashboard/projects - Get user's projects (protected)
 export const GET = withAuth(async (request: AuthenticatedRequest) => {
   try {
@@ -13,9 +21,12 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       );
     }
 
+    // Transform projects to include image field
+    const transformedProjects = transformProjectsForDashboard(result.data || []);
+
     return NextResponse.json({
       success: true,
-      data: result.data
+      data: transformedProjects
     });
   } catch (error) {
     console.error('Get user projects error:', error);
