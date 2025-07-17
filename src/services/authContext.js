@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔑 CENTRAL AUTH: Signing up user:', email);
       
-      const response = await apiService.register(email, password);
+      const response = await apiService.register(email, password, userData);
       
       if (response.success) {
         console.log('✅ User registered successfully');

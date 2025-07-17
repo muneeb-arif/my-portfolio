@@ -30,9 +30,9 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
   }, [project]);
 
   // Check if project has multiple images
-  const hasMultipleImages = project.details.images && project.details.images.length > 1;
-  const images = project.details.images || [{ url: project.image, caption: 'Project Preview' }];
-  const currentImage = images[currentImageIndex] || { url: project.image, caption: 'Project Preview' };
+  const hasMultipleImages = project?.details?.images && project.details.images.length > 1;
+  const images = project?.details?.images || [{ url: project?.image || '/images/domains/default.jpeg', caption: 'Project Preview' }];
+  const currentImage = images[currentImageIndex] || { url: project?.image || '/images/domains/default.jpeg', caption: 'Project Preview' };
 
   // Image navigation functions
   const nextImage = () => {
@@ -103,6 +103,11 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
     };
   }, [onClose, onNavigate, canNavigateLeft, canNavigateRight]);
 
+  // Safety check - if no project, don't render
+  if (!project) {
+    return null;
+  }
+
   const handleBackdropClick = (event) => {
     if (event.target === event.currentTarget) {
       onClose();
@@ -167,7 +172,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
       >
         {/* Header - Sticky Top */}
         <div className="flex items-center justify-between p-6 bg-white border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-2xl font-bold text-gray-800">{project.title}</h2>
+          <h2 className="text-2xl font-bold text-gray-800">{project?.title || 'Project Details'}</h2>
           <div className="flex items-center gap-4">
             {/* Navigation indicators */}
             <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
@@ -202,8 +207,8 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
             {/* Main Image - Smart Aspect Ratio */}
             <div className={`relative ${getImageAspectClass(currentImage)} flex items-center justify-center bg-gray-100 overflow-hidden`}>
               <img
-                src={currentImage?.url || project.image}
-                alt={currentImage?.caption || project.title}
+                src={currentImage?.url || project?.image || '/images/domains/default.jpeg'}
+                alt={currentImage?.caption || project?.title || 'Project Image'}
                 className="w-full h-full object-contain transition-opacity duration-300 cursor-zoom-in"
                 onClick={() => openLightbox(currentImageIndex)}
               />
@@ -262,7 +267,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
               {/* Category Badge */}
               <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
                 <span className="px-4 py-2 bg-white/90 text-sand-dark font-semibold rounded-full text-sm backdrop-blur-sm">
-                  {project.category}
+                  {project?.category || 'Web Development'}
                 </span>
               </div>
 
@@ -276,10 +281,10 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
               )}
 
               {/* Image Caption */}
-              {(currentImage?.caption || project.title) && (
+              {(currentImage?.caption || project?.title) && (
                 <div className={`absolute bottom-4 z-10 ${hasMultipleImages ? 'left-16 right-16' : 'left-4 right-4'}`}>
                   <div className="bg-black/60 text-white px-4 py-2 rounded-lg text-sm backdrop-blur-sm text-center">
-                    {currentImage?.caption || `${project.title} - Preview`}
+                    {currentImage?.caption || `${project?.title || 'Project'} - Preview`}
                   </div>
                 </div>
               )}
@@ -303,7 +308,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
                         `}
                       >
                                               <img
-                        src={image?.url || project.image}
+                        src={image?.url || project?.image || '/images/domains/default.jpeg'}
                         alt={image?.caption || `Image ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
@@ -329,7 +334,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-gray-800">Project Overview</h3>
               <p className="text-gray-600 leading-relaxed">
-                {renderTextWithLineBreaks(project.details.overview)}
+                {renderTextWithLineBreaks(project?.details?.overview || project?.description || 'No overview available.')}
               </p>
             </div>
 
@@ -337,7 +342,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-gray-800">Technologies Used</h3>
               <div className="flex flex-wrap gap-2">
-                {project.details.technologies.map((tech, index) => (
+                {(project?.details?.technologies || []).map((tech, index) => (
                   <span
                     key={index}
                     className="px-3 py-1 bg-sand-light text-sand-dark rounded-full text-sm font-medium"
@@ -352,7 +357,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-gray-800">Key Features</h3>
               <ul className="space-y-2">
-                {project.details.features.map((feature, index) => (
+                {(project?.details?.features || []).map((feature, index) => (
                   <li key={index} className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-sand-dark rounded-full mt-2 flex-shrink-0" />
                     <span className="text-gray-600">{feature}</span>
@@ -367,7 +372,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
         <div className="flex-shrink-0 p-6 bg-white border-t border-gray-200">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Only show Live Demo button if URL is valid */}
-            {(project.details.liveUrl && project.details.liveUrl !== '#' && project.details.liveUrl !== '') && (
+            {(project?.details?.liveUrl && project.details.liveUrl !== '#' && project.details.liveUrl !== '') && (
               <a
                 href={project.details.liveUrl}
                 className="flex-1 px-6 py-3 bg-sand-dark text-white font-semibold rounded-full text-center hover:bg-gray-700 transform hover:scale-105 transition-all duration-300"
@@ -378,7 +383,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
               </a>
             )}
             {/* Only show Source Code button if URL is valid */}
-            {(project.details.githubUrl && project.details.githubUrl !== '#' && project.details.githubUrl !== '') && (
+            {(project?.details?.githubUrl && project.details.githubUrl !== '#' && project.details.githubUrl !== '') && (
               <a
                 href={project.details.githubUrl}
                 className="flex-1 px-6 py-3 border-2 border-sand-dark text-sand-dark font-semibold rounded-full text-center hover:bg-sand-dark hover:text-white transform hover:scale-105 transition-all duration-300"
@@ -389,8 +394,8 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
               </a>
             )}
             {/* Show message if no buttons are available */}
-            {(!project.details.liveUrl || project.details.liveUrl === '#' || project.details.liveUrl === '') && 
-             (!project.details.githubUrl || project.details.githubUrl === '#' || project.details.githubUrl === '') && (
+            {(!project?.details?.liveUrl || project.details.liveUrl === '#' || project.details.liveUrl === '') && 
+             (!project?.details?.githubUrl || project.details.githubUrl === '#' || project.details.githubUrl === '') && (
               <div className="flex-1 px-6 py-3 text-center text-gray-500 italic">
                 Demo and source code links coming soon
               </div>

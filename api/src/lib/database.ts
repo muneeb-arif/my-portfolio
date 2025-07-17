@@ -99,9 +99,9 @@ export function getPoolStatus() {
 }
 
 // Log pool status every 30 seconds for debugging
-setInterval(() => {
-  const status = getPoolStatus();
-  console.log('📊 DB Pool Status:', status);
-}, 30000);
+// setInterval(() => {
+//   const status = getPoolStatus();
+//   // console.log('📊 DB Pool Status:', status);
+// }, 30000);
 
 export default pool; 

@@ -8,7 +8,8 @@ const Login = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: ''
+    fullName: '',
+    domain: ''
   });
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,7 @@ const Login = () => {
   };
 
   const validateForm = () => {
-    const { email, password, confirmPassword, fullName } = formData;
+    const { email, password, confirmPassword, fullName, domain } = formData;
     
     if (!email || !password) {
       setError('Email and password are required');
@@ -47,6 +48,14 @@ const Login = () => {
     if (!isLogin) {
       if (!fullName.trim()) {
         setError('Full name is required for registration');
+        return false;
+      }
+      if (!domain.trim()) {
+        setError('Domain is required for registration (e.g., http://yourdomain.com)');
+        return false;
+      }
+      if (!domain.includes('://') || !domain.includes('.')) {
+        setError('Please provide a valid domain (e.g., http://yourdomain.com)');
         return false;
       }
       if (password !== confirmPassword) {
@@ -78,16 +87,19 @@ const Login = () => {
           setError(result.error || 'Failed to sign in');
         }
       } else {
-        // Sign up
+        // Sign up with domain
         const result = await signUp(
           formData.email, 
           formData.password,
-          { full_name: formData.fullName }
+          { 
+            full_name: formData.fullName,
+            domain: formData.domain
+          }
         );
         if (result.success) {
-          setSuccess('Account created! Please check your email to verify your account.');
+          setSuccess('Account created successfully! Your portfolio is now ready.');
           setIsLogin(true);
-          setFormData({ email: '', password: '', confirmPassword: '', fullName: '' });
+          setFormData({ email: '', password: '', confirmPassword: '', fullName: '', domain: '' });
         } else {
           setError(result.error || 'Failed to create account');
         }
@@ -130,7 +142,8 @@ const Login = () => {
       email: 'demo@example.com',
       password: 'demo123',
       confirmPassword: 'demo123',
-      fullName: 'Demo User'
+      fullName: 'Demo User',
+      domain: 'http://demo.example.com'
     });
     setError('');
   };
@@ -140,7 +153,7 @@ const Login = () => {
     setError('');
     setSuccess('');
     setShowResetForm(false);
-    setFormData({ email: '', password: '', confirmPassword: '', fullName: '' });
+    setFormData({ email: '', password: '', confirmPassword: '', fullName: '', domain: '' });
   };
 
   // Auth state changes are now handled by the centralized AuthContext
@@ -221,6 +234,24 @@ const Login = () => {
                 placeholder="Enter your full name"
                 required={!isLogin}
               />
+            </div>
+          )}
+
+          {!isLogin && (
+            <div className="form-group">
+              <label htmlFor="domain">Your Domain</label>
+              <input
+                type="url"
+                id="domain"
+                name="domain"
+                value={formData.domain}
+                onChange={handleInputChange}
+                placeholder="http://yourdomain.com"
+                required={!isLogin}
+              />
+              <small className="form-help">
+                This will be your portfolio URL (e.g., http://john.doe.com)
+              </small>
             </div>
           )}
 

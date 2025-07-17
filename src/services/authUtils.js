@@ -12,7 +12,7 @@ let authCache = {
   promise: null // Store pending promise to avoid multiple simultaneous calls
 };
 
-const CACHE_DURATION = 5000; // 5 seconds cache for initialization period
+const CACHE_DURATION = 1000; // 1 second cache for debugging
 
 // Setup Supabase authentication for storage operations
 const setupSupabaseAuth = async (user) => {

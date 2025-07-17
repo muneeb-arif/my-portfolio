@@ -112,6 +112,20 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .user-email {
@@ -177,6 +191,23 @@
 
 .nav-label {
   font-weight: 500;
+}
+
+.nav-item.admin-only {
+  position: relative;
+}
+
+.admin-indicator {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.nav-item:hover .admin-indicator {
+  opacity: 1;
 }
 
 /* Sidebar Footer */

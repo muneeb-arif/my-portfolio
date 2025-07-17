@@ -6,6 +6,7 @@ import { imageService } from '../../services/imageService';
 import { supabase } from '../../config/supabase'; // Keep for storage operations
 import { getCurrentUser } from '../../services/authUtils';
 import { useSettings } from '../../services/settingsContext';
+import { adminService } from '../../services/adminService';
 import ProjectsManager from './ProjectsManager';
 import CategoriesManager from './CategoriesManager';
 import DomainsTechnologiesManager from './DomainsTechnologiesManager';
@@ -59,6 +60,11 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     isComplete: false
   });
 
+  // Admin sections state
+  const [accessibleSectionKeys, setAccessibleSectionKeys] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminSectionsLoaded, setAdminSectionsLoaded] = useState(false);
+
   // Auto-clear success message after 5 seconds
   useEffect(() => {
     if (successMessage && onClearSuccess) {
@@ -69,22 +75,78 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     }
   }, [successMessage, onClearSuccess]);
 
-  // Navigation items
-  const navItems = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'projects', label: 'Projects', icon: '💼' },
-    { id: 'queries', label: 'Contact Queries', icon: '📨' },
-    { id: 'domains-technologies', label: 'Technologies', icon: '🎯' },
-    { id: 'niche', label: 'Domains / Niche', icon: '🏆' },
-    { id: 'media', label: 'Media Library', icon: '🖼️' },
-    { id: 'backup-files', label: 'Backup Files', icon: '📦' },
-    { id: 'categories', label: 'Categories', icon: '📁' },
-    { id: 'appearance', label: 'Appearance', icon: '🎨' },
-    { id: 'theme-updates', label: 'Theme Updates', icon: '🚀' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
-    { id: 'export', label: 'Import/Export', icon: '📤' },
-    { id: 'debug', label: 'Debug Sync', icon: '🔧' }
-  ];
+  // Load admin sections
+  useEffect(() => {
+    loadAdminSections();
+  }, []);
+
+  const loadAdminSections = async () => {
+    try {
+      const result = await adminService.getAdminSections();
+      if (result.success) {
+        // Map database section keys (with underscores) to navigation IDs (with hyphens)
+        const mappedKeys = (result.data.sections || []).map(s => {
+          // Convert section_key to navigation ID format
+          switch (s.section_key) {
+            case 'backup_files': return 'backup-files';
+            case 'theme_updates': return 'theme-updates';
+            case 'import_export': return 'export';
+            case 'debug_sync': return 'debug';
+            default: return s.section_key;
+          }
+        });
+        setAccessibleSectionKeys(mappedKeys);
+        setIsAdmin(result.data.sections?.length > 0);
+        setAdminSectionsLoaded(true);
+        console.log('🔒 Dashboard: Admin sections loaded:', result.data.sections?.length || 0);
+        console.log('🔒 Dashboard: Mapped section keys:', mappedKeys);
+      } else {
+        console.log('🔒 Dashboard: No admin access or failed to load admin sections');
+        setAccessibleSectionKeys([]);
+        setIsAdmin(false);
+        setAdminSectionsLoaded(true);
+      }
+    } catch (error) {
+      console.error('🔒 Dashboard: Error loading admin sections:', error);
+      setAccessibleSectionKeys([]);
+      setIsAdmin(false);
+      setAdminSectionsLoaded(true);
+    }
+  };
+
+  // Navigation items with admin filtering
+  const navItems = useMemo(() => {
+    const allNavItems = [
+      { id: 'overview', label: 'Overview', icon: '📊', adminOnly: false },
+      { id: 'projects', label: 'Projects', icon: '💼', adminOnly: false },
+      { id: 'queries', label: 'Contact Queries', icon: '📨', adminOnly: false },
+      { id: 'domains-technologies', label: 'Technologies', icon: '🎯', adminOnly: false },
+      { id: 'niche', label: 'Domains / Niche', icon: '🏆', adminOnly: false },
+      { id: 'media', label: 'Media Library', icon: '🖼️', adminOnly: false },
+      { id: 'backup-files', label: 'Backup Files', icon: '📦', adminOnly: true },
+      { id: 'categories', label: 'Categories', icon: '📁', adminOnly: false },
+      { id: 'appearance', label: 'Appearance', icon: '🎨', adminOnly: false },
+      { id: 'theme-updates', label: 'Theme Updates', icon: '🚀', adminOnly: true },
+      { id: 'settings', label: 'Settings', icon: '⚙️', adminOnly: false },
+      { id: 'export', label: 'Import/Export', icon: '📤', adminOnly: true },
+      { id: 'debug', label: 'Debug Sync', icon: '🔧', adminOnly: true }
+    ];
+
+    // Filter navigation items based on admin permissions
+    return allNavItems.filter(item => {
+      if (!item.adminOnly) {
+        return true; // Show non-admin items to everyone
+      }
+      
+      // For admin-only items, check if user has access
+      if (item.adminOnly && isAdmin) {
+        // Check if user has access to this specific section
+        return accessibleSectionKeys.includes(item.id);
+      }
+      
+      return false; // Hide admin-only items from non-admin users
+    });
+  }, [isAdmin, accessibleSectionKeys]);
 
   // Load dashboard data
   useEffect(() => {
@@ -526,6 +588,11 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     }
   };
 
+  // Only render nav after admin sections are loaded
+  if (!adminSectionsLoaded) {
+    return <div className="dashboard-loading">Loading dashboard...</div>;
+  }
+
   return (
     <div className="dashboard-layout">
       {/* Mobile Header */}
@@ -567,7 +634,10 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
               {user?.email?.charAt(0).toUpperCase()}
             </div>
             <div className="user-details">
-              <p className="user-name">{user?.user_metadata?.full_name || 'User'}</p>
+              <p className="user-name">
+                {user?.user_metadata?.full_name || 'User'}
+                {isAdmin && <span className="admin-badge">👑 Admin</span>}
+              </p>
               <p className="user-email">{user?.email}</p>
             </div>
           </div>
@@ -577,11 +647,12 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
           {navItems.map(item => (
             <button
               key={item.id}
-              className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
+              className={`nav-item ${activeSection === item.id ? 'active' : ''} ${item.adminOnly ? 'admin-only' : ''}`}
               onClick={() => handleNavClick(item.id)}
             >
               <span className="nav-icon">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
+              {item.adminOnly && <span className="admin-indicator">👑</span>}
             </button>
           ))}
         </nav>

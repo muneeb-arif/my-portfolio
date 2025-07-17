@@ -136,10 +136,10 @@ class ApiService {
 
   // ================ AUTHENTICATION ================
 
-  async register(email, password) {
+  async register(email, password, userData = {}) {
     return await this.makeRequest('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, ...userData })
     });
   }
 

@@ -38,6 +38,11 @@ export async function GET(request: NextRequest) {
     const userData = {
       id: user.id,
       email: user.email,
+      name: user.name,
+      full_name: user.full_name,
+      avatar_url: user.avatar_url,
+      email_verified: user.email_verified,
+      is_admin: user.is_admin,
       created_at: user.created_at,
       updated_at: user.updated_at
     };

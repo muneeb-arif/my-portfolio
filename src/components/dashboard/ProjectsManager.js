@@ -328,10 +328,9 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
       if (!dbResult.success) throw new Error(dbResult.error);
       const dbImages = dbResult.data || [];
       
-      // Compare arrays (by url, name, order_index)
-      // First, ensure currentImages have order_index set and all required properties
+      // Filter out blob URLs and ensure currentImages have order_index set and all required properties
       const normalizedCurrentImages = currentImages
-        .filter(img => img && img.url) // Remove any undefined/null images
+        .filter(img => img && img.url && !img.url.startsWith('blob:')) // Remove blob URLs
         .map((img, index) => {
           // Ensure all required properties exist with safe defaults
           const safeImg = {
@@ -544,13 +543,33 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
         
         setUploadingImages(false);
         
-        // Add uploaded images to selected images with proper properties
-        const uploadedImagesWithProps = uploadedImages.map(img => ({
-          ...img,
-          isNew: false, // These are now saved images
-          isFromMedia: false // Not from media library
-        }));
-        setSelectedImages(prev => [...prev, ...uploadedImagesWithProps]);
+        // Replace blob URLs with actual Supabase URLs in selectedImages
+        setSelectedImages(prev => {
+          const updatedImages = [...prev];
+          
+          // For each uploaded image, find the corresponding blob URL and replace it
+          uploadedImages.forEach((uploadedImg, index) => {
+            const blobImageIndex = updatedImages.findIndex(img => 
+              img.isNew && img.original_name === uploadedImg.original_name
+            );
+            
+            if (blobImageIndex !== -1) {
+              // Replace blob URL with Supabase URL
+              updatedImages[blobImageIndex] = {
+                ...uploadedImg,
+                isNew: false, // These are now saved images
+                isFromMedia: false // Not from media library
+              };
+              
+              // Clean up the blob URL
+              if (updatedImages[blobImageIndex].url && updatedImages[blobImageIndex].url.startsWith('blob:')) {
+                URL.revokeObjectURL(updatedImages[blobImageIndex].url);
+              }
+            }
+          });
+          
+          return updatedImages;
+        });
         
         // Show success toast for image uploads
         if (uploadedImages.length > 0) {
@@ -561,9 +580,9 @@ const ProjectsManager = ({ projects, onProjectsChange, editingProject: externalE
 
       // Update project images in database
       if (projectData && projectData.id) {
-        // Filter out any undefined or null images and ensure all images have required properties
+        // Filter out any undefined or null images and blob URLs, ensure all images have required properties
         const safeSelectedImages = selectedImages
-          .filter(img => img && img.url) // Remove any undefined/null images
+          .filter(img => img && img.url && !img.url.startsWith('blob:')) // Remove blob URLs
           .map((img, index) => {
             // Ensure all required properties exist with safe defaults
             return {

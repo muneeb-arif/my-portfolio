@@ -412,7 +412,8 @@ function AppContent() {
             project={selectedProject}
             onClose={closeModal}
             onNavigate={handleProjectNavigation}
-            navigationState={getNavigationState()}
+            canNavigateLeft={getNavigationState().canNavigateLeft}
+            canNavigateRight={getNavigationState().canNavigateRight}
           />
         )}
       </div>

@@ -115,6 +115,13 @@
   transform: translateY(-1px);
 }
 
+.form-help {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  margin-top: 4px;
+  font-style: italic;
+}
+
 .submit-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
