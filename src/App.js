@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
@@ -21,38 +21,7 @@ import portfolioService from './services/portfolioService';
 import { SettingsProvider, useSettings } from './services/settingsContext';
 import { AuthProvider } from './services/authContext';
 import { checkEnvMissing } from './config/supabase';
-
-// Route detector component
-function RouteHandler() {
-  const location = useLocation();
-  
-  // Check if we're on dashboard route (handles both /dashboard and /#/dashboard)
-  const isDashboard = location.pathname === '/dashboard' || 
-                     window.location.hash === '#/dashboard' ||
-                     window.location.pathname === '/dashboard';
-  
-  console.log('🔍 RouteHandler - Location:', location.pathname);
-  console.log('🔍 RouteHandler - Hash:', window.location.hash);
-  console.log('🔍 RouteHandler - isDashboard:', isDashboard);
-  
-  // Handle hash routing redirect
-  useEffect(() => {
-    if (window.location.hash === '#/dashboard' && location.pathname !== '/dashboard') {
-      console.log('🔄 Redirecting from hash to path routing');
-      window.history.replaceState(null, '', '/dashboard');
-    }
-  }, [location.pathname]);
-  
-  if (isDashboard) {
-    return <Dashboard />;
-  }
-  
-  return (
-    <SettingsProvider>
-      <AppContent />
-    </SettingsProvider>
-  );
-}
+import metaTagService from './services/metaTagService';
 
 function App() {
   // Debug logging
@@ -60,12 +29,12 @@ function App() {
   console.log('🔍 App.js - Pathname:', window.location.pathname);
   console.log('🔍 App.js - Hash:', window.location.hash);
   
-  // Handle initial hash routing
+  // Handle hash routing redirect (only once on initial load)
   useEffect(() => {
     if (window.location.hash === '#/dashboard') {
       console.log('🔄 Initial hash routing detected, redirecting to path routing');
       window.history.replaceState(null, '', '/dashboard');
-      window.location.reload();
+      // Don't reload - let React Router handle the navigation
     }
   }, []);
   
@@ -83,8 +52,12 @@ function App() {
             </SettingsProvider>
           } />
           
-          {/* Catch-all route that handles both normal and hash routing */}
-          <Route path="*" element={<RouteHandler />} />
+          {/* Catch-all route */}
+          <Route path="*" element={
+            <SettingsProvider>
+              <AppContent />
+            </SettingsProvider>
+          } />
         </Routes>
       </AuthProvider>
     </Router>
@@ -179,6 +152,9 @@ function AppContent() {
     if (!settingsLoading && settingsInitialized) {
       // Settings are loaded, now load portfolio data in background
       loadPortfolioData();
+      
+      // Initialize dynamic meta tags
+      metaTagService.initialize();
     }
   }, [settingsLoading, settingsInitialized, loadPortfolioData]);
 

@@ -8,14 +8,12 @@ require('dotenv').config();
 // Supabase setup
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-const portfolioOwnerEmail = process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
 
-if (!supabaseUrl || !supabaseAnonKey || !portfolioOwnerEmail) {
+if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Missing required environment variables');
   console.log('Required variables:');
   console.log('- REACT_APP_SUPABASE_URL');
   console.log('- REACT_APP_SUPABASE_ANON_KEY'); 
-  console.log('- REACT_APP_PORTFOLIO_OWNER_EMAIL');
   process.exit(1);
 }
 
@@ -106,46 +104,23 @@ function formatBytes(bytes) {
 
 async function updateMetaTags() {
   try {
-    console.log('🔄 Fetching settings from database...');
+    console.log('🔄 Setting up default meta tags for build...');
     
-    // First get the portfolio config to find the user_id
-    const { data: portfolioConfig, error: configError } = await supabase
-      .from('portfolio_config')
-      .select('owner_user_id')
-      .eq('owner_email', portfolioOwnerEmail)
-      .eq('is_active', true)
-      .single();
+    // For build time, we'll set generic meta tags
+    // The actual domain-specific meta tags will be loaded at runtime
+    console.log('📝 Using default meta tags - will be updated at runtime based on domain');
 
-    if (configError || !portfolioConfig) {
-      console.error('❌ Error fetching portfolio config:', configError?.message || 'No portfolio config found');
-      console.log('💡 Tip: Make sure the email in REACT_APP_PORTFOLIO_OWNER_EMAIL exists in portfolio_config with is_active=true');
-      return;
-    }
+    // For build time, use default settings
+    // Runtime will load actual settings based on domain
+    const settings = {
+      banner_name: 'Portfolio Owner',
+      banner_title: 'Professional Portfolio',
+      banner_tagline: 'Welcome to my professional portfolio',
+      site_url: 'https://example.com',
+      avatar_image: '/images/profile/avatar.jpeg'
+    };
 
-    // Get settings using the user_id
-    const { data: settingsData, error: settingsError } = await supabase
-      .from('settings')
-      .select('*')
-      .eq('user_id', portfolioConfig.owner_user_id);
-
-    if (settingsError) {
-      console.error('❌ Error fetching settings:', settingsError.message);
-      return;
-    }
-
-    // Convert settings array to object
-    const settings = {};
-    (settingsData || []).forEach(setting => {
-      try {
-        // Try to parse JSON values
-        settings[setting.key] = JSON.parse(setting.value);
-      } catch {
-        // If not JSON, use raw value
-        settings[setting.key] = setting.value;
-      }
-    });
-
-    console.log('✅ Settings fetched successfully');
+    console.log('✅ Using default settings for build');
 
     // Read the current index.html
     const indexPath = path.join(__dirname, '..', 'public', 'index.html');
