@@ -17,6 +17,7 @@ import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
 import AutomaticUpdateDashboard from './AutomaticUpdateDashboard';
 import UpdateNotificationBar from './UpdateNotificationBar';
+import DashboardMobileNav from './DashboardMobileNav';
 import { applyTheme, themes } from '../../utils/themeUtils';
 import './DashboardLayout.css';
 import './ProjectsManager.css';
@@ -737,6 +738,13 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
         messages={progressDisplay.messages}
         isComplete={progressDisplay.isComplete}
         onClose={closeProgressDisplay}
+      />
+
+      {/* Mobile Bottom Navigation */}
+      <DashboardMobileNav
+        activeSection={activeSection}
+        onNavClick={handleNavClick}
+        navItems={navItems}
       />
     </div>
   );
