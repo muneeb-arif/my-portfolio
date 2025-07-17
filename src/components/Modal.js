@@ -205,11 +205,11 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
           {/* Project Image Gallery */}
           <div className="relative">
             {/* Main Image - Smart Aspect Ratio */}
-            <div className={`relative ${getImageAspectClass(currentImage)} flex items-center justify-center bg-gray-100 overflow-hidden`}>
+            <div className={`relative ${getImageAspectClass(currentImage)} flex items-start justify-center bg-gray-100 overflow-hidden`}>
               <img
                 src={currentImage?.url || project?.image || '/images/domains/default.jpeg'}
                 alt={currentImage?.caption || project?.title || 'Project Image'}
-                className="w-full h-full object-contain transition-opacity duration-300 cursor-zoom-in"
+                className="w-full h-full object-contain object-top transition-opacity duration-300 cursor-zoom-in"
                 onClick={() => openLightbox(currentImageIndex)}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
@@ -310,7 +310,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
                                               <img
                         src={image?.url || project?.image || '/images/domains/default.jpeg'}
                         alt={image?.caption || `Image ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-top"
                       />
                       </button>
                       

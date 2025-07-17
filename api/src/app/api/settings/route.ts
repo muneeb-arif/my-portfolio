@@ -5,18 +5,36 @@ import crypto from 'crypto';
 
 // Utility to get user id by domain
 async function getUserByDomain(domain: string) {
+  console.log('🔍 Looking up domain for settings (LIKE):', domain);
+  
   const query = `
-    SELECT u.id 
+    SELECT u.id, d.status, d.name
     FROM users u
     INNER JOIN domains d ON u.id = d.user_id
-    WHERE d.name = ? AND d.status = 1
+    WHERE d.name LIKE ?
+    AND d.status = 1
     LIMIT 1
   `;
   
-  const result = await executeQuery(query, [domain]);
+  const pattern = `%${domain}%`;
+  const result = await executeQuery(query, [pattern]);
+  console.log('🔍 Domain lookup result for settings:', result);
+  
   if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
-    return (result.data[0] as any).id;
+    const domainData = result.data[0] as any;
+    console.log('🔍 Found domain data for settings:', domainData);
+    
+    // Check if domain is enabled (status = 1)
+    if (domainData.status === 1) {
+      console.log('✅ Domain is enabled for settings, returning user ID:', domainData.id);
+      return domainData.id;
+    } else {
+      console.log('❌ Domain is disabled for settings (status =', domainData.status, ')');
+      return null;
+    }
   }
+  
+  console.log('❌ Domain not found in database for settings');
   return null;
 }
 

@@ -4,17 +4,20 @@ const SkeletonLoader = ({ type = 'project', count = 1 }) => {
   const skeletons = Array.from({ length: count }, (_, index) => (
     <div key={index} className="animate-pulse">
       {type === 'project' && (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           {/* Image skeleton */}
-          <div className="w-full h-48 bg-gray-300"></div>
-          <div className="p-4">
+          <div className="w-full h-56 md:h-64 lg:h-72 xl:h-80 bg-gray-300"></div>
+          <div className="p-6 space-y-4">
             {/* Title skeleton */}
-            <div className="h-6 bg-gray-300 rounded w-3/4 mb-2"></div>
+            <div className="h-6 bg-gray-300 rounded w-3/4"></div>
             {/* Description skeleton */}
-            <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-            <div className="h-4 bg-gray-300 rounded w-2/3 mb-4"></div>
-            {/* Button skeleton */}
-            <div className="h-10 bg-gray-300 rounded w-1/3"></div>
+            <div className="h-4 bg-gray-300 rounded w-full"></div>
+            <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+            {/* Category and button skeleton */}
+            <div className="flex items-center justify-between">
+              <div className="h-6 bg-gray-300 rounded w-20"></div>
+              <div className="h-8 bg-gray-300 rounded w-24"></div>
+            </div>
           </div>
         </div>
       )}

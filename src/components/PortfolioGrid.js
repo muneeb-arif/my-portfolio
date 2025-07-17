@@ -17,7 +17,7 @@ const PortfolioGrid = ({ projects, onProjectClick, activeFilter, loading }) => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <SkeletonLoader key={i} />
             ))}
@@ -57,7 +57,7 @@ const PortfolioGrid = ({ projects, onProjectClick, activeFilter, loading }) => {
 
         {/* Projects Grid */}
         {projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {projects.map((project, index) => (
               <Card
                 key={project.id}

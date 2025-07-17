@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
@@ -94,7 +94,7 @@ function App() {
 function AppContent() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
-  const [particles, setParticles] = useState([]);
+  const [particles] = useState([]);
   const [projects, setProjects] = useState([]);
   const [filters, setFilters] = useState(['All']);
   const [loading, setLoading] = useState(true);

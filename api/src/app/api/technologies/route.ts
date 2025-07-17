@@ -2,19 +2,101 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { executeQuery } from '@/lib/database';
 
-// Utility to get portfolio owner user id
-async function getPortfolioOwnerUserId() {
-  const ownerEmail = process.env.PORTFOLIO_OWNER_EMAIL;
-  if (!ownerEmail) return null;
-  const userResult = await executeQuery('SELECT id FROM users WHERE email = ?', [ownerEmail]);
-  const userRows = userResult.success && Array.isArray(userResult.data) ? userResult.data as any[] : [];
-  if (userRows.length > 0) {
-    return userRows[0].id;
+// Demo technologies data
+const demoTechnologies = [
+  {
+    id: 1,
+    title: "Web Development",
+    type: "domain",
+    icon: "Code",
+    sort_order: 1,
+    tech_skills: [
+      { id: 1, name: "React", level: 90 },
+      { id: 2, name: "Node.js", level: 85 },
+      { id: 3, name: "TypeScript", level: 80 },
+      { id: 4, name: "MongoDB", level: 75 },
+      { id: 5, name: "PostgreSQL", level: 70 }
+    ]
+  },
+  {
+    id: 2,
+    title: "Mobile Development",
+    type: "domain",
+    icon: "Smartphone",
+    sort_order: 2,
+    tech_skills: [
+      { id: 6, name: "React Native", level: 85 },
+      { id: 7, name: "Flutter", level: 75 },
+      { id: 8, name: "iOS Development", level: 70 },
+      { id: 9, name: "Android Development", level: 65 }
+    ]
+  },
+  {
+    id: 3,
+    title: "AI/ML",
+    type: "domain",
+    icon: "Cpu",
+    sort_order: 3,
+    tech_skills: [
+      { id: 10, name: "Python", level: 90 },
+      { id: 11, name: "TensorFlow", level: 80 },
+      { id: 12, name: "PyTorch", level: 75 },
+      { id: 13, name: "NLP", level: 70 },
+      { id: 14, name: "Computer Vision", level: 65 }
+    ]
+  },
+  {
+    id: 4,
+    title: "Cloud Computing",
+    type: "domain",
+    icon: "Cloud",
+    sort_order: 4,
+    tech_skills: [
+      { id: 15, name: "AWS", level: 85 },
+      { id: 16, name: "Docker", level: 80 },
+      { id: 17, name: "Kubernetes", level: 75 },
+      { id: 18, name: "Azure", level: 70 },
+      { id: 19, name: "Google Cloud", level: 65 }
+    ]
   }
+];
+
+// Utility to get user id by domain
+async function getUserByDomain(domain: string) {
+  console.log('🔍 Looking up domain for technologies (LIKE):', domain);
+  
+  const query = `
+    SELECT u.id, d.status, d.name
+    FROM users u
+    INNER JOIN domains d ON u.id = d.user_id
+    WHERE d.name LIKE ?
+    AND d.status = 1
+    LIMIT 1
+  `;
+  
+  const pattern = `%${domain}%`;
+  const result = await executeQuery(query, [pattern]);
+  console.log('🔍 Domain lookup result for technologies:', result);
+  
+  if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
+    const domainData = result.data[0] as any;
+    console.log('🔍 Found domain data for technologies:', domainData);
+    
+    // Check if domain is enabled (status = 1)
+    if (domainData.status === 1) {
+      console.log('✅ Domain is enabled for technologies, returning user ID:', domainData.id);
+      return domainData.id;
+    } else {
+      console.log('❌ Domain is disabled for technologies (status =', domainData.status, ')');
+      return null;
+    }
+  }
+  
+  console.log('❌ Domain not found in database for technologies');
   return null;
 }
 
-// GET /api/technologies - Public (portfolio owner) or dashboard (auth)
+// GET /api/technologies - Public (domain-based or demo) or dashboard (auth)
 export async function GET(request: NextRequest) {
   try {
     let userId = null;
@@ -29,14 +111,29 @@ export async function GET(request: NextRequest) {
         }
       } catch (e) {}
     }
+    
+    // If not authenticated, try to get user by domain
     if (!userId) {
-      userId = await getPortfolioOwnerUserId();
+      const origin = request.headers.get('origin') || request.headers.get('referer');
+      console.log('🔍 Request origin for technologies:', origin);
+      
+      if (origin) {
+        // Extract domain from origin/referer
+        const domain = origin.replace(/^https?:\/\//, '').split('/')[0];
+        console.log('🔍 Extracted domain for technologies:', domain);
+        userId = await getUserByDomain(domain);
+      } else {
+        console.log('❌ No origin or referer found in request headers for technologies');
+      }
     }
+    
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Portfolio owner not configured or not found' },
-        { status: 500 }
-      );
+      console.log('🎭 No domain found or disabled, returning demo technologies');
+      return NextResponse.json({
+        success: true,
+        data: demoTechnologies,
+        demo: true
+      });
     }
     const query = `
       SELECT dt.*, ts.id as skill_id, ts.name as skill_name, ts.level as skill_level
@@ -47,10 +144,12 @@ export async function GET(request: NextRequest) {
     `;
     const result = await executeQuery(query, [userId]);
     if (!result.success) {
-      return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 500 }
-      );
+      console.log('❌ Failed to get user technologies, falling back to demo data');
+      return NextResponse.json({
+        success: true,
+        data: demoTechnologies,
+        demo: true
+      });
     }
     // Group skills by technology/domain
     const groupedData = (result.data as any[]).reduce((acc, row) => {
@@ -79,14 +178,16 @@ export async function GET(request: NextRequest) {
     }, {});
     return NextResponse.json({
       success: true,
-      data: Object.values(groupedData)
+      data: Object.values(groupedData),
+      demo: false
     });
   } catch (error) {
     console.error('Get technologies error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: true,
+      data: demoTechnologies,
+      demo: true
+    });
   }
 }
 

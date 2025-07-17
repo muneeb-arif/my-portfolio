@@ -1,4 +1,3 @@
-import { apiService } from './apiService';
 import { getCurrentOrigin } from '../utils/domainUtils';
 
 // Portfolio service for public data (domain-based)

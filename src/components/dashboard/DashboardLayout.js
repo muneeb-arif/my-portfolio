@@ -491,6 +491,39 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     }
   };
 
+  const handleClearCache = async () => {
+    try {
+      // Clear browser cache
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        for (const cacheName of cacheNames) {
+          await caches.delete(cacheName);
+        }
+      }
+      
+      // Clear localStorage
+      const localStorageKeys = Object.keys(localStorage);
+      localStorageKeys.forEach(key => {
+        if (key.includes('cache') || key.includes('api') || key.includes('portfolio') || key.includes('projects') || key.includes('categories') || key.includes('technologies') || key.includes('niches')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear sessionStorage
+      const sessionStorageKeys = Object.keys(sessionStorage);
+      sessionStorageKeys.forEach(key => {
+        if (key.includes('cache') || key.includes('api') || key.includes('portfolio')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      // Reload the page
+      window.location.reload();
+    } catch (error) {
+      console.error('Cache clearing failed:', error);
+    }
+  };
+
   const handleNavClick = (sectionId) => {
     setActiveSection(sectionId);
     setSidebarOpen(false); // Close mobile sidebar
@@ -535,6 +568,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
             resetMessage={resetMessage}
             onResetData={handleResetData}
             onEditProject={handleEditProject}
+            onClearCache={handleClearCache}
           />
         );
       case 'projects':
@@ -583,6 +617,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
             resetMessage={resetMessage}
             onResetData={handleResetData}
             onEditProject={handleEditProject}
+            onClearCache={handleClearCache}
           />
         );
     }
@@ -693,7 +728,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
 };
 
 // Overview Section Component
-const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isSyncing, syncMessage, onSyncData, isBackingUp, backupMessage, onBackupData, importFile, isImporting, importMessage, onFileSelect, onImportData, isResetting, resetMessage, onResetData, onEditProject }) => {
+const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isSyncing, syncMessage, onSyncData, isBackingUp, backupMessage, onBackupData, importFile, isImporting, importMessage, onFileSelect, onImportData, isResetting, resetMessage, onResetData, onEditProject, onClearCache }) => {
   const recentProjects = projects.slice(0, 5); // Only for overview display
 
   return (
@@ -852,6 +887,14 @@ const OverviewSection = ({ stats, projects, isDatabaseEmpty, databaseStatus, isS
               style={{ backgroundColor: '#dc3545', color: 'white', borderRadius: '8px' }}
             >
               {isResetting ? '🗑️ Resetting...' : '🗑️ Reset All Data'}
+            </button>
+
+            <button 
+              className="btn-cache"
+              onClick={onClearCache}
+              style={{ backgroundColor: '#2196f3', color: 'white', borderRadius: '8px', padding: '10px 20px' }}
+            >
+              🧹 Clear Cache & Reload
             </button>
           </div>
 

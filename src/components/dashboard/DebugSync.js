@@ -97,6 +97,93 @@ const DebugSync = () => {
     setLogs([]);
   };
 
+  const clearAllCache = async () => {
+    setIsTesting(true);
+    setLogs([]);
+    
+    try {
+      addLog('🧹 Starting cache clearing process...', 'info');
+      
+      // Clear browser cache for API responses
+      addLog('🌐 Clearing browser cache...', 'info');
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        for (const cacheName of cacheNames) {
+          await caches.delete(cacheName);
+          addLog(`🗑️ Deleted cache: ${cacheName}`, 'success');
+        }
+      }
+      
+      // Clear localStorage
+      addLog('💾 Clearing localStorage...', 'info');
+      const localStorageKeys = Object.keys(localStorage);
+      localStorageKeys.forEach(key => {
+        if (key.includes('cache') || key.includes('api') || key.includes('portfolio')) {
+          localStorage.removeItem(key);
+          addLog(`🗑️ Removed localStorage key: ${key}`, 'success');
+        }
+      });
+      
+      // Clear sessionStorage
+      addLog('💾 Clearing sessionStorage...', 'info');
+      const sessionStorageKeys = Object.keys(sessionStorage);
+      sessionStorageKeys.forEach(key => {
+        if (key.includes('cache') || key.includes('api') || key.includes('portfolio')) {
+          sessionStorage.removeItem(key);
+          addLog(`🗑️ Removed sessionStorage key: ${key}`, 'success');
+        }
+      });
+      
+      // Force reload the page to clear any in-memory cache
+      addLog('🔄 Reloading page to clear in-memory cache...', 'info');
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+      
+    } catch (error) {
+      addLog(`❌ Cache clearing failed: ${error.message}`, 'error');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const clearApiCache = async () => {
+    setIsTesting(true);
+    setLogs([]);
+    
+    try {
+      addLog('🌐 Clearing API cache...', 'info');
+      
+      // Clear any cached API responses
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        for (const cacheName of cacheNames) {
+          if (cacheName.includes('api') || cacheName.includes('portfolio')) {
+            await caches.delete(cacheName);
+            addLog(`🗑️ Deleted API cache: ${cacheName}`, 'success');
+          }
+        }
+      }
+      
+      // Clear localStorage API-related items
+      const localStorageKeys = Object.keys(localStorage);
+      localStorageKeys.forEach(key => {
+        if (key.includes('api') || key.includes('portfolio') || key.includes('projects') || key.includes('categories') || key.includes('technologies') || key.includes('niches')) {
+          localStorage.removeItem(key);
+          addLog(`🗑️ Removed API localStorage key: ${key}`, 'success');
+        }
+      });
+      
+      addLog('✅ API cache cleared successfully', 'success');
+      addLog('💡 Refresh the page to see the latest data', 'info');
+      
+    } catch (error) {
+      addLog(`❌ API cache clearing failed: ${error.message}`, 'error');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   return (
     <div className="debug-sync">
       <h3>🔧 Debug Categories Sync</h3>
@@ -117,6 +204,34 @@ const DebugSync = () => {
         >
           🗑️ Clear Logs
         </button>
+      </div>
+
+      <div className="cache-controls">
+        <h4>🧹 Cache Management</h4>
+        <p>Clear various types of cache that might be causing issues:</p>
+        
+        <div className="cache-buttons">
+          <button 
+            onClick={clearApiCache} 
+            disabled={isTesting}
+            className="btn-cache-api"
+          >
+            🌐 Clear API Cache
+          </button>
+          
+          <button 
+            onClick={clearAllCache} 
+            disabled={isTesting}
+            className="btn-cache-all"
+          >
+            🧹 Clear All Cache & Reload
+          </button>
+        </div>
+        
+        <div className="cache-info">
+          <p><strong>API Cache:</strong> Clears cached API responses and localStorage data</p>
+          <p><strong>All Cache:</strong> Clears everything and reloads the page</p>
+        </div>
       </div>
       
       <div className="debug-logs">
@@ -173,6 +288,66 @@ const DebugSync = () => {
           padding: 10px 20px;
           border-radius: 5px;
           cursor: pointer;
+        }
+        
+        .cache-controls {
+          background: #e3f2fd;
+          border: 1px solid #2196f3;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+        }
+        
+        .cache-buttons {
+          display: flex;
+          gap: 10px;
+          margin: 15px 0;
+          flex-wrap: wrap;
+        }
+        
+        .btn-cache-api {
+          background: #2196f3;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+        
+        .btn-cache-api:hover {
+          background: #1976d2;
+        }
+        
+        .btn-cache-all {
+          background: #f44336;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+        
+        .btn-cache-all:hover {
+          background: #d32f2f;
+        }
+        
+        .btn-cache-api:disabled,
+        .btn-cache-all:disabled {
+          background: #6c757d;
+          cursor: not-allowed;
+        }
+        
+        .cache-info {
+          background: #f8f9fa;
+          border: 1px solid #dee2e6;
+          border-radius: 5px;
+          padding: 15px;
+          margin-top: 15px;
+        }
+        
+        .cache-info p {
+          margin: 5px 0;
+          font-size: 14px;
         }
         
         .debug-logs {

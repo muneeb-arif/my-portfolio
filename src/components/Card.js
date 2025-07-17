@@ -14,7 +14,7 @@ const Card = ({ project, onClick, animationDelay }) => {
     >
       <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
         {/* Image Container */}
-        <div className="relative h-48 md:h-56 lg:h-64 overflow-hidden">
+        <div className="relative h-56 md:h-64 lg:h-72 xl:h-80 overflow-hidden">
           {/* Loading Placeholder */}
           {!isLoaded && (
             <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse" />
@@ -25,7 +25,7 @@ const Card = ({ project, onClick, animationDelay }) => {
             src={project.image}
             alt={project.title}
             className={`
-              w-full h-full object-cover transition-all duration-700 group-hover:scale-110
+              w-full h-full object-cover object-top transition-all duration-700 group-hover:scale-110
               ${isLoaded ? 'opacity-100' : 'opacity-0'}
             `}
             onLoad={handleImageLoad}
