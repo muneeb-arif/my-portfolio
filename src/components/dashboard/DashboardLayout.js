@@ -16,6 +16,7 @@ import QueriesManager from './QueriesManager';
 import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
 import AutomaticUpdateDashboard from './AutomaticUpdateDashboard';
+import SharedHostingUpdateManager from './SharedHostingUpdateManager';
 import UpdateNotificationBar from './UpdateNotificationBar';
 import DashboardMobileNav from './DashboardMobileNav';
 import { applyTheme, themes } from '../../utils/themeUtils';
@@ -604,7 +605,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
       case 'appearance':
         return <AppearanceSection />;
       case 'theme-updates':
-        return <AutomaticUpdateDashboard />;
+        return <SharedHostingUpdateManager />;
       case 'settings':
         return <SettingsSection user={user} />;
       case 'export':
@@ -2176,43 +2177,80 @@ const BackupFilesSection = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
-  // Load all backup files from updates storage
+  // Load all backup files from updates storage and database
   const loadBackupFiles = async () => {
     try {
       setLoading(true);
       setError('');
       
-      // List all files from the updates bucket
-      const { data: files, error } = await supabase.storage
+      // First, try to get backup files from database API
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${API_BASE}/backup-files`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('api_token')}`
+        }
+      });
+
+      let databaseFiles = [];
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          databaseFiles = data.data || [];
+        }
+      }
+
+      // Also get files from Supabase storage as fallback
+      const { data: storageFiles, error } = await supabase.storage
         .from('updates')
         .list('', {
           limit: 1000,
           sortBy: { column: 'created_at', order: 'desc' }
         });
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Error loading from Supabase storage:', error);
+      }
 
-      // Filter backup files and get public URLs
-      const backupFilesData = files.filter(file => 
+      // Filter backup files from storage
+      const storageBackupFiles = (storageFiles || []).filter(file => 
         file.name.match(/\.(zip|tar|gz|rar|7z)$/i) && 
         !file.name.startsWith('.')
       );
 
-      const filesWithUrls = backupFilesData.map(file => {
-        const { data: { publicUrl } } = supabase.storage
-          .from('updates')
-          .getPublicUrl(file.name);
-        
-        return {
-          name: file.name,
-          url: publicUrl,
-          size: file.metadata?.size || 0,
-          created_at: file.created_at,
-          updated_at: file.updated_at
-        };
+      // Combine database and storage files, prioritizing database entries
+      const combinedFiles = [...databaseFiles];
+      
+      // Add storage files that aren't in database
+      storageBackupFiles.forEach(storageFile => {
+        const existsInDb = databaseFiles.some(dbFile => dbFile.file_name === storageFile.name);
+        if (!existsInDb) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('updates')
+            .getPublicUrl(storageFile.name);
+          
+          combinedFiles.push({
+            id: null,
+            file_name: storageFile.name,
+            name: storageFile.name, // For compatibility
+            url: publicUrl,
+            public_url: publicUrl,
+            size: storageFile.metadata?.size || 0,
+            file_size: storageFile.metadata?.size || 0,
+            created_at: storageFile.created_at,
+            upload_date: storageFile.created_at,
+            updated_at: storageFile.updated_at
+          });
+        }
       });
 
-      setBackupFiles(filesWithUrls);
+      // Sort by upload date (newest first)
+      combinedFiles.sort((a, b) => {
+        const dateA = new Date(a.upload_date || a.created_at);
+        const dateB = new Date(b.upload_date || b.created_at);
+        return dateB - dateA;
+      });
+
+      setBackupFiles(combinedFiles);
     } catch (error) {
       console.error('Error loading backup files:', error);
       setError('Failed to load backup files: ' + error.message);
@@ -2235,11 +2273,41 @@ const BackupFilesSection = () => {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const fileName = `backup-${timestamp}-${file.name}`;
         
-        const { error } = await supabase.storage
+        // Upload to Supabase storage
+        const { error: uploadError } = await supabase.storage
           .from('updates')
           .upload(fileName, file);
 
-        if (error) throw error;
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('updates')
+          .getPublicUrl(fileName);
+
+        // Create database entry via API
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_BASE}/backup-files`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('api_token')}`
+          },
+          body: JSON.stringify({
+            file_name: fileName,
+            file_size: file.size,
+            file_type: file.type,
+            storage_path: `updates/${fileName}`,
+            public_url: publicUrl,
+            description: `Backup file uploaded on ${new Date().toLocaleDateString()}`
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Failed to create backup file entry:', errorData);
+          // Don't throw error here - file was uploaded successfully, just DB entry failed
+        }
       }
 
       // Reload files after upload
@@ -2279,19 +2347,40 @@ const BackupFilesSection = () => {
 
   // Delete backup file
   const deleteFile = async (file) => {
-    if (!window.confirm(`Are you sure you want to delete ${file.name}?`)) {
+    if (!window.confirm(`Are you sure you want to delete ${file.name || file.file_name}?`)) {
       return;
     }
 
     try {
-      const { error } = await supabase.storage
+      // Delete from Supabase storage
+      const fileName = file.name || file.file_name;
+      const { error: storageError } = await supabase.storage
         .from('updates')
-        .remove([file.name]);
+        .remove([fileName]);
 
-      if (error) throw error;
+      if (storageError) {
+        console.warn('Error deleting from storage:', storageError);
+      }
+
+      // Delete from database if it has an ID
+      if (file.id) {
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_BASE}/backup-files?id=${file.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('api_token')}`
+          }
+        });
+
+        if (!response.ok) {
+          console.warn('Error deleting from database:', await response.text());
+        }
+      }
 
       // Remove from local state
-      setBackupFiles(backupFiles.filter(f => f.name !== file.name));
+      setBackupFiles(backupFiles.filter(f => 
+        (f.name || f.file_name) !== (file.name || file.file_name)
+      ));
       
     } catch (error) {
       console.error('Error deleting backup file:', error);
@@ -2400,7 +2489,7 @@ const BackupFilesSection = () => {
       )}
 
       <div className="backup-stats">
-        <p>{backupFiles.length} backup files • Total size: {formatFileSize(backupFiles.reduce((total, file) => total + file.size, 0))}</p>
+        <p>{backupFiles.length} backup files • Total size: {formatFileSize(backupFiles.reduce((total, file) => total + (file.size || file.file_size || 0), 0))}</p>
       </div>
 
       {loading ? (
@@ -2422,44 +2511,53 @@ const BackupFilesSection = () => {
         </div>
       ) : (
         <div className="backup-files-list">
-          {backupFiles.map((file, index) => (
-            <div key={file.name} className="backup-file-item" data-file={file.name}>
-              <div className="file-icon">
-                {getFileIcon(file.name)}
-              </div>
-              <div className="file-info">
-                <h4>{file.name}</h4>
-                <div className="file-meta">
-                  <span>{formatFileSize(file.size)}</span>
-                  <span>•</span>
-                  <span>{formatDate(file.created_at)}</span>
+          {backupFiles.map((file, index) => {
+            const fileName = file.name || file.file_name;
+            const fileSize = file.size || file.file_size;
+            const fileDate = file.upload_date || file.created_at;
+            const fileUrl = file.url || file.public_url;
+            
+            return (
+              <div key={fileName} className="backup-file-item" data-file={fileName}>
+                <div className="file-icon">
+                  {getFileIcon(fileName)}
+                </div>
+                <div className="file-info">
+                  <h4>{fileName}</h4>
+                  <div className="file-meta">
+                    <span>{formatFileSize(fileSize)}</span>
+                    <span>•</span>
+                    <span>{formatDate(fileDate)}</span>
+                    {file.id && <span>•</span>}
+                    {file.id && <span style={{ color: '#16a34a' }}>✓ DB Tracked</span>}
+                  </div>
+                </div>
+                <div className="file-actions">
+                  <button 
+                    onClick={() => copyUrl({ ...file, url: fileUrl, name: fileName })}
+                    className="action-btn copy copy-btn"
+                    title="Copy public URL"
+                  >
+                    📋 Copy URL
+                  </button>
+                  <button 
+                    onClick={() => downloadFile({ ...file, url: fileUrl, name: fileName })}
+                    className="action-btn download"
+                    title="Download"
+                  >
+                    📥 Download
+                  </button>
+                  <button 
+                    onClick={() => deleteFile(file)}
+                    className="action-btn delete"
+                    title="Delete"
+                  >
+                    🗑️ Delete
+                  </button>
                 </div>
               </div>
-              <div className="file-actions">
-                <button 
-                  onClick={() => copyUrl(file)}
-                  className="action-btn copy copy-btn"
-                  title="Copy public URL"
-                >
-                  📋 Copy URL
-                </button>
-                <button 
-                  onClick={() => downloadFile(file)}
-                  className="action-btn download"
-                  title="Download"
-                >
-                  📥 Download
-                </button>
-                <button 
-                  onClick={() => deleteFile(file)}
-                  className="action-btn delete"
-                  title="Delete"
-                >
-                  🗑️ Delete
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

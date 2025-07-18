@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../config/supabase';
+import { apiService } from '../../services/apiService';
 import './SharedHostingUpdateManager.css';
 
 const SharedHostingUpdateManager = () => {
@@ -15,11 +15,8 @@ const SharedHostingUpdateManager = () => {
     version: '',
     title: '',
     description: '',
-    release_notes: '',
-    package_url: '',
-    special_instructions: '',
-    channel: 'stable',
-    is_critical: false
+    files: [{ url: '' }], // Start with one file by default
+    is_active: true
   });
 
   useEffect(() => {
@@ -29,181 +26,159 @@ const SharedHostingUpdateManager = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        loadClients(),
-        loadUpdates(),
-        loadStats()
-      ]);
+      setError(null);
+
+      console.log('🔍 Loading shared hosting updates data...');
+      console.log('🔍 API base URL:', apiService.baseUrl);
+      console.log('🔍 API available:', apiService.isApiServerAvailable());
+
+      // Load updates
+      const updatesResult = await apiService.getSharedHostingUpdates({
+        order: 'created_at DESC'
+      });
+
+      console.log('🔍 Updates result:', updatesResult);
+
+      if (updatesResult.success) {
+        setUpdates(updatesResult.data || []);
+      } else {
+        setError('Failed to load updates: ' + updatesResult.error);
+      }
+
+      // Load stats
+      const statsResult = await apiService.getSharedHostingUpdates({
+        is_active: true
+      });
+
+      console.log('🔍 Stats result:', statsResult);
+
+      if (statsResult.success) {
+        const activeUpdates = statsResult.data || [];
+        setStats({
+          totalUpdates: updates.length,
+          activeUpdates: activeUpdates.length,
+          latestVersion: activeUpdates.length > 0 ? activeUpdates[0].version : '1.0.0'
+        });
+      }
+
     } catch (err) {
       console.error('Failed to load data:', err);
-      setError('Failed to load data. Please try again.');
+      setError('Failed to load data: ' + err.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadClients = async () => {
-    const { data, error } = await supabase
-      .from('shared_hosting_clients')
-      .select('*')
-      .order('last_seen', { ascending: false });
-
-    if (error) throw error;
-    setClients(data || []);
-  };
-
-  const loadUpdates = async () => {
-    const { data, error } = await supabase
-      .from('shared_hosting_updates')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    setUpdates(data || []);
-  };
-
-  const loadStats = async () => {
-    const { data, error } = await supabase
-      .from('shared_hosting_update_stats')
-      .select('*');
-
-    if (error) throw error;
-    
-    // Process stats into summary
-    const summary = {
-      totalClients: clients.length,
-      totalUpdates: updates.length,
-      activeUpdates: updates.filter(u => u.is_active).length,
-      lastWeekUpdates: updates.filter(u => 
-        new Date(u.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      ).length
-    };
-    
-    setStats(summary);
   };
 
   const createUpdate = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true);
+      setError(null);
 
       // Validate form
-      if (!newUpdate.version || !newUpdate.title || !newUpdate.package_url) {
-        throw new Error('Please fill in all required fields');
+      if (!newUpdate.version || !newUpdate.title || !newUpdate.description) {
+        setError('Please fill in all required fields');
+        return;
       }
 
-      // Insert new update
-      const { data, error } = await supabase
-        .from('shared_hosting_updates')
-        .insert([{
-          ...newUpdate,
-          created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
+      // Validate that the file has a URL (compulsory)
+      if (!newUpdate.files[0] || !newUpdate.files[0].url) {
+        setError('File URL is required');
+        return;
+      }
 
-      if (error) throw error;
+      console.log('Creating update with data:', newUpdate);
 
-      // Create notifications for clients
-      await createNotifications(data.id);
+      const result = await apiService.createSharedHostingUpdate(newUpdate);
 
-      // Reset form
-      setNewUpdate({
-        version: '',
-        title: '',
-        description: '',
-        release_notes: '',
-        package_url: '',
-        special_instructions: '',
-        channel: 'stable',
-        is_critical: false
-      });
+      if (result.success) {
+        // Reset form
+        setNewUpdate({
+          version: '',
+          title: '',
+          description: '',
+          files: [{ url: '' }], // Reset to one file
+          is_active: true
+        });
 
-      // Reload data
-      await loadData();
-      setActiveTab('updates');
-
-      alert('✅ Update created successfully! Notifications will be sent to clients.');
-
+        // Reload data
+        await loadData();
+        setActiveTab('updates');
+        
+        alert('✅ Update created successfully!');
+      } else {
+        setError('Failed to create update: ' + (result.error || 'Unknown error'));
+      }
     } catch (err) {
       console.error('Failed to create update:', err);
-      alert('❌ Failed to create update: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createNotifications = async (updateId) => {
-    try {
-      const { data, error } = await supabase.rpc('create_shared_hosting_notifications', {
-        p_update_id: updateId,
-        p_notification_type: 'update_available'
-      });
-
-      if (error) throw error;
-      console.log('Notifications created:', data);
-    } catch (err) {
-      console.error('Failed to create notifications:', err);
+      setError('Failed to create update: ' + err.message);
     }
   };
 
   const toggleUpdateStatus = async (updateId, currentStatus) => {
     try {
-      const { error } = await supabase
-        .from('shared_hosting_updates')
-        .update({ is_active: !currentStatus })
-        .eq('id', updateId);
+      const result = await apiService.updateSharedHostingUpdate(updateId, {
+        is_active: !currentStatus
+      });
 
-      if (error) throw error;
-
-      await loadUpdates();
-      alert(currentStatus ? '✅ Update deactivated' : '✅ Update activated');
+      if (result.success) {
+        await loadData();
+        alert(currentStatus ? '✅ Update deactivated' : '✅ Update activated');
+      } else {
+        setError('Failed to update status: ' + result.error);
+      }
     } catch (err) {
       console.error('Failed to toggle update status:', err);
-      alert('❌ Failed to update status');
+      setError('Failed to update status: ' + err.message);
     }
   };
 
-  const generateDownloadLink = (update) => {
-    return update.package_url || update.download_url || '#';
+  const deleteUpdate = async (updateId) => {
+    if (!window.confirm('Are you sure you want to delete this update?')) {
+      return;
+    }
+
+    try {
+      const result = await apiService.deleteSharedHostingUpdate(updateId);
+
+      if (result.success) {
+        await loadData();
+        alert('✅ Update deleted successfully');
+      } else {
+        setError('Failed to delete update: ' + result.error);
+      }
+    } catch (err) {
+      console.error('Failed to delete update:', err);
+      setError('Failed to delete update: ' + err.message);
+    }
+  };
+
+  const updateFile = (index, field, value) => {
+    setNewUpdate(prev => ({
+      ...prev,
+      files: prev.files.map((file, i) => 
+        i === index ? { ...file, [field]: value } : file
+      )
+    }));
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(dateString).toLocaleDateString();
   };
 
-  const getClientStatus = (client) => {
-    const lastSeen = new Date(client.last_seen);
-    const now = new Date();
-    const diffHours = (now - lastSeen) / (1000 * 60 * 60);
-    
-    if (diffHours < 24) return 'online';
-    if (diffHours < 168) return 'recent'; // 1 week
-    return 'offline';
-  };
-
-  if (loading && clients.length === 0) {
+  if (loading) {
     return (
-      <div className="shared-hosting-update-manager">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading shared hosting update manager...</p>
-        </div>
+      <div className="shared-hosting-update-manager loading">
+        <div className="loading-spinner"></div>
+        <p>Loading shared hosting update manager...</p>
       </div>
     );
   }
 
   return (
     <div className="shared-hosting-update-manager">
-      <div className="update-manager-header">
-        <h2>🏗️ Shared Hosting Update Manager</h2>
-        <p>Manage theme updates for cPanel-based client deployments</p>
+      <div className="manager-header">
+        <h2>🚀 Shared Hosting Update Manager</h2>
+        <p>Manage theme updates for shared hosting environments (cPanel)</p>
       </div>
 
       {error && (
@@ -213,26 +188,20 @@ const SharedHostingUpdateManager = () => {
         </div>
       )}
 
-      <div className="update-manager-tabs">
-        <button 
+      <div className="manager-tabs">
+        <button
           className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           📊 Overview
         </button>
-        <button 
-          className={`tab ${activeTab === 'clients' ? 'active' : ''}`}
-          onClick={() => setActiveTab('clients')}
-        >
-          🌐 Clients ({clients.length})
-        </button>
-        <button 
+        <button
           className={`tab ${activeTab === 'updates' ? 'active' : ''}`}
           onClick={() => setActiveTab('updates')}
         >
-          📦 Updates ({updates.length})
+          📦 Updates
         </button>
-        <button 
+        <button
           className={`tab ${activeTab === 'create' ? 'active' : ''}`}
           onClick={() => setActiveTab('create')}
         >
@@ -240,142 +209,39 @@ const SharedHostingUpdateManager = () => {
         </button>
       </div>
 
-      <div className="tab-content">
+      <div className="manager-content">
         {activeTab === 'overview' && (
           <div className="overview-tab">
             <div className="stats-grid">
               <div className="stat-card">
-                <div className="stat-icon">🌐</div>
-                <div className="stat-content">
-                  <h3>{stats.totalClients || 0}</h3>
-                  <p>Total Clients</p>
-                </div>
+                <h3>Total Updates</h3>
+                <div className="stat-value">{stats.totalUpdates || 0}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon">📦</div>
-                <div className="stat-content">
-                  <h3>{stats.totalUpdates || 0}</h3>
-                  <p>Total Updates</p>
-                </div>
+                <h3>Active Updates</h3>
+                <div className="stat-value">{stats.activeUpdates || 0}</div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon">✅</div>
-                <div className="stat-content">
-                  <h3>{stats.activeUpdates || 0}</h3>
-                  <p>Active Updates</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">🆕</div>
-                <div className="stat-content">
-                  <h3>{stats.lastWeekUpdates || 0}</h3>
-                  <p>This Week</p>
-                </div>
+                <h3>Latest Version</h3>
+                <div className="stat-value">{stats.latestVersion || '1.0.0'}</div>
               </div>
             </div>
 
-            <div className="recent-activity">
-              <h3>📋 Recent Activity</h3>
-              <div className="activity-list">
-                {updates.slice(0, 5).map(update => (
-                  <div key={update.id} className="activity-item">
-                    <div className="activity-icon">
-                      {update.is_active ? '✅' : '⏸️'}
-                    </div>
-                    <div className="activity-content">
-                      <p><strong>{update.title}</strong> (v{update.version})</p>
-                      <p className="activity-time">{formatDate(update.created_at)}</p>
-                    </div>
-                    <div className="activity-status">
-                      <span className={`status ${update.is_active ? 'active' : 'inactive'}`}>
-                        {update.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
+            <div className="recent-updates">
+              <h3>Recent Updates</h3>
+              {updates.slice(0, 5).map(update => (
+                <div key={update.id} className="update-item">
+                  <div className="update-info">
+                    <h4>{update.title}</h4>
+                    <p>v{update.version} • {formatDate(update.created_at)}</p>
                   </div>
-                ))}
-                {updates.length === 0 && (
-                  <p className="no-activity">No updates created yet</p>
-                )}
-              </div>
-            </div>
-
-            <div className="quick-actions">
-              <h3>🚀 Quick Actions</h3>
-              <div className="action-buttons">
-                <button 
-                  className="action-btn primary"
-                  onClick={() => setActiveTab('create')}
-                >
-                  ➕ Create New Update
-                </button>
-                <button 
-                  className="action-btn secondary"
-                  onClick={() => setActiveTab('clients')}
-                >
-                  👥 View All Clients
-                </button>
-                <button 
-                  className="action-btn secondary"
-                  onClick={loadData}
-                  disabled={loading}
-                >
-                  🔄 Refresh Data
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'clients' && (
-          <div className="clients-tab">
-            <div className="clients-header">
-              <h3>🌐 Client Deployments</h3>
-              <p>Shared hosting clients using cPanel</p>
-            </div>
-
-            <div className="clients-list">
-              {clients.map(client => (
-                <div key={client.id} className="client-item">
-                  <div className="client-info">
-                    <div className="client-main">
-                      <h4>{client.domain}</h4>
-                      <div className="client-meta">
-                        <span className={`status ${getClientStatus(client)}`}>
-                          {getClientStatus(client) === 'online' ? '🟢' : 
-                           getClientStatus(client) === 'recent' ? '🟡' : '🔴'}
-                          {getClientStatus(client)}
-                        </span>
-                        <span className="version">v{client.current_version}</span>
-                        <span className="hosting">{client.hosting_provider || 'cPanel'}</span>
-                      </div>
-                    </div>
-                    <div className="client-details">
-                      <p><strong>Last Seen:</strong> {formatDate(client.last_seen)}</p>
-                      <p><strong>Client ID:</strong> {client.client_id}</p>
-                      {client.contact_email && (
-                        <p><strong>Contact:</strong> {client.contact_email}</p>
-                      )}
-                      {client.timezone && (
-                        <p><strong>Timezone:</strong> {client.timezone}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="client-actions">
-                    <button 
-                      className="btn-small"
-                      onClick={() => window.open(`https://${client.domain}`, '_blank')}
-                    >
-                      🔗 Visit Site
-                    </button>
+                  <div className="update-status">
+                    <span className={`status ${update.is_active ? 'active' : 'inactive'}`}>
+                      {update.is_active ? 'Active' : 'Inactive'}
+                    </span>
                   </div>
                 </div>
               ))}
-              {clients.length === 0 && (
-                <div className="no-clients">
-                  <p>📭 No clients registered yet</p>
-                  <p>Clients will appear here automatically when they visit their websites</p>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -383,67 +249,50 @@ const SharedHostingUpdateManager = () => {
         {activeTab === 'updates' && (
           <div className="updates-tab">
             <div className="updates-header">
-              <h3>📦 Theme Updates</h3>
-              <p>Manage update packages for distribution</p>
+              <h3>All Updates</h3>
+              <button 
+                className="btn-create-update"
+                onClick={() => setActiveTab('create')}
+              >
+                + Create Update
+              </button>
             </div>
-
+            
             <div className="updates-list">
               {updates.map(update => (
-                <div key={update.id} className="update-item">
-                  <div className="update-info">
-                    <div className="update-main">
-                      <h4>{update.title}</h4>
-                      <div className="update-meta">
-                        <span className="version">v{update.version}</span>
-                        <span className={`channel ${update.channel}`}>{update.channel}</span>
-                        <span className={`status ${update.is_active ? 'active' : 'inactive'}`}>
-                          {update.is_active ? '✅ Active' : '⏸️ Inactive'}
-                        </span>
-                        {update.is_critical && <span className="critical">🚨 Critical</span>}
-                      </div>
-                    </div>
-                    <div className="update-details">
-                      <p><strong>Description:</strong> {update.description}</p>
-                      <p><strong>Created:</strong> {formatDate(update.created_at)}</p>
-                      {update.package_size_mb && (
-                        <p><strong>Package Size:</strong> {update.package_size_mb} MB</p>
-                      )}
-                      {update.special_instructions && (
-                        <div className="special-instructions">
-                          <strong>Special Instructions:</strong>
-                          <p>{update.special_instructions}</p>
-                        </div>
-                      )}
-                    </div>
+                <div key={update.id} className="update-card">
+                  <div className="update-header">
+                    <div className="update-title">{update.title}</div>
+                    <div className="update-version">v{update.version}</div>
                   </div>
+                  
+                  <div className="update-description">
+                    {update.description}
+                  </div>
+                  
+                  <div className="update-meta">
+                    <span>Created: {formatDate(update.created_at)}</span>
+                    <span className={`status ${update.is_active ? 'active' : 'inactive'}`}>
+                      {update.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  
                   <div className="update-actions">
-                    <button 
-                      className="btn-small"
-                      onClick={() => window.open(generateDownloadLink(update), '_blank')}
-                      disabled={!update.package_url && !update.download_url}
-                    >
-                      📥 Download
-                    </button>
-                    <button 
-                      className={`btn-small ${update.is_active ? 'danger' : 'success'}`}
+                    <button
                       onClick={() => toggleUpdateStatus(update.id, update.is_active)}
+                      className={`btn-toggle ${update.is_active ? 'deactivate' : 'activate'}`}
                     >
-                      {update.is_active ? '⏸️ Deactivate' : '▶️ Activate'}
+                      {update.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button
+                      onClick={() => deleteUpdate(update.id)}
+                      className="btn-delete"
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>
               ))}
-              {updates.length === 0 && (
-                <div className="no-updates">
-                  <p>📭 No updates created yet</p>
-                  <button 
-                    className="btn-primary"
-                    onClick={() => setActiveTab('create')}
-                  >
-                    ➕ Create First Update
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -452,11 +301,11 @@ const SharedHostingUpdateManager = () => {
           <div className="create-tab">
             <div className="create-header">
               <h3>➕ Create New Update</h3>
-              <p>Create a new theme update package for shared hosting clients</p>
+              <p>Create a new theme update package for your clients</p>
             </div>
-
+            
             <form onSubmit={createUpdate} className="create-form">
-              <div className="form-grid">
+              <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="version">Version *</label>
                   <input
@@ -467,118 +316,68 @@ const SharedHostingUpdateManager = () => {
                     placeholder="e.g., 1.2.0"
                     required
                   />
-                  <small>Use semantic versioning (major.minor.patch)</small>
                 </div>
-
+                
                 <div className="form-group">
-                  <label htmlFor="channel">Channel</label>
+                  <label htmlFor="is_active">Status</label>
                   <select
-                    id="channel"
-                    value={newUpdate.channel}
-                    onChange={(e) => setNewUpdate({...newUpdate, channel: e.target.value})}
+                    id="is_active"
+                    value={newUpdate.is_active ? '1' : '0'}
+                    onChange={(e) => setNewUpdate({...newUpdate, is_active: e.target.value === '1'})}
                   >
-                    <option value="stable">Stable</option>
-                    <option value="beta">Beta</option>
-                    <option value="alpha">Alpha</option>
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
                   </select>
                 </div>
-
-                <div className="form-group full-width">
-                  <label htmlFor="title">Title *</label>
-                  <input
-                    type="text"
-                    id="title"
-                    value={newUpdate.title}
-                    onChange={(e) => setNewUpdate({...newUpdate, title: e.target.value})}
-                    placeholder="e.g., Bug Fixes and Performance Improvements"
-                    required
-                  />
-                </div>
-
-                <div className="form-group full-width">
-                  <label htmlFor="description">Description</label>
-                  <textarea
-                    id="description"
-                    value={newUpdate.description}
-                    onChange={(e) => setNewUpdate({...newUpdate, description: e.target.value})}
-                    placeholder="Brief description of what's new..."
-                    rows="3"
-                  />
-                </div>
-
-                <div className="form-group full-width">
-                  <label htmlFor="package_url">Package URL *</label>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="title">Title *</label>
+                <input
+                  type="text"
+                  id="title"
+                  value={newUpdate.title}
+                  onChange={(e) => setNewUpdate({...newUpdate, title: e.target.value})}
+                  placeholder="e.g., Performance Improvements"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="description">Description *</label>
+                <textarea
+                  id="description"
+                  value={newUpdate.description}
+                  onChange={(e) => setNewUpdate({...newUpdate, description: e.target.value})}
+                  placeholder="Describe what's new in this update..."
+                  rows="4"
+                  required
+                />
+              </div>
+              
+                            <div className="form-group">
+                <label>Update File URL *</label>
+                <div className="files-section">
                   <input
                     type="url"
-                    id="package_url"
-                    value={newUpdate.package_url}
-                    onChange={(e) => setNewUpdate({...newUpdate, package_url: e.target.value})}
-                    placeholder="https://example.com/updates/v1.2.0.zip"
+                    placeholder="File URL (required)"
+                    value={newUpdate.files[0]?.url || ''}
+                    onChange={(e) => updateFile(0, 'url', e.target.value)}
                     required
                   />
-                  <small>Direct download link to the ZIP package</small>
-                </div>
-
-                <div className="form-group full-width">
-                  <label htmlFor="release_notes">Release Notes</label>
-                  <textarea
-                    id="release_notes"
-                    value={newUpdate.release_notes}
-                    onChange={(e) => setNewUpdate({...newUpdate, release_notes: e.target.value})}
-                    placeholder="- Fixed navigation bug&#10;- Improved mobile responsiveness&#10;- Updated dependencies"
-                    rows="4"
-                  />
-                  <small>Detailed changelog (one item per line)</small>
-                </div>
-
-                <div className="form-group full-width">
-                  <label htmlFor="special_instructions">cPanel Instructions</label>
-                  <textarea
-                    id="special_instructions"
-                    value={newUpdate.special_instructions}
-                    onChange={(e) => setNewUpdate({...newUpdate, special_instructions: e.target.value})}
-                    placeholder="Special instructions for this update (e.g., backup requirements, file permissions, etc.)"
-                    rows="3"
-                  />
-                  <small>Any special steps needed for this update</small>
-                </div>
-
-                <div className="form-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={newUpdate.is_critical}
-                      onChange={(e) => setNewUpdate({...newUpdate, is_critical: e.target.checked})}
-                    />
-                    🚨 Critical Update
-                  </label>
-                  <small>Mark as critical if this update fixes security issues</small>
                 </div>
               </div>
-
+              
               <div className="form-actions">
-                <button 
-                  type="submit" 
-                  className="btn-primary"
-                  disabled={loading}
-                >
-                  {loading ? 'Creating...' : '🚀 Create Update'}
+                <button type="submit" className="btn-create-update-submit">
+                  📦 Create Update
                 </button>
                 <button 
-                  type="button"
+                  type="button" 
+                  onClick={() => setActiveTab('updates')}
                   className="btn-secondary"
-                  onClick={() => setNewUpdate({
-                    version: '',
-                    title: '',
-                    description: '',
-                    release_notes: '',
-                    package_url: '',
-                    special_instructions: '',
-                    channel: 'stable',
-                    is_critical: false
-                  })}
                 >
-                  🗑️ Clear Form
+                  📋 View Updates
                 </button>
               </div>
             </form>

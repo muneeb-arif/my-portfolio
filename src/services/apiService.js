@@ -425,15 +425,44 @@ class ApiService {
   }
 
   async updateSharedHostingUpdate(updateId, updateData) {
-    return await this.makeRequest(`/shared-hosting-updates/${updateId}`, {
+    return await this.makeRequest(`/shared-hosting-updates?id=${updateId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData)
     });
   }
 
   async deleteSharedHostingUpdate(updateId) {
-    return await this.makeRequest(`/shared-hosting-updates/${updateId}`, {
+    return await this.makeRequest(`/shared-hosting-updates?id=${updateId}`, {
       method: 'DELETE'
+    });
+  }
+
+  // ================ SHARED HOSTING CLIENTS ================
+
+  async getSharedHostingClients(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.order) queryParams.append('order', params.order);
+    
+    const queryString = queryParams.toString();
+    const endpoint = `/shared-hosting-clients${queryString ? `?${queryString}` : ''}`;
+    
+    return await this.makeRequest(endpoint);
+  }
+
+  async registerSharedHostingClient(clientData) {
+    return await this.makeRequest('/shared-hosting-clients', {
+      method: 'POST',
+      body: JSON.stringify(clientData)
+    });
+  }
+
+  // ================ SHARED HOSTING ACTIVITY LOGS ================
+
+  async logSharedHostingActivity(activityData) {
+    return await this.makeRequest('/shared-hosting-activity', {
+      method: 'POST',
+      body: JSON.stringify(activityData)
     });
   }
 

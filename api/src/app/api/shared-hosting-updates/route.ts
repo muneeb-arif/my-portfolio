@@ -2,65 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { executeQuery } from '@/lib/database';
 
-// Utility to get portfolio owner user id
-async function getPortfolioOwnerUserId() {
-  const ownerEmail = process.env.PORTFOLIO_OWNER_EMAIL;
-  if (!ownerEmail) return null;
-  const userResult = await executeQuery('SELECT id FROM users WHERE email = ?', [ownerEmail]);
-  const userRows = userResult.success && Array.isArray(userResult.data) ? userResult.data as any[] : [];
-  if (userRows.length > 0) {
-    return userRows[0].id;
-  }
-  return null;
-}
-
-// GET /api/shared-hosting-updates - Get shared hosting updates (commented out for later use)
-/*
+// GET /api/shared-hosting-updates - Get shared hosting updates
 export async function GET(request: NextRequest) {
   try {
-    let userId = null;
-    // Try to get user from auth header
-    const authHeader = request.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.replace('Bearer ', '');
-        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-        if (payload && payload.id) {
-          userId = payload.id;
-        }
-      } catch (e) {}
-    }
-    if (!userId) {
-      userId = await getPortfolioOwnerUserId();
-    }
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Portfolio owner not configured or not found' },
-        { status: 500 }
-      );
-    }
-
-    // Get query parameters
     const { searchParams } = new URL(request.url);
     const isActive = searchParams.get('is_active');
     const limit = searchParams.get('limit');
-    const orderBy = searchParams.get('order') || 'created_at.desc';
+    let order = searchParams.get('order') || 'created_at DESC';
+    
+    // Fix order parameter format (convert dot notation to space)
+    if (order.includes('.')) {
+      order = order.replace('.', ' ');
+    }
 
-    let query = 'SELECT * FROM shared_hosting_updates WHERE user_id = ?';
-    const params = [userId];
+    let query = 'SELECT * FROM shared_hosting_updates';
+    const params: any[] = [];
 
     // Add filters
     if (isActive !== null) {
-      query += ' AND is_active = ?';
+      query += ' WHERE is_active = ?';
       params.push(isActive === 'true' ? 1 : 0);
     }
 
     // Add ordering
-    if (orderBy === 'created_at.desc') {
-      query += ' ORDER BY created_at DESC';
-    } else if (orderBy === 'created_at.asc') {
-      query += ' ORDER BY created_at ASC';
-    }
+    query += ` ORDER BY ${order}`;
 
     // Add limit
     if (limit) {
@@ -69,9 +34,10 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await executeQuery(query, params);
+
     if (!result.success) {
       return NextResponse.json(
-        { success: false, error: result.error },
+        { error: 'Failed to fetch updates', details: result.error },
         { status: 500 }
       );
     }
@@ -80,69 +46,51 @@ export async function GET(request: NextRequest) {
       success: true,
       data: result.data
     });
+
   } catch (error) {
-    console.error('Get shared hosting updates error:', error);
+    console.error('❌ GET /api/shared-hosting-updates error:', error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
 }
 
-// POST /api/shared-hosting-updates - Create new shared hosting update (protected)
-export const POST = withAuth(async (request: AuthenticatedRequest) => {
+// POST /api/shared-hosting-updates - Create new shared hosting update
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      version, 
-      title, 
-      description, 
-      release_notes, 
-      package_url, 
-      special_instructions, 
-      channel, 
-      is_critical 
-    } = body;
+    const { version, title, description, files, is_active = true } = body;
 
-    // Validate input
-    if (!title || !version) {
+    // Validate required fields
+    if (!version || !title || !description) {
       return NextResponse.json(
-        { success: false, error: 'Title and version are required' },
+        { error: 'Missing required fields: version, title, description' },
         { status: 400 }
       );
     }
 
+    // Generate UUID for the update
     const updateId = crypto.randomUUID();
-    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    
-    const query = `
-      INSERT INTO shared_hosting_updates (
-        id, user_id, version, title, description, release_notes, 
-        package_url, special_instructions, channel, is_critical, 
-        is_active, created_at, updated_at
-      ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+    // Insert the update
+    const insertQuery = `
+      INSERT INTO shared_hosting_updates (id, version, title, description, files, is_active)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
-    
-    const result = await executeQuery(query, [
-      updateId, 
-      request.user!.id, 
-      version, 
-      title, 
-      description || null, 
-      release_notes || null, 
-      package_url || null, 
-      special_instructions || null, 
-      channel || 'stable', 
-      is_critical || false,
-      true, // is_active defaults to true
-      now,
-      now
+
+    const result = await executeQuery(insertQuery, [
+      updateId,
+      version,
+      title,
+      description,
+      files ? JSON.stringify(files) : null,
+      is_active ? 1 : 0
     ]);
 
     if (!result.success) {
       return NextResponse.json(
-        { success: false, error: result.error },
+        { error: 'Failed to create update', details: result.error },
         { status: 500 }
       );
     }
@@ -151,26 +99,133 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     const getQuery = 'SELECT * FROM shared_hosting_updates WHERE id = ?';
     const getResult = await executeQuery(getQuery, [updateId]);
 
+    if (!getResult.success || !getResult.data || !Array.isArray(getResult.data) || getResult.data.length === 0) {
+      return NextResponse.json(
+        { error: 'Failed to retrieve created update' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      data: (getResult.data as any[])?.[0],
-      message: 'Shared hosting update created successfully'
+      data: getResult.data[0],
+      message: 'Update created successfully'
     }, { status: 201 });
+
   } catch (error) {
-    console.error('Create shared hosting update error:', error);
+    console.error('❌ POST /api/shared-hosting-updates error:', error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
-});
-*/
+}
 
-// Placeholder response for now
-export async function GET(request: NextRequest) {
-  return NextResponse.json({
-    success: true,
-    data: [],
-    message: 'Shared hosting updates API is commented out for later use'
-  });
+// PUT /api/shared-hosting-updates - Update existing shared hosting update
+export async function PUT(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const body = await request.json();
+    const { version, title, description, files, is_active } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Update ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Build update query dynamically
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (version !== undefined) {
+      updates.push('version = ?');
+      params.push(version);
+    }
+    if (title !== undefined) {
+      updates.push('title = ?');
+      params.push(title);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      params.push(description);
+    }
+    if (files !== undefined) {
+      updates.push('files = ?');
+      params.push(JSON.stringify(files));
+    }
+    if (is_active !== undefined) {
+      updates.push('is_active = ?');
+      params.push(is_active ? 1 : 0);
+    }
+
+    if (updates.length === 0) {
+      return NextResponse.json(
+        { error: 'No fields to update' },
+        { status: 400 }
+      );
+    }
+
+    params.push(id);
+    const updateQuery = `UPDATE shared_hosting_updates SET ${updates.join(', ')} WHERE id = ?`;
+
+    const result = await executeQuery(updateQuery, params);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Failed to update', details: result.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Update modified successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ PUT /api/shared-hosting-updates error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/shared-hosting-updates - Delete shared hosting update
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Update ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const result = await executeQuery('DELETE FROM shared_hosting_updates WHERE id = ?', [id]);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Failed to delete update', details: result.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Update deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ DELETE /api/shared-hosting-updates error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
 } 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../config/supabase';
+import { apiService } from '../../services/apiService';
 import { automaticUpdateService } from '../../services/automaticUpdateService';
 
 const UpdateNotificationBar = () => {
@@ -24,20 +24,20 @@ const UpdateNotificationBar = () => {
 
   const checkForUpdates = async () => {
     try {
-      // Get the latest active update
-      const { data: updates, error } = await supabase
-        .from('shared_hosting_updates')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // Get the latest active update using local API
+      const result = await apiService.getSharedHostingUpdates({
+        is_active: true,
+        limit: 1,
+        order: 'created_at DESC'
+      });
 
-      if (error) {
-        console.warn('Failed to check for updates:', error);
+      if (!result.success) {
+        console.warn('Failed to check for updates:', result.error);
         return;
       }
 
-      if (!updates || updates.length === 0) {
+      const updates = result.data || [];
+      if (updates.length === 0) {
         setIsVisible(false);
         return;
       }
