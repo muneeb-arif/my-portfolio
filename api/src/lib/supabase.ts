@@ -1,4 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
+// Extend SupabaseClient type to include our custom property
+interface ExtendedSupabaseClient extends SupabaseClient {
+  isEnvMissing?: boolean;
+}
 
 // Supabase configuration for API (server-side)
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -8,7 +13,7 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const isEnvMissing = !supabaseUrl || !supabaseAnonKey;
 
 // Create Supabase client with fallback for missing env vars
-let supabase;
+let supabase: ExtendedSupabaseClient;
 
 if (isEnvMissing) {
   console.warn('⚠️ Supabase environment variables missing. Creating dummy client.');

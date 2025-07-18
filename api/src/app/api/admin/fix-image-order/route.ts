@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     
     let totalUpdated = 0;
     
-    for (const projectId of projectsToFix) {
+    for (const projectId of Array.from(projectsToFix)) {
       // Get images for this project ordered by created_at
       const projectImagesResult = await executeQuery(`
         SELECT id, name, created_at

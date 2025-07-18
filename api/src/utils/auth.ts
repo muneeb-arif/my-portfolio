@@ -18,7 +18,7 @@ export async function comparePassword(password: string, hashedPassword: string):
 
 // Generate JWT token
 export function generateToken(user: User): string {
-  return jwt.sign(
+  return (jwt as any).sign(
     { 
       id: user.id, 
       email: user.email 

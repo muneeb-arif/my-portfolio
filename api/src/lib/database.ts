@@ -46,7 +46,7 @@ export async function executeQuery(query: string, params: any[] = []) {
     connection = await pool.getConnection();
     
     // Log connection status for debugging
-    console.log(`🔗 DB Connection - Active: ${pool.pool._allConnections.length}, Idle: ${pool.pool._freeConnections.length}, Pending: ${pool.pool._connectionQueue.length}`);
+    console.log(`🔗 DB Connection - Executing query: ${query.substring(0, 50)}...`);
     
     const [rows] = await connection.execute(query, params);
     return { success: true, data: rows };
@@ -88,9 +88,6 @@ export async function executeTransaction(queries: { query: string; params?: any[
 // Monitor connection pool status
 export function getPoolStatus() {
   return {
-    allConnections: pool.pool._allConnections.length,
-    freeConnections: pool.pool._freeConnections.length,
-    pendingConnections: pool.pool._connectionQueue.length,
     config: {
       connectionLimit: dbConfig.connectionLimit,
       queueLimit: dbConfig.queueLimit

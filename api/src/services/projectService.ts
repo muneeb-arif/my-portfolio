@@ -41,7 +41,7 @@ export class ProjectService {
       });
     }
     
-    return result;
+    return result as DbResult<Project[]>;
   }
 
   // Get published projects for portfolio owner (public)
@@ -84,7 +84,7 @@ export class ProjectService {
       });
     }
     
-    return result;
+    return result as DbResult<Project[]>;
   }
 
   // Get project by ID
@@ -161,7 +161,7 @@ export class ProjectService {
     if (result.success) {
       return this.getProjectById(projectId, userId);
     }
-    return result;
+    return result as DbResult<Project>;
   }
 
   // Update project
@@ -241,7 +241,7 @@ export class ProjectService {
     if (result.success) {
       return this.getProjectById(projectData.id, userId);
     }
-    return result;
+    return result as DbResult<Project>;
   }
 
   // Delete project

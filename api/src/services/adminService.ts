@@ -96,7 +96,8 @@ export class AdminService {
     
     const result = await executeQuery(query, [userId, sectionKey]);
     if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
-      return { success: true, data: result.data[0].count > 0 };
+      const row = result.data[0] as any;
+      return { success: true, data: row.count > 0 };
     }
     return { success: false, error: 'Failed to check section access' };
   }
