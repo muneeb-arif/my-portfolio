@@ -1,5 +1,3 @@
-import { supabase } from '../config/supabase';
-
 // Service to dynamically update meta tags at runtime based on current domain
 export const metaTagService = {
   // Cache for meta tag data
@@ -8,27 +6,23 @@ export const metaTagService = {
   _cacheDuration: 5 * 60 * 1000, // 5 minutes
 
   // Update meta tags based on current domain
-  async updateMetaTags() {
+  async updateMetaTags(settings = null) {
     try {
       const currentDomain = window.location.origin;
       console.log('🔧 META TAGS: Updating for domain:', currentDomain);
 
-      // Get portfolio config for current domain
-      const portfolioConfig = await this._getPortfolioConfigForDomain(currentDomain);
-      if (!portfolioConfig) {
-        console.log('🔧 META TAGS: No portfolio config found for domain:', currentDomain);
-        return;
-      }
-
-      // Get settings for the portfolio owner
-      const settings = await this._getSettingsForUser(portfolioConfig.owner_user_id);
-      if (!settings) {
-        console.log('🔧 META TAGS: No settings found for user:', portfolioConfig.owner_user_id);
-        return;
+      // Use provided settings or get from API
+      let settingsData = settings;
+      if (!settingsData) {
+        settingsData = await this._getSettingsFromAPI();
+        if (!settingsData) {
+          console.log('🔧 META TAGS: No settings found from API');
+          return;
+        }
       }
 
       // Update meta tags
-      this._updateMetaTags(settings, currentDomain);
+      this._updateMetaTags(settingsData, currentDomain);
       console.log('✅ META TAGS: Updated successfully');
 
     } catch (error) {
@@ -36,74 +30,26 @@ export const metaTagService = {
     }
   },
 
-  // Get portfolio config for current domain
-  async _getPortfolioConfigForDomain(domain) {
+  // Get settings from MySQL API
+  async _getSettingsFromAPI() {
     try {
-      // First try to find by site_url in settings
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('settings')
-        .select('user_id')
-        .eq('key', 'site_url')
-        .eq('value', domain)
-        .single();
-
-      if (settingsData) {
-        // Get portfolio config for this user
-        const { data: configData, error: configError } = await supabase
-          .from('portfolio_config')
-          .select('*')
-          .eq('owner_user_id', settingsData.user_id)
-          .eq('is_active', true)
-          .single();
-
-        if (configData) {
-          return configData;
-        }
-      }
-
-      // Fallback: get first active portfolio config
-      const { data: fallbackConfig, error: fallbackError } = await supabase
-        .from('portfolio_config')
-        .select('*')
-        .eq('is_active', true)
-        .single();
-
-      return fallbackConfig;
-
-    } catch (error) {
-      console.error('🔧 META TAGS: Error getting portfolio config:', error);
-      return null;
-    }
-  },
-
-  // Get settings for a specific user
-  async _getSettingsForUser(userId) {
-    try {
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (settingsError || !settingsData) {
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      
+      console.log('🔧 META TAGS: Fetching settings from MySQL API...');
+      
+      const response = await fetch(`${API_BASE}/settings`);
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        console.log('🔧 META TAGS: Settings loaded from MySQL API');
+        return data.data;
+      } else {
+        console.log('🔧 META TAGS: No settings from MySQL API');
         return null;
       }
 
-      // Convert settings array to object
-      const settings = {};
-      settingsData.forEach(setting => {
-        try {
-          // Try to parse JSON values
-          settings[setting.key] = JSON.parse(setting.value);
-        } catch {
-          // If not JSON, use raw value
-          settings[setting.key] = setting.value;
-        }
-      });
-
-      return settings;
-
     } catch (error) {
-      console.error('🔧 META TAGS: Error getting settings:', error);
+      console.error('🔧 META TAGS: Error getting settings from API:', error);
       return null;
     }
   },

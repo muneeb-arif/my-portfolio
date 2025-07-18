@@ -1,5 +1,4 @@
 import { apiService } from './apiService';
-import { clearConfigCache } from './portfolioConfigUtils';
 import { supabase } from '../config/supabase';
 
 // Simple auth utilities with short-term caching to prevent repeated API calls

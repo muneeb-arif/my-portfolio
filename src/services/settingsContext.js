@@ -138,19 +138,8 @@ export const SettingsProvider = ({ children }) => {
       console.error('❌ GLOBAL SETTINGS LOAD: Error:', error);
       setError(error.message);
       
-      // Retry logic for network errors ONLY (not for 404/API errors)
-      if (retryCount < 3 && 
-          (error.message.includes('timeout') || 
-           error.message.includes('fetch') || 
-           error.message.includes('network'))) {
-        console.log(`🔄 GLOBAL LOAD: Retrying... (${retryCount + 1}/3)`);
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => loadSettingsGlobally(true), 2000 * (retryCount + 1)); // Exponential backoff
-        return;
-      }
-      
-      // For API errors (404, 500, etc.), don't retry - just use fallback
-      console.log('🔄 GLOBAL LOAD: API error detected, using fallback settings immediately');
+      // DISABLED: Retry logic - API is working fine, no need for retries
+      console.log('🔄 GLOBAL LOAD: Error detected, using fallback settings immediately (no retries)');
       
       // Fallback to defaults on final failure
       console.log('🔄 GLOBAL LOAD: Using fallback settings');

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { apiService } from './apiService';
-import { getSiteUrl, clearConfigCache } from './portfolioConfigUtils';
 
 const AuthContext = createContext({
   user: null,

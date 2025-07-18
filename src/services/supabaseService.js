@@ -2,13 +2,25 @@ import { supabase, TABLES, BUCKETS } from '../config/supabase';
 import { fallbackDataService } from './fallbackDataService';
 import { fallbackUtils } from '../utils/fallbackUtils';
 import { getCurrentUser } from './authUtils';
-import { getPortfolioConfig, getSiteUrl } from './portfolioConfigUtils';
 
 // ================ AUTH OPERATIONS ================
 
-// Helper function to get site URL from database settings
+// Helper function to get site URL from MySQL API settings
 const getSiteUrlFromSettings = async () => {
-  return await getSiteUrl();
+  try {
+    const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+    const response = await fetch(`${API_BASE}/settings`);
+    const data = await response.json();
+    
+    if (data.success && data.data && data.data.site_url) {
+      return data.data.site_url;
+    }
+    
+    return window.location.origin;
+  } catch (error) {
+    console.warn('🔧 SITE URL: Error getting site URL from API:', error);
+    return window.location.origin;
+  }
 };
 
 export const authService = {
@@ -1208,9 +1220,22 @@ export const portfolioConfigService = {
     }
   },
 
-  // Get portfolio configuration matching the EXACT email in .env (no fallbacks)
+  // Get portfolio configuration from MySQL API
   async getPortfolioConfig() {
-    return await getPortfolioConfig();
+    try {
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${API_BASE}/settings`);
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        return data.data;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('🔧 PORTFOLIO CONFIG: Error getting config from API:', error);
+      return null;
+    }
   },
 
   // Check if portfolio is configured and set it up if needed (with caching)
@@ -1270,7 +1295,7 @@ export const portfolioConfigService = {
       }
 
       // Check if .env email exists and is active in portfolio_config
-      const existingConfig = await getPortfolioConfig();
+      const existingConfig = await this.getPortfolioConfig();
 
       if (existingConfig) {
       // console.log('✅ .env email already configured:', envEmail);
@@ -1429,14 +1454,20 @@ export const publicPortfolioService = {
         return;
       }
 
-      // For public mode, ensure portfolio is configured in the database
-      // console.log('🌐 Public mode: Setting up portfolio configuration...');
-      const setupResult = await portfolioConfigService.ensurePortfolioConfigured();
-      
-      if (setupResult.success) {
-      // console.log('✅ Portfolio configuration ready');
-      } else {
-      // console.log('⚠️ Portfolio configuration failed:', setupResult.message);
+      // For public mode, check if settings are available from MySQL API
+      // console.log('🌐 Public mode: Checking MySQL API settings...');
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      try {
+        const response = await fetch(`${API_BASE}/settings`);
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log('✅ MySQL API settings available');
+        } else {
+          console.log('⚠️ MySQL API settings not available');
+        }
+      } catch (error) {
+        console.log('⚠️ MySQL API not accessible:', error.message);
       }
       
       // In public mode, we don't cache user ID - let RLS policies handle filtering
@@ -1457,45 +1488,20 @@ export const publicPortfolioService = {
         // Initialize only once
         await this.initialize();
         
-        // Get the user ID for the .env email
-        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        // Get settings from MySQL API to determine user context
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_BASE}/settings`);
+        const settingsData = await response.json();
         
-        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        // console.log('⚠️ No portfolio config found, using fallback data');
+        if (!settingsData.success || !settingsData.data) {
+          console.log('⚠️ No settings found from API, using fallback data');
           return fallbackDataService.getProjects();
         }
 
-        // console.log('📊 Fetching projects for user ID:', portfolioConfig.owner_user_id);
-        
-        // Try with order_index first, fallback to created_at if column doesn't exist
-        let { data, error } = await supabase
-          .from(TABLES.PROJECTS)
-          .select(`
-            *,
-            project_images(*).order(order_index)
-          `)
-          .eq('status', 'published')
-          .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
-          .order('created_at', { ascending: false });
-
-        // If order_index column doesn't exist, try without ordering
-        if (error && error.message?.includes('order_index')) {
-          console.warn('⚠️ order_index column not found, falling back to created_at ordering');
-          ({ data, error } = await supabase
-            .from(TABLES.PROJECTS)
-            .select(`
-              *,
-              project_images(*).order(created_at)
-            `)
-            .eq('status', 'published')
-            .eq('user_id', portfolioConfig.owner_user_id)
-            .order('created_at', { ascending: false }));
-        }
-
-        if (error) throw error;
-        
-        // console.log(`✅ Found ${data?.length || 0} projects for .env user`);
-        return data || [];
+        // For now, use fallback data since we're moving away from Supabase
+        // In the future, you can implement MySQL-based project fetching here
+        console.log('📊 Using fallback projects data (Supabase migration in progress)');
+        return fallbackDataService.getProjects();
       } catch (error) {
         // console.error('Error fetching published projects from Supabase, using fallback data:', error);
         // Show fallback notification
@@ -1513,22 +1519,19 @@ export const publicPortfolioService = {
         // Initialize only once
         await this.initialize();
         
-        // Get the user ID for the .env email
-        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        // Get settings from MySQL API to determine user context
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_BASE}/settings`);
+        const settingsData = await response.json();
         
-        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-          // console.log('⚠️ No portfolio config found, using fallback data');
+        if (!settingsData.success || !settingsData.data) {
+          console.log('⚠️ No settings found from API, using fallback data');
           return fallbackDataService.getCategories();
         }
 
-        const { data, error } = await supabase
-          .from(TABLES.CATEGORIES)
-          .select('*')
-          .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
-          .order('name');
-
-        if (error) throw error;
-        return data || [];
+        // For now, use fallback data since we're moving away from Supabase
+        console.log('📊 Using fallback categories data (Supabase migration in progress)');
+        return fallbackDataService.getCategories();
       } catch (error) {
         // console.error('Error fetching categories from Supabase, using fallback data:', error);
         // Show fallback notification
@@ -1546,25 +1549,19 @@ export const publicPortfolioService = {
         // Initialize only once
         await this.initialize();
         
-        // Get the user ID for the .env email
-        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        // Get settings from MySQL API to determine user context
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_BASE}/settings`);
+        const settingsData = await response.json();
         
-        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-        // console.log('⚠️ No portfolio config found, using fallback data');
+        if (!settingsData.success || !settingsData.data) {
+          console.log('⚠️ No settings found from API, using fallback data');
           return fallbackDataService.getTechnologies();
         }
 
-        const { data, error } = await supabase
-          .from('domains_technologies')
-          .select(`
-            *,
-            tech_skills (*)
-          `)
-          .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
-          .order('sort_order', { ascending: true });
-
-        if (error) throw error;
-        return data || [];
+        // For now, use fallback data since we're moving away from Supabase
+        console.log('📊 Using fallback technologies data (Supabase migration in progress)');
+        return fallbackDataService.getTechnologies();
       } catch (error) {
         // console.error('Error fetching domains/technologies from Supabase, using fallback data:', error);
         // Show fallback notification
@@ -1582,22 +1579,19 @@ export const publicPortfolioService = {
         // Initialize only once
         await this.initialize();
         
-        // Get the user ID for the .env email
-        const portfolioConfig = await portfolioConfigService.getPortfolioConfig();
+        // Get settings from MySQL API to determine user context
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_BASE}/settings`);
+        const settingsData = await response.json();
         
-        if (!portfolioConfig || !portfolioConfig.owner_user_id) {
-          // console.log('⚠️ No portfolio config found, using fallback data');
+        if (!settingsData.success || !settingsData.data) {
+          console.log('⚠️ No settings found from API, using fallback data');
           return fallbackDataService.getNiches();
         }
 
-        const { data, error } = await supabase
-          .from('niche')
-          .select('*')
-          .eq('user_id', portfolioConfig.owner_user_id)  // ← NOW filtering by correct user!
-          .order('sort_order', { ascending: true });
-
-        if (error) throw error;
-        return data || [];
+        // For now, use fallback data since we're moving away from Supabase
+        console.log('📊 Using fallback niches data (Supabase migration in progress)');
+        return fallbackDataService.getNiches();
       } catch (error) {
         // console.error('Error fetching niches from Supabase, using fallback data:', error);
         // Show fallback notification

@@ -132,20 +132,16 @@ function AppContent() {
     }
   }, []);
 
-  // Hide the main loader with 1 second delay after settings are loaded
+  // Hide the main loader immediately when settings are loaded
   useEffect(() => {
     if (settingsLoading) {
       // Show loader immediately when settings start loading
       setLoading(true);
-    } else {
-      // Add 1 second delay before hiding loader when settings finish loading
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
+    } else if (settingsInitialized) {
+      // Hide loader immediately when settings are loaded and initialized
+      setLoading(false);
     }
-  }, [settingsLoading]);
+  }, [settingsLoading, settingsInitialized]);
 
   // Wait for settings to load, then load portfolio data and initialize theme updates
   useEffect(() => {
@@ -153,10 +149,10 @@ function AppContent() {
       // Settings are loaded, now load portfolio data in background
       loadPortfolioData();
       
-      // Initialize dynamic meta tags
-      metaTagService.initialize();
+      // Initialize dynamic meta tags with existing settings (no duplicate API call)
+      metaTagService.updateMetaTags(settings);
     }
-  }, [settingsLoading, settingsInitialized, loadPortfolioData]);
+  }, [settingsLoading, settingsInitialized, loadPortfolioData, settings]);
 
   // Handle filter changes
   const handleFilterChange = async (newFilter) => {
