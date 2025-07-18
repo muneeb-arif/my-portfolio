@@ -27,7 +27,7 @@ const demoProjects = [
     project_images: [
       {
         id: 1,
-        url: "/images/domains/web-development.jpeg",
+        url: "/images/hero-bg.png",
         caption: "E-Commerce Platform Preview"
       }
     ],
@@ -55,7 +55,7 @@ const demoProjects = [
     project_images: [
       {
         id: 2,
-        url: "/images/domains/ai-ml.jpeg",
+        url: "/images/hero-bg.png",
         caption: "AI Chatbot Preview"
       }
     ],
@@ -83,7 +83,7 @@ const demoProjects = [
     project_images: [
       {
         id: 3,
-        url: "/images/domains/mobile-development.jpeg",
+        url: "/images/hero-bg.png",
         caption: "Mobile Banking App Preview"
       }
     ],

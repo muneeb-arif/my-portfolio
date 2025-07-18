@@ -19,6 +19,7 @@ import AutomaticUpdateDashboard from './AutomaticUpdateDashboard';
 import SharedHostingUpdateManager from './SharedHostingUpdateManager';
 import UpdateNotificationBar from './UpdateNotificationBar';
 import DashboardMobileNav from './DashboardMobileNav';
+import ImagePositioner from './ImagePositioner';
 import { applyTheme, themes } from '../../utils/themeUtils';
 import './DashboardLayout.css';
 import './ProjectsManager.css';
@@ -1372,6 +1373,8 @@ const AppearanceSection = () => {
   const [resumeFile, setResumeFile] = useState(null);
   const [whatsappFile, setWhatsappFile] = useState(null);
   const [currentTheme, setCurrentTheme] = useState('sand');
+  const [tempHeroUrl, setTempHeroUrl] = useState(null);
+  const [tempAvatarUrl, setTempAvatarUrl] = useState(null);
 
   const defaultSettings = useMemo(() => ({
     logo_type: 'initials',
@@ -1379,8 +1382,12 @@ const AppearanceSection = () => {
     logo_image: '',
     hero_banner_image: '/images/hero-bg.png',
     hero_banner_zoom: 100,
+    hero_banner_position_x: 50,
+    hero_banner_position_y: 50,
     avatar_image: '/images/profile/avatar.jpeg',
     avatar_zoom: 100,
+    avatar_position_x: 50,
+    avatar_position_y: 50,
     whatsapp_preview_image: '',
     banner_name: 'Muneeb Arif',
     banner_title: 'Principal Software Engineer',
@@ -1437,8 +1444,56 @@ const AppearanceSection = () => {
     }
   }, [loading, settings, loadLocalSettings]);
 
+  // Cleanup temporary URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (tempHeroUrl) {
+        URL.revokeObjectURL(tempHeroUrl);
+      }
+      if (tempAvatarUrl) {
+        URL.revokeObjectURL(tempAvatarUrl);
+      }
+    };
+  }, [tempHeroUrl, tempAvatarUrl]);
+
   const handleInputChange = (key, value) => {
     setLocalSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleBannerPositionChange = (x, y) => {
+    setLocalSettings(prev => ({ 
+      ...prev, 
+      hero_banner_position_x: x, 
+      hero_banner_position_y: y 
+    }));
+  };
+
+  const handleAvatarPositionChange = (x, y) => {
+    setLocalSettings(prev => ({ 
+      ...prev, 
+      avatar_position_x: x, 
+      avatar_position_y: y 
+    }));
+  };
+
+  const handleHeroFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setHeroFile(file);
+      // Create temporary URL for immediate preview
+      const tempUrl = URL.createObjectURL(file);
+      setTempHeroUrl(tempUrl);
+    }
+  };
+
+  const handleAvatarFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      // Create temporary URL for immediate preview
+      const tempUrl = URL.createObjectURL(file);
+      setTempAvatarUrl(tempUrl);
+    }
   };
 
   const handleThemeChange = async (themeName) => {
@@ -1529,12 +1584,22 @@ const AppearanceSection = () => {
       
       if (success) {
         setMessage('✅ Settings saved successfully!');
-        // Clear file inputs
+        // Clear file inputs and temporary URLs
         setLogoFile(null);
         setHeroFile(null);
         setAvatarFile(null);
         setResumeFile(null);
         setWhatsappFile(null);
+        
+        // Clean up temporary URLs
+        if (tempHeroUrl) {
+          URL.revokeObjectURL(tempHeroUrl);
+          setTempHeroUrl(null);
+        }
+        if (tempAvatarUrl) {
+          URL.revokeObjectURL(tempAvatarUrl);
+          setTempAvatarUrl(null);
+        }
         
         console.log('✅ Dashboard: Settings saved successfully');
       } else {
@@ -1750,11 +1815,19 @@ const AppearanceSection = () => {
                    <input
                      type="file"
                      accept="image/*"
-                     onChange={(e) => setHeroFile(e.target.files[0])}
+                     onChange={handleHeroFileSelect}
                    />
-                   {localSettings.hero_banner_image && (
-                     <div className="current-file">
-                       <p>Current: {localSettings.hero_banner_image.split('/').pop()}</p>
+                   {(localSettings.hero_banner_image || tempHeroUrl) && (
+                     <div className="current-banner-image">
+                       <img 
+                         src={tempHeroUrl || localSettings.hero_banner_image} 
+                         alt="Hero Banner" 
+                         className="banner-preview-thumb"
+                       />
+                       <div className="banner-image-info">
+                         <p>{tempHeroUrl ? '🆕 New hero banner image (preview)' : '✅ Current hero banner image'}</p>
+                         <small>This image appears as the background in your hero section</small>
+                       </div>
                      </div>
                    )}
                  </div>
@@ -1775,6 +1848,29 @@ const AppearanceSection = () => {
                    </div>
                    <small className="form-help">Adjust image zoom level for better positioning</small>
                  </div>
+
+                 {/* Banner Image Positioner */}
+                 {(localSettings.hero_banner_image || tempHeroUrl) && (
+                   <div className="form-group">
+                     <label>Banner Image Position</label>
+                     <ImagePositioner
+                       imageUrl={localSettings.hero_banner_image}
+                       tempImageUrl={tempHeroUrl}
+                       containerWidth={300}
+                       containerHeight={200}
+                       imageWidth={400}
+                       imageHeight={300}
+                       positionX={localSettings.hero_banner_position_x || 50}
+                       positionY={localSettings.hero_banner_position_y || 50}
+                       zoom={localSettings.hero_banner_zoom || 100}
+                       onPositionChange={handleBannerPositionChange}
+                       title="Hero Banner Position"
+                       isCircular={false}
+                       previewMode="realistic"
+                     />
+                     <small className="form-help">Drag the image to position it within the hero section background. This preview shows exactly how your banner will appear.</small>
+                   </div>
+                 )}
                  
                  {/* WhatsApp Preview Image Upload */}
                  <div className="form-group whatsapp-upload-section">
@@ -1828,11 +1924,19 @@ const AppearanceSection = () => {
                    <input
                      type="file"
                      accept="image/*"
-                     onChange={(e) => setAvatarFile(e.target.files[0])}
+                     onChange={handleAvatarFileSelect}
                    />
-                   {localSettings.avatar_image && (
-                     <div className="current-file">
-                       <p>Current: {localSettings.avatar_image.split('/').pop()}</p>
+                   {(localSettings.avatar_image || tempAvatarUrl) && (
+                     <div className="current-avatar-image">
+                       <img 
+                         src={tempAvatarUrl || localSettings.avatar_image} 
+                         alt="Profile Picture" 
+                         className="avatar-preview-thumb"
+                       />
+                       <div className="avatar-image-info">
+                         <p>{tempAvatarUrl ? '🆕 New profile picture (preview)' : '✅ Current profile picture'}</p>
+                         <small>This image appears as your profile picture in the hero section</small>
+                       </div>
                      </div>
                    )}
                  </div>
@@ -1853,6 +1957,29 @@ const AppearanceSection = () => {
                    </div>
                    <small className="form-help">Adjust avatar zoom level for better cropping</small>
                  </div>
+
+                 {/* Avatar Image Positioner */}
+                 {(localSettings.avatar_image || tempAvatarUrl) && (
+                   <div className="form-group">
+                     <label>Avatar Image Position</label>
+                     <ImagePositioner
+                       imageUrl={localSettings.avatar_image}
+                       tempImageUrl={tempAvatarUrl}
+                       containerWidth={200}
+                       containerHeight={200}
+                       imageWidth={300}
+                       imageHeight={300}
+                       positionX={localSettings.avatar_position_x || 50}
+                       positionY={localSettings.avatar_position_y || 50}
+                       zoom={localSettings.avatar_zoom || 100}
+                       onPositionChange={handleAvatarPositionChange}
+                       title="Profile Picture Position"
+                       isCircular={true}
+                       previewMode="realistic"
+                     />
+                     <small className="form-help">Drag the image to position it within the circular profile container. This preview shows exactly how your avatar will appear.</small>
+                   </div>
+                 )}
                </div>
 
                {/* Resume Section */}

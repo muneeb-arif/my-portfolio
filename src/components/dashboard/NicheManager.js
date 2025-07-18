@@ -315,11 +315,11 @@ const NicheManager = () => {
                   {/* Image Preview */}
                   <div className="image-preview">
                     <img 
-                      src={formData.image.startsWith('http') ? formData.image : `/images/domains/${formData.image}`}
+                      src={formData.image.startsWith('http') ? formData.image : `/images/hero-bg.png`}
                       alt="Preview"
                       className="preview-image"
                       onError={(e) => {
-                        e.target.src = '/images/domains/default.jpeg';
+                        e.target.src = '/images/hero-bg.png';
                       }}
                     />
                   </div>
@@ -439,11 +439,11 @@ const NicheManager = () => {
                 <div className="niche-header">
                   <div className="niche-info">
                     <img 
-                      src={niche.image.startsWith('http') ? niche.image : `/images/domains/${niche.image}`}
+                      src={niche.image.startsWith('http') ? niche.image : `/images/hero-bg.png`}
                       alt={niche.title}
                       className="niche-image"
                       onError={(e) => {
-                        e.target.src = '/images/domains/default.jpeg';
+                        e.target.src = '/images/hero-bg.png';
                       }}
                     />
                     <div className="niche-details">

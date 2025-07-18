@@ -100,7 +100,7 @@ Looking forward to hearing from you!`
     }
     // If Unsplash fails, fall back to default
     else if (currentSrc.includes('source.unsplash.com')) {
-      e.target.src = '/images/domains/default.jpeg';
+      e.target.src = '/images/hero-bg.png';
     }
     // If default also fails, hide the image section
     else {

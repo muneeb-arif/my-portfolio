@@ -239,7 +239,7 @@ class PortfolioService {
       title: project.title,
       description: project.description,
       category: project.category || 'Web Development',
-      image: project.project_images?.[0]?.url || '/images/domains/default.jpeg',
+      image: project.project_images?.[0]?.url || '/images/hero-bg.png',
       buttonText: 'View Details',
       is_prompt: project.is_prompt || 0, // Preserve the is_prompt field
       status: project.status || 'draft',

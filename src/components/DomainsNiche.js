@@ -50,7 +50,7 @@ const DomainsNiche = ({ additionalDataLoading }) => {
       icon: getIconComponent('Target'), // Use Target icon for niches
       subtitle: niche.overview || 'Specialized domain expertise',
       tags: toolsArray,
-      image: niche.image.startsWith('http') ? niche.image : `/images/domains/${niche.image}`,
+      image: niche.image.startsWith('http') ? niche.image : `/images/hero-bg.png`,
       modalContent: keyFeaturesArray,
       ai_driven: niche.ai_driven
     };

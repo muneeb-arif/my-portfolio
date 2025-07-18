@@ -69,11 +69,11 @@ const Hero = ({ isLoading = false }) => {
     <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-cover bg-no-repeat"
         style={{
           backgroundImage: `url('${heroBannerImage}')`,
-          transform: `scale(${(settings.hero_banner_zoom || 100) / 100})`,
-          transformOrigin: 'center center',
+          backgroundSize: `${settings.hero_banner_zoom || 100}%`,
+          backgroundPosition: `${settings.hero_banner_position_x || 50}% ${settings.hero_banner_position_y || 50}%`,
         }}
       />
       
@@ -153,10 +153,10 @@ const Hero = ({ isLoading = false }) => {
                 <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight drop-shadow-lg">
                   {bannerName}
                 </h1>
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-white/90 drop-shadow-lg">
+                <h2 className="text-left text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-white/90 drop-shadow-lg">
                   {bannerTitle}
                 </h2>
-                <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-lg leading-relaxed drop-shadow-lg">
+                <p className="text-left text-base sm:text-lg md:text-xl text-white/80 max-w-lg leading-relaxed drop-shadow-lg">
                   {bannerTagline}
                 </p>
               </div>
@@ -190,7 +190,7 @@ const Hero = ({ isLoading = false }) => {
                 style={{
                   backgroundImage: `url('${avatarUrl}')`,
                   backgroundSize: `${settings.avatar_zoom || 100}%`,
-                  backgroundPosition: 'center center',
+                  backgroundPosition: `${settings.avatar_position_x || 50}% ${settings.avatar_position_y || 50}%`,
                   backgroundRepeat: 'no-repeat'
                 }}
                 role="img"

@@ -365,7 +365,7 @@ class HybridService {
       title: project.title,
       description: project.description,
       category: project.category || 'Web Development',
-      image: project.project_images?.[0]?.url || '/images/domains/default.jpeg',
+      image: project.project_images?.[0]?.url || '/images/hero-bg.png',
       buttonText: 'View Details',
       details: {
         overview: project.overview || project.description,
@@ -387,7 +387,7 @@ class HybridService {
       title: project.title,
       description: project.description,
       category: project.category || 'Web Development',
-      image: project.project_images?.[0]?.url || '/images/domains/default.jpeg',
+      image: project.project_images?.[0]?.url || '/images/hero-bg.png',
       buttonText: 'View Details',
       details: {
         overview: project.overview || project.description,
@@ -409,7 +409,7 @@ class HybridService {
       title: project.title,
       description: project.description,
       category: project.category || 'Web Development',
-      image: project.image || '/images/domains/default.jpeg',
+      image: project.image || '/images/hero-bg.png',
       buttonText: 'View Details',
       details: {
         overview: project.overview || project.description,

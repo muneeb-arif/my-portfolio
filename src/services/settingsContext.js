@@ -41,8 +41,12 @@ export const SettingsProvider = ({ children }) => {
     logo_image: '',
     hero_banner_image: '/images/hero-bg.png',
     hero_banner_zoom: 100,
+    hero_banner_position_x: 50,
+    hero_banner_position_y: 50,
     avatar_image: '/images/profile/avatar.jpeg',
     avatar_zoom: 100,
+    avatar_position_x: 50,
+    avatar_position_y: 50,
     whatsapp_preview_image: '', // Optimized image for WhatsApp sharing
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
     show_resume_download: true,

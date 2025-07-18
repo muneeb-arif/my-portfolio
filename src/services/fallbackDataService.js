@@ -24,7 +24,7 @@ export const fallbackDataService = {
         github_url: "https://github.com/username/ecommerce-platform",
         status: "published",
         views: 1250,
-        image: "/images/domains/web-development.jpeg",
+        image: "/images/hero-bg.png",
         created_at: "2024-01-15T10:00:00Z"
       },
       {
@@ -46,7 +46,7 @@ export const fallbackDataService = {
         github_url: "https://github.com/username/ai-chatbot",
         status: "published",
         views: 890,
-        image: "/images/domains/ai-ml.jpeg",
+        image: "/images/hero-bg.png",
         created_at: "2024-02-20T14:30:00Z"
       },
       {
@@ -68,7 +68,7 @@ export const fallbackDataService = {
         github_url: "https://github.com/username/mobile-banking",
         status: "published",
         views: 2100,
-        image: "/images/domains/mobile-development.jpeg",
+        image: "/images/hero-bg.png",
         created_at: "2024-03-10T09:15:00Z"
       },
       {
@@ -90,7 +90,7 @@ export const fallbackDataService = {
         github_url: "https://github.com/username/cloud-dashboard",
         status: "published",
         views: 750,
-        image: "/images/domains/cloud-computing.jpeg",
+        image: "/images/hero-bg.png",
         created_at: "2024-04-05T16:45:00Z"
       },
       {
@@ -112,7 +112,7 @@ export const fallbackDataService = {
         github_url: "https://github.com/username/blockchain-supplychain",
         status: "published",
         views: 680,
-        image: "/images/domains/blockchain.jpeg",
+        image: "/images/hero-bg.png",
         created_at: "2024-05-12T11:20:00Z"
       }
     ];
@@ -329,7 +329,7 @@ export const fallbackDataService = {
         overview: "Comprehensive e-commerce platforms with modern UI/UX, payment processing, and inventory management systems.",
         tools: "React, Node.js, Stripe, MongoDB, Redis",
         key_features: "User authentication, Product catalog, Shopping cart, Payment processing, Admin dashboard, Analytics",
-        image: "/images/domains/web-development.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 1,
         ai_driven: false
       },
@@ -339,7 +339,7 @@ export const fallbackDataService = {
         overview: "Intelligent applications leveraging machine learning, natural language processing, and computer vision technologies.",
         tools: "Python, TensorFlow, PyTorch, FastAPI, AWS SageMaker",
         key_features: "Natural language processing, Computer vision, Predictive analytics, Recommendation systems, Chatbots, Data analysis",
-        image: "/images/domains/ai-ml.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 2,
         ai_driven: true
       },
@@ -349,7 +349,7 @@ export const fallbackDataService = {
         overview: "Secure financial technology applications including mobile banking, payment gateways, and investment platforms.",
         tools: "React Native, Node.js, PostgreSQL, Redis, AWS",
         key_features: "Biometric authentication, Real-time transactions, Payment processing, Investment tracking, Security compliance, Analytics",
-        image: "/images/domains/mobile-development.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 3,
         ai_driven: false
       },
@@ -359,7 +359,7 @@ export const fallbackDataService = {
         overview: "Scalable cloud infrastructure solutions with monitoring, automation, and cost optimization.",
         tools: "AWS, Docker, Kubernetes, Terraform, Prometheus",
         key_features: "Multi-cloud management, Auto-scaling, Cost optimization, Security monitoring, CI/CD pipelines, Disaster recovery",
-        image: "/images/domains/cloud-computing.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 4,
         ai_driven: false
       },
@@ -369,7 +369,7 @@ export const fallbackDataService = {
         overview: "Decentralized applications and smart contracts for transparent and secure business processes.",
         tools: "Ethereum, Solidity, Web3.js, IPFS, Hardhat",
         key_features: "Smart contracts, Decentralized storage, Token economics, Supply chain tracking, DeFi protocols, NFT platforms",
-        image: "/images/domains/blockchain.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 5,
         ai_driven: false
       },
@@ -379,7 +379,7 @@ export const fallbackDataService = {
         overview: "Advanced security solutions for threat detection, vulnerability assessment, and compliance management.",
         tools: "Python, AWS Security Hub, Wireshark, Metasploit, OWASP",
         key_features: "Penetration testing, Vulnerability scanning, Threat detection, Security auditing, Compliance monitoring, Incident response",
-        image: "/images/domains/cybersecurity.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 6,
         ai_driven: true
       },
@@ -389,7 +389,7 @@ export const fallbackDataService = {
         overview: "Comprehensive data analytics and business intelligence solutions for data-driven decision making.",
         tools: "Python, Apache Spark, Tableau, Power BI, AWS Redshift",
         key_features: "Data visualization, Predictive analytics, Real-time dashboards, ETL pipelines, Machine learning integration, Custom reporting",
-        image: "/images/domains/data-science.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 7,
         ai_driven: true
       },
@@ -399,7 +399,7 @@ export const fallbackDataService = {
         overview: "End-to-end DevOps automation solutions for continuous integration, deployment, and infrastructure management.",
         tools: "Jenkins, GitLab CI/CD, Ansible, Terraform, Kubernetes",
         key_features: "CI/CD pipelines, Infrastructure as Code, Automated testing, Monitoring & alerting, Blue-green deployments, Rollback strategies",
-        image: "/images/domains/devops.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 8,
         ai_driven: false
       },
@@ -409,7 +409,7 @@ export const fallbackDataService = {
         overview: "Comprehensive design systems and user experience solutions for modern web and mobile applications.",
         tools: "Figma, Adobe XD, Sketch, InVision, Principle",
         key_features: "Design systems, Prototyping, User research, Accessibility compliance, Design tokens, Component libraries",
-        image: "/images/domains/ui-ux.jpeg",
+        image: "/images/hero-bg.png",
         sort_order: 9,
         ai_driven: false
       }

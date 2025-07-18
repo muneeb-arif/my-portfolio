@@ -670,10 +670,10 @@ const PromptsManager = ({ prompts, onPromptsChange, editingPrompt: externalEditi
               <div key={prompt.id} className="prompt-card">
                 <div className="prompt-image">
                   <img 
-                    src={prompt.image || '/images/domains/default.jpeg'} 
+                    src={prompt.image || '/images/hero-bg.png'} 
                     alt={prompt.title}
                     onError={(e) => {
-                      e.target.src = '/images/domains/default.jpeg';
+                      e.target.src = '/images/hero-bg.png';
                     }}
                   />
                   <div className="prompt-overlay">

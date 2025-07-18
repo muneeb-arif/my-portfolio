@@ -15,7 +15,7 @@ const DomainCard = ({ domain, onClick, isSelected }) => {
     }
     // If Unsplash fails, fall back to default
     else if (currentSrc.includes('source.unsplash.com')) {
-      e.target.src = '/images/domains/default.jpeg';
+      e.target.src = '/images/hero-bg.png';
     }
     // If default also fails, show icon fallback (handled below)
     else {

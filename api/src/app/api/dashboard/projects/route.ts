@@ -6,7 +6,7 @@ import { withAuth, AuthenticatedRequest } from '@/middleware/auth';
 function transformProjectsForDashboard(projects: any[]) {
   return projects.map(project => ({
     ...project,
-    image: project.project_images?.[0]?.url || '/images/domains/default.jpeg'
+    image: project.project_images?.[0]?.url || '/images/hero-bg.png'
   }));
 }
 

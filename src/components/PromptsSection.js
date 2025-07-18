@@ -249,7 +249,7 @@ const PromptsSection = () => {
                 title: prompt?.title || 'Untitled Prompt',
                 description: prompt?.description || 'No description available',
                 category: prompt?.category || 'Uncategorized',
-                image: prompt?.image || '/images/domains/default.jpeg',
+                image: prompt?.image || '/images/hero-bg.png',
                 buttonText: 'View Prompt',
                 ...prompt
               };

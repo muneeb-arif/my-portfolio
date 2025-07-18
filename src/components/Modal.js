@@ -32,8 +32,8 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
 
   // Check if project has multiple images
   const hasMultipleImages = project?.details?.images && project.details.images.length > 1;
-  const images = project?.details?.images || [{ url: project?.image || '/images/domains/default.jpeg', caption: 'Project Preview' }];
-  const currentImage = images[currentImageIndex] || { url: project?.image || '/images/domains/default.jpeg', caption: 'Project Preview' };
+  const images = project?.details?.images || [{ url: project?.image || '/images/hero-bg.png', caption: 'Project Preview' }];
+  const currentImage = images[currentImageIndex] || { url: project?.image || '/images/hero-bg.png', caption: 'Project Preview' };
 
   // Image navigation functions
   const nextImage = () => {
@@ -220,7 +220,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
             {/* Main Image - Smart Aspect Ratio */}
             <div className={`relative ${getImageAspectClass(currentImage)} flex items-start justify-center bg-gray-100 overflow-hidden`}>
               <img
-                src={currentImage?.url || project?.image || '/images/domains/default.jpeg'}
+                src={currentImage?.url || project?.image || '/images/hero-bg.png'}
                 alt={currentImage?.caption || project?.title || 'Project Image'}
                 className="w-full h-full object-contain object-top transition-opacity duration-300 cursor-zoom-in"
                 onClick={() => openLightbox(currentImageIndex)}
@@ -321,7 +321,7 @@ const Modal = ({ project, onClose, onNavigate, canNavigateLeft, canNavigateRight
                         `}
                       >
                                               <img
-                        src={image?.url || project?.image || '/images/domains/default.jpeg'}
+                        src={image?.url || project?.image || '/images/hero-bg.png'}
                         alt={image?.caption || `Image ${index + 1}`}
                         className="w-full h-full object-cover object-top"
                       />

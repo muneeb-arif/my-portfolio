@@ -90,15 +90,15 @@ const Technologies = ({ additionalDataLoading }) => {
             {technologies.map((tech, index) => {
               // Use predefined background images or gradients instead of random Unsplash URLs
               const backgroundImages = [
-                `/images/domains/web-development.jpeg`,
-                `/images/domains/mobile-development.jpeg`,
-                `/images/domains/ai-ml.jpeg`,
-                `/images/domains/cloud-computing.jpeg`,
-                `/images/domains/blockchain.jpeg`,
-                `/images/domains/cybersecurity.jpeg`,
-                `/images/domains/data-science.jpeg`,
-                `/images/domains/devops.jpeg`,
-                `/images/domains/ui-ux.jpeg`
+                `/images/hero-bg.png`,
+                `/images/hero-bg.png`,
+                `/images/hero-bg.png`,
+                `/images/hero-bg.png`,
+                `/images/hero-bg.png`,
+                `/images/hero-bg.png`,
+                `/images/hero-bg.png`,
+                `/images/hero-bg.png`,
+                `/images/hero-bg.png`
               ];
               
               // Use predefined image or gradient as fallback
