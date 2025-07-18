@@ -8,18 +8,17 @@ const dbConfig = {
   password: process.env.MYSQL_PASSWORD || 'root',
   database: process.env.MYSQL_DATABASE || 'portfolio',
   waitForConnections: true,
-  connectionLimit: 20, // Increased from 10
-  queueLimit: 10, // Added queue limit
+  connectionLimit: 20, // Maximum number of connections in the pool
+  queueLimit: 10, // Maximum number of connection requests queued
   // MySQL2 compatible timeout settings
-  acquireTimeoutMillis: 60000,
-  connectionTimeoutMillis: 60000,
+  acquireTimeout: 60000, // Timeout for getting a connection from the pool
+  timeout: 60000, // Query timeout
   // Connection pool settings
-  idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
-  maxIdle: 10, // Maximum number of idle connections
-  // Remove invalid options
-  // acquireTimeout: 60000,  // Invalid for mysql2
-  // timeout: 60000,         // Invalid for mysql2  
-  // reconnect: true,        // Invalid for mysql2
+  idleTimeout: 30000, // Close idle connections after 30 seconds
+  // Remove invalid options that cause warnings
+  // acquireTimeoutMillis: 60000,  // Invalid for mysql2
+  // connectionTimeoutMillis: 60000, // Invalid for mysql2
+  // maxIdle: 10, // Invalid for mysql2
 };
 
 // Create connection pool
