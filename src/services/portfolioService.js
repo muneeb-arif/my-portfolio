@@ -29,7 +29,8 @@ class PortfolioService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        console.error(`❌ PORTFOLIO SERVICE: Settings API returned ${response.status}`);
+        return {}; // Return empty object instead of throwing error
       }
 
       const data = await response.json();
@@ -39,7 +40,7 @@ class PortfolioService {
         return data.data || {};
       } else {
         console.error('❌ PORTFOLIO SERVICE: Failed to load settings:', data.error);
-        return {};
+        return {}; // Return empty object for graceful fallback
       }
     } catch (error) {
       console.error('❌ PORTFOLIO SERVICE: Error loading settings:', error);

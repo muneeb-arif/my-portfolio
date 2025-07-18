@@ -38,17 +38,7 @@ async function getUserByDomain(domain: string) {
   return null;
 }
 
-// Utility to get portfolio owner user id (fallback)
-async function getPortfolioOwnerUserId() {
-  const ownerEmail = process.env.PORTFOLIO_OWNER_EMAIL;
-  if (!ownerEmail) return null;
-  const userResult = await executeQuery('SELECT id FROM users WHERE email = ?', [ownerEmail]);
-  const userRows = userResult.success && Array.isArray(userResult.data) ? userResult.data as any[] : [];
-  if (userRows.length > 0) {
-    return userRows[0].id;
-  }
-  return null;
-}
+
 
 // GET /api/settings - Public (domain-based) or dashboard (auth)
 export async function GET(request: NextRequest) {
@@ -82,16 +72,35 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // Fallback to portfolio owner if domain not found
-    if (!userId) {
-      userId = await getPortfolioOwnerUserId();
-    }
+    // Fallback to portfolio owner if domain not found - REMOVED
+    // No longer using PORTFOLIO_OWNER_EMAIL fallback
     
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'Domain not found or portfolio owner not configured' },
-        { status: 404 }
-      );
+      // Return demo settings instead of error for development/production
+      console.log('⚠️ No user/domain found, returning demo settings');
+      const demoSettings = {
+        banner_name: 'Muneeb Arif',
+        banner_title: 'Full Stack Developer',
+        banner_tagline: 'Building modern web applications with passion and precision',
+        theme_name: 'sand',
+        avatar_image: '/images/profile/avatar.jpeg',
+        hero_image: '/images/hero-bg.png',
+        section_hero_visible: true,
+        section_portfolio_visible: true,
+        section_technologies_visible: true,
+        section_domains_visible: true,
+        section_project_cycle_visible: true,
+        section_prompts_visible: false,
+        show_resume_download: true,
+        logo_type: 'initials',
+        site_url: 'https://my-portfolio-apis.vercel.app'
+      };
+      
+      return NextResponse.json({
+        success: true,
+        data: demoSettings,
+        demo: true
+      });
     }
     
     const query = `

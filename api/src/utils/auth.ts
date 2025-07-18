@@ -46,7 +46,9 @@ export function extractToken(authHeader: string | undefined): string | null {
   return authHeader.substring(7);
 }
 
-// Get portfolio owner email from environment
+// Get portfolio owner email from environment - DEPRECATED
+// This function is no longer used and should be removed
 export function getPortfolioOwnerEmail(): string {
-  return process.env.PORTFOLIO_OWNER_EMAIL || '';
+  console.warn('getPortfolioOwnerEmail is deprecated and should not be used');
+  return '';
 } 
