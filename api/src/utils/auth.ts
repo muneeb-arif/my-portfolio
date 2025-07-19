@@ -21,7 +21,8 @@ export function generateToken(user: User): string {
   return (jwt as any).sign(
     { 
       id: user.id, 
-      email: user.email 
+      email: user.email,
+      is_admin: user.is_admin || 0
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
@@ -29,9 +30,9 @@ export function generateToken(user: User): string {
 }
 
 // Verify JWT token
-export function verifyToken(token: string): { id: string; email: string } | null {
+export function verifyToken(token: string): { id: string; email: string; is_admin: number } | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; is_admin: number };
     return decoded;
   } catch (error) {
     return null;
