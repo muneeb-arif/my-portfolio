@@ -1,3 +1,5 @@
+import { API_BASE } from '../utils/apiConfig';
+
 // Service to dynamically update meta tags at runtime based on current domain
 export const metaTagService = {
   // Cache for meta tag data
@@ -33,8 +35,6 @@ export const metaTagService = {
   // Get settings from MySQL API
   async _getSettingsFromAPI() {
     try {
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-      
       console.log('🔧 META TAGS: Fetching settings from MySQL API...');
       
       const response = await fetch(`${API_BASE}/settings`);

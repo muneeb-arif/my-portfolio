@@ -1,5 +1,6 @@
 import { apiService } from './apiService';
 import { getCurrentUser } from './authUtils';
+import { API_BASE } from '../utils/apiConfig';
 
 // Admin Service for frontend
 export const adminService = {
@@ -31,7 +32,6 @@ export const adminService = {
         return { success: false, data: { sections: [], permissions: [] } };
       }
 
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
       const response = await fetch(`${API_BASE}/admin/sections`, {
         method: 'GET',
         headers: {
@@ -72,7 +72,6 @@ export const adminService = {
         return false;
       }
 
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
       const response = await fetch(`${API_BASE}/admin/sections/${sectionKey}/access`, {
         method: 'GET',
         headers: {

@@ -1,4 +1,4 @@
-// Utility functions for handling fallback data
+import { API_BASE } from './apiConfig';
 import { supabase } from '../config/supabase';
 
 let fallbackNotificationShown = false;
@@ -112,7 +112,7 @@ export const fallbackUtils = {
   // Check if API is available
   async checkApiConnection() {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/health`);
+      const response = await fetch(`${API_BASE}/health`);
       const data = await response.json();
       return data.status === 'healthy';
     } catch (error) {

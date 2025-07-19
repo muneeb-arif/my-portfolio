@@ -7,6 +7,7 @@ import { supabase } from '../../config/supabase'; // Keep for storage operations
 import { getCurrentUser } from '../../services/authUtils';
 import { useSettings } from '../../services/settingsContext';
 import { adminService } from '../../services/adminService';
+import { API_BASE } from '../../utils/apiConfig';
 import ProjectsManager from './ProjectsManager';
 import PromptsManager from './PromptsManager';
 import CategoriesManager from './CategoriesManager';
@@ -2311,7 +2312,6 @@ const BackupFilesSection = () => {
       setError('');
       
       // First, try to get backup files from database API
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
       const response = await fetch(`${API_BASE}/backup-files`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('api_token')}`
@@ -2413,7 +2413,6 @@ const BackupFilesSection = () => {
           .getPublicUrl(fileName);
 
         // Create database entry via API
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
         const response = await fetch(`${API_BASE}/backup-files`, {
           method: 'POST',
           headers: {
@@ -2491,7 +2490,6 @@ const BackupFilesSection = () => {
 
       // Delete from database if it has an ID
       if (file.id) {
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
         const response = await fetch(`${API_BASE}/backup-files?id=${file.id}`, {
           method: 'DELETE',
           headers: {

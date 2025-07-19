@@ -2,13 +2,13 @@ import { supabase, TABLES, BUCKETS } from '../config/supabase';
 import { fallbackDataService } from './fallbackDataService';
 import { fallbackUtils } from '../utils/fallbackUtils';
 import { getCurrentUser } from './authUtils';
+import { API_BASE } from '../utils/apiConfig';
 
 // ================ AUTH OPERATIONS ================
 
 // Helper function to get site URL from MySQL API settings
 const getSiteUrlFromSettings = async () => {
   try {
-    const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
     const response = await fetch(`${API_BASE}/settings`);
     const data = await response.json();
     
@@ -1223,7 +1223,6 @@ export const portfolioConfigService = {
   // Get portfolio configuration from MySQL API
   async getPortfolioConfig() {
     try {
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
       const response = await fetch(`${API_BASE}/settings`);
       const data = await response.json();
       
@@ -1456,7 +1455,6 @@ export const publicPortfolioService = {
 
       // For public mode, check if settings are available from MySQL API
       // console.log('🌐 Public mode: Checking MySQL API settings...');
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
       try {
         const response = await fetch(`${API_BASE}/settings`);
         const data = await response.json();
@@ -1489,7 +1487,6 @@ export const publicPortfolioService = {
         await this.initialize();
         
         // Get settings from MySQL API to determine user context
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
         const response = await fetch(`${API_BASE}/settings`);
         const settingsData = await response.json();
         
@@ -1520,7 +1517,6 @@ export const publicPortfolioService = {
         await this.initialize();
         
         // Get settings from MySQL API to determine user context
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
         const response = await fetch(`${API_BASE}/settings`);
         const settingsData = await response.json();
         
@@ -1550,7 +1546,6 @@ export const publicPortfolioService = {
         await this.initialize();
         
         // Get settings from MySQL API to determine user context
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
         const response = await fetch(`${API_BASE}/settings`);
         const settingsData = await response.json();
         
@@ -1580,7 +1575,6 @@ export const publicPortfolioService = {
         await this.initialize();
         
         // Get settings from MySQL API to determine user context
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
         const response = await fetch(`${API_BASE}/settings`);
         const settingsData = await response.json();
         
@@ -1609,7 +1603,6 @@ export const publicPortfolioService = {
         console.log('🔍 publicPortfolioService.getPublicSettings: Starting...');
         
         // Use API instead of Supabase for settings
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
         
         console.log('🔍 publicPortfolioService.getPublicSettings: Fetching from API...');
         

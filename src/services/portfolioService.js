@@ -1,9 +1,10 @@
 import { getCurrentOrigin } from '../utils/domainUtils';
+import { API_BASE } from '../utils/apiConfig';
 
 // Portfolio service for public data (domain-based)
 class PortfolioService {
   constructor() {
-    this.baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+    this.baseUrl = API_BASE;
   }
 
   // Get current domain for API calls

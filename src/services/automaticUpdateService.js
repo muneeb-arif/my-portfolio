@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase';
+import { API_BASE } from '../utils/apiConfig';
 
 /**
  * Debug Logger for Automatic Updates
@@ -497,20 +498,24 @@ export class AutomaticUpdateService {
    */
   async logActivity(updateId, activity, details = null) {
     try {
-      const { error } = await supabase
-        .from('automatic_update_logs')
-        .insert({
+      const response = await fetch(`${API_BASE}/automatic-update-logs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           update_id: updateId,
           client_id: this.clientId,
           activity: activity,
           details: details,
-          timestamp: new Date().toISOString(),
           user_agent: navigator.userAgent,
           domain: window.location.hostname
-        });
+        })
+      });
 
-      if (error) {
-        console.error('Failed to log activity:', error);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to log activity:', errorData);
       }
     } catch (error) {
       console.error('Failed to log activity:', error);
@@ -522,15 +527,14 @@ export class AutomaticUpdateService {
    */
   async getUpdateLogs(limit = 10) {
     try {
-      const { data, error } = await supabase
-        .from('automatic_update_logs')
-        .select('*')
-        .eq('client_id', this.clientId)
-        .order('timestamp', { ascending: false })
-        .limit(limit);
+      const response = await fetch(`${API_BASE}/automatic-update-logs?client_id=${this.clientId}&limit=${limit}`);
 
-      if (error) throw error;
-      return data || [];
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.success ? result.data : [];
     } catch (error) {
       console.error('Failed to get update logs:', error);
       return [];

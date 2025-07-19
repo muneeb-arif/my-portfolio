@@ -1,3 +1,5 @@
+import { API_BASE } from './apiConfig';
+
 // Domain utilities for portfolio identification
 
 /**
@@ -59,7 +61,6 @@ export const isLocalhost = () => {
  */
 export const getUserByDomain = async (domain) => {
   try {
-    const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
     const response = await fetch(`${API_BASE}/domains/user?domain=${encodeURIComponent(domain)}`);
     const data = await response.json();
     

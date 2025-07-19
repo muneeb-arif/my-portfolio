@@ -4,8 +4,7 @@
 
 import { fallbackDataService } from './fallbackDataService';
 import { fallbackUtils } from '../utils/fallbackUtils';
-
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import { API_BASE } from '../utils/apiConfig';
 
 class ApiService {
   constructor() {

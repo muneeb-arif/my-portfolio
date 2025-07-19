@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase';
+import { API_BASE } from '../utils/apiConfig';
 
 // Centralized portfolio config cache with promise deduplication
 let configCache = {
@@ -92,7 +93,6 @@ export const getSiteUrl = async () => {
     }
     
     // Get site_url from API settings
-    const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
     const response = await fetch(`${API_BASE}/settings`);
     const data = await response.json();
     
