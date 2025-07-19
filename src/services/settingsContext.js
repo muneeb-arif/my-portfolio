@@ -56,6 +56,9 @@ export const SettingsProvider = ({ children }) => {
     social_github: 'https://github.com/muneebarif',
     social_instagram: '',
     social_facebook: '',
+    phone_number: '', // Phone number for mobile call functionality
+    address: '', // Business address for footer display
+    map_location_url: '', // Map location URL for footer display
     
     // Section Visibility (all sections visible by default)
     section_hero_visible: true,

@@ -265,4 +265,8 @@ Temporary Items
 .apdisk
 build.zip
 minimal-update.zip
+build-packages/
+optimized-images/
+optimized-images-backup/
+build-optimized.zip
 backup-urls.txt

@@ -2171,6 +2171,38 @@
   line-height: 1.3;
 }
 
+.whatsapp-test-links {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-test-whatsapp, .btn-test-twitter {
+  padding: 6px 12px;
+  border: 1px solid #007bff;
+  background: #007bff;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-test-whatsapp:hover, .btn-test-twitter:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.btn-test-twitter {
+  border-color: #1da1f2;
+  background: #1da1f2;
+}
+
+.btn-test-twitter:hover {
+  background: #0d8bd9;
+}
+
 /* Banner and Avatar Image Previews */
 .current-banner-image,
 .current-avatar-image {

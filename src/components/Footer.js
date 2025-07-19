@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ClientOnboardingForm from './ClientOnboardingForm';
-import { FileText, Mail, Github, Instagram } from 'lucide-react';
+import { FileText, Mail, Github, Instagram, Phone, MapPin } from 'lucide-react';
 import { useSettings } from '../services/settingsContext';
 
 const Footer = () => {
@@ -19,6 +19,23 @@ const Footer = () => {
   const handleEmailClick = () => {
     const mailtoLink = `mailto:${getSetting('social_email')}?subject=${encodeURIComponent('Get Started - TheExpertWays.com')}`;
     window.location.href = mailtoLink;
+  };
+
+  // Phone click handler
+  const handlePhoneClick = () => {
+    const phoneNumber = getSetting('phone_number');
+    if (phoneNumber) {
+      const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
+      window.location.href = `tel:${cleanPhone}`;
+    }
+  };
+
+  // Map location click handler
+  const handleMapClick = () => {
+    const mapUrl = getSetting('map_location_url');
+    if (mapUrl) {
+      window.open(mapUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   // Smooth scroll to section function
@@ -52,7 +69,7 @@ const Footer = () => {
 
         {/* Main Content - Above background */}
         <div className="container mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
             
             {/* Brand Section */}
             <div className="md:col-span-2">
@@ -192,6 +209,57 @@ const Footer = () => {
                   </button>
                 </li>
               </ul>
+            </div>
+
+            {/* Contact Information */}
+            <div>
+              <h4 className="text-lg font-semibold text-white mb-4">Contact Info</h4>
+              <div className="space-y-3">
+                {getSetting('phone_number') && (
+                  <div className="flex items-start space-x-2">
+                    <Phone className="w-4 h-4 text-white/70 mt-0.5 flex-shrink-0" />
+                    <button
+                      onClick={handlePhoneClick}
+                      className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-0 hover:underline"
+                    >
+                      {getSetting('phone_number')}
+                    </button>
+                  </div>
+                )}
+                
+                {getSetting('social_email') && (
+                  <div className="flex items-start space-x-2">
+                    <Mail className="w-4 h-4 text-white/70 mt-0.5 flex-shrink-0" />
+                    <button
+                      onClick={handleEmailClick}
+                      className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-0 hover:underline"
+                    >
+                      {getSetting('social_email')}
+                    </button>
+                  </div>
+                )}
+                
+                {getSetting('address') && (
+                  <div className="flex items-start space-x-2">
+                    <MapPin className="w-4 h-4 text-white/70 mt-0.5 flex-shrink-0" />
+                    <div className="text-white/70 text-sm">
+                      {getSetting('address')}
+                    </div>
+                  </div>
+                )}
+                
+                {getSetting('map_location_url') && (
+                  <div className="flex items-start space-x-2">
+                    <MapPin className="w-4 h-4 text-white/70 mt-0.5 flex-shrink-0" />
+                    <button
+                      onClick={handleMapClick}
+                      className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-0 hover:underline"
+                    >
+                      View on Map
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

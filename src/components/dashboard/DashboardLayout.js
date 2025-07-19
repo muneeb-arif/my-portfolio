@@ -27,6 +27,7 @@ import './ProjectsManager.css';
 import './CategoriesManager.css';
 import './DomainsTechnologiesManager.css';
 import './NicheManager.css';
+import { themeUpdateService } from '../../services/themeUpdateService';
 
 const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) => {
   const [activeSection, setActiveSection] = useState('overview');
@@ -161,6 +162,17 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     loadDashboardData();
     checkDatabaseStatus();
   }, []);
+
+  // Initialize theme update notifications for admin users
+  useEffect(() => {
+    if (isAdmin && adminSectionsLoaded) {
+      console.log('🔧 DASHBOARD: Initializing theme update notifications for admin user');
+      // Initialize theme update service for admin notifications
+      themeUpdateService.initialize();
+      // Force an immediate check for updates
+      themeUpdateService.forceUpdateCheck();
+    }
+  }, [isAdmin, adminSectionsLoaded]);
 
   const loadDashboardData = async () => {
     try {
@@ -1908,6 +1920,27 @@ const AppearanceSection = () => {
                        <div className="whatsapp-image-info">
                          <p>✅ Current WhatsApp preview image</p>
                          <small>This image will appear when your portfolio is shared on WhatsApp, Slack, and other social platforms</small>
+                         <div className="whatsapp-test-links">
+                           <button 
+                             onClick={() => {
+                               const testText = `${localSettings.banner_name || 'Portfolio'} - ${localSettings.banner_title || 'Professional Portfolio'}\n\n${localSettings.banner_tagline || 'Check out my portfolio'}\n\n${window.location.origin}`;
+                               const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(testText)}`;
+                               window.open(whatsappUrl, '_blank');
+                             }}
+                             className="btn-test-whatsapp"
+                           >
+                             🧪 Test WhatsApp Preview
+                           </button>
+                           <button 
+                             onClick={() => {
+                               const testUrl = `https://cards-dev.twitter.com/validator`;
+                               window.open(testUrl, '_blank');
+                             }}
+                             className="btn-test-twitter"
+                           >
+                             🧪 Test Twitter Card
+                           </button>
+                         </div>
                        </div>
                      </div>
                    )}
@@ -2091,6 +2124,9 @@ const SettingsSection = ({ user }) => {
         section_domains_visible: settings.section_domains_visible !== undefined ? settings.section_domains_visible : true,
         section_project_cycle_visible: settings.section_project_cycle_visible !== undefined ? settings.section_project_cycle_visible : true,
         section_prompts_visible: settings.section_prompts_visible !== undefined ? settings.section_prompts_visible : false,
+        phone_number: settings.phone_number || '',
+        address: settings.address || '',
+        map_location_url: settings.map_location_url || '',
       });
     }
   }, [loading, settings]);
@@ -2164,6 +2200,59 @@ const SettingsSection = ({ user }) => {
               />
               <small className="form-help">Profile updates coming soon</small>
             </div>
+          </div>
+          
+          <div className="settings-group">
+            <h3>📞 Contact Information</h3>
+            <div className="form-group">
+              <label>Phone Number</label>
+              <input 
+                type="tel" 
+                value={localSettings.phone_number || ''} 
+                onChange={(e) => setLocalSettings(prev => ({
+                  ...prev,
+                  phone_number: e.target.value
+                }))}
+                placeholder="+1 (555) 123-4567"
+              />
+              <small className="form-help">
+                This will show a call icon on mobile devices. Leave empty to hide.
+              </small>
+            </div>
+            
+            <div className="form-group">
+              <label>Address</label>
+              <textarea 
+                value={localSettings.address || ''} 
+                onChange={(e) => setLocalSettings(prev => ({
+                  ...prev,
+                  address: e.target.value
+                }))}
+                placeholder="Enter your full address"
+                rows={3}
+                style={{ resize: 'vertical' }}
+              />
+              <small className="form-help">
+                Your business address. Will be displayed in the footer.
+              </small>
+            </div>
+            
+            <div className="form-group">
+              <label>Map Location URL</label>
+              <input 
+                type="url" 
+                value={localSettings.map_location_url || ''} 
+                onChange={(e) => setLocalSettings(prev => ({
+                  ...prev,
+                  map_location_url: e.target.value
+                }))}
+                placeholder="https://maps.google.com/?q=your+location"
+              />
+              <small className="form-help">
+                Google Maps or other map service URL. Will be clickable in the footer.
+              </small>
+            </div>
+            
           </div>
         </div>
 

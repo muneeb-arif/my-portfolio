@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ClientOnboardingForm from './ClientOnboardingForm';
 import ContactForm from './ContactForm';
-import { FileText, Mail } from 'lucide-react';
+import { FileText, Mail, Phone } from 'lucide-react';
 import { useSettings } from '../services/settingsContext';
 import { usePublicData } from '../services/PublicDataContext';
 
@@ -33,6 +33,15 @@ const Header = ({ additionalDataLoading }) => {
 
   const closeContactForm = () => {
     setIsContactFormOpen(false);
+  };
+
+  const handleCall = () => {
+    const phoneNumber = getSetting('phone_number');
+    if (phoneNumber) {
+      // Remove any non-digit characters except + for tel: links
+      const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
+      window.location.href = `tel:${cleanPhone}`;
+    }
   };
 
   const scrollToSection = (sectionId) => {
@@ -153,6 +162,17 @@ const Header = ({ additionalDataLoading }) => {
               >
                 <Mail size={16} />
               </button>
+              
+              {/* Call Button - Only show on mobile when phone number is set */}
+              {getSetting('phone_number') && (
+                <button
+                  onClick={handleCall}
+                  className="md:hidden bg-white/20 text-white p-2 rounded-lg hover:bg-white/30 transition-colors"
+                  title={`Call ${getSetting('phone_number')}`}
+                >
+                  <Phone size={16} />
+                </button>
+              )}
             </div>
           </div>
         </div>

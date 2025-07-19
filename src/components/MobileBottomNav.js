@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Code, Globe, CheckCircle, Mail } from 'lucide-react';
+import { Briefcase, Code, Globe, CheckCircle, Mail, Phone } from 'lucide-react';
 import ContactForm from './ContactForm';
 import { useSettings } from '../services/settingsContext';
 import { usePublicData } from '../services/PublicDataContext';
 
 const MobileBottomNav = ({ additionalDataLoading }) => {
-  const { loading: settingsLoading, initialized: settingsInitialized } = useSettings();
+  const { getSetting, loading: settingsLoading, initialized: settingsInitialized } = useSettings();
   const { projects, technologies, niches, loading: publicLoading } = usePublicData();
   const [activeSection, setActiveSection] = useState('hero');
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
@@ -52,11 +52,30 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
     setIsContactFormOpen(false);
   };
 
+  const handleCall = () => {
+    const phoneNumber = getSetting('phone_number');
+    if (phoneNumber) {
+      // Remove any non-digit characters except + for tel: links
+      const cleanPhone = phoneNumber.replace(/[^\d+]/g, '');
+      window.location.href = `tel:${cleanPhone}`;
+    }
+  };
+
   // Don't render navigation until we know what sections have data
   const showNavigation = !settingsLoading && settingsInitialized && !sectionsData.loading;
 
   // Build navigation items based on available data
   const navItems = [];
+  
+  // Show call button if phone number is set
+  if (getSetting('phone_number')) {
+    navItems.push({
+      id: 'call',
+      label: 'Call',
+      icon: Phone,
+      onClick: handleCall
+    });
+  }
   
   // Always show contact
   navItems.push({
