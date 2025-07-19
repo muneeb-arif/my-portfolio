@@ -24,8 +24,16 @@ export async function GET(request: NextRequest) {
       params.push(isActive === 'true' ? 1 : 0);
     }
 
-    // Add ordering
-    query += ` ORDER BY ${order}`;
+    // Add ordering - use safe column names
+    if (order.includes('created_at')) {
+      query += ' ORDER BY created_at DESC';
+    } else if (order.includes('updated_at')) {
+      query += ' ORDER BY updated_at DESC';
+    } else if (order.includes('version')) {
+      query += ' ORDER BY version DESC';
+    } else {
+      query += ' ORDER BY created_at DESC'; // default
+    }
 
     // Add limit
     if (limit) {
@@ -60,7 +68,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { version, title, description, files, is_active = true } = body;
+    const { version, title, description, files, is_active = true, created_by } = body;
 
     // Validate required fields
     if (!version || !title || !description) {
@@ -75,12 +83,13 @@ export async function POST(request: NextRequest) {
 
     // Insert the update
     const insertQuery = `
-      INSERT INTO shared_hosting_updates (id, version, title, description, files, is_active)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO shared_hosting_updates (id, created_by, version, title, description, files, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
     const result = await executeQuery(insertQuery, [
       updateId,
+      created_by || 'system', // Use provided created_by or default to 'system'
       version,
       title,
       description,
