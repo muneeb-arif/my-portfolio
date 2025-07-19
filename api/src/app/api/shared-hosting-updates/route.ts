@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { version, title, description, files, is_active = true, created_by } = body;
+    const { version, title, description, files, is_active = true } = body;
 
     // Validate required fields
     if (!version || !title || !description) {
@@ -101,13 +101,12 @@ export async function POST(request: NextRequest) {
 
     // Insert the update
     const insertQuery = `
-      INSERT INTO shared_hosting_updates (id, created_by, version, title, description, files, is_active)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO shared_hosting_updates (id, version, title, description, files, is_active)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     const result = await executeQuery(insertQuery, [
       updateId,
-      created_by || 'system', // Use provided created_by or default to 'system'
       version,
       title,
       description,
