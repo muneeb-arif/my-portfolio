@@ -15,13 +15,16 @@ export async function GET(request: NextRequest) {
       order = order.replace('.', ' ');
     }
 
+    // Start with a simple query and build it up
     let query = 'SELECT * FROM shared_hosting_updates';
     const params: any[] = [];
 
     // Add filters
     if (isActive !== null) {
       query += ' WHERE is_active = ?';
-      params.push(isActive === 'true' ? 1 : 0);
+      // Ensure we're passing a proper integer
+      const activeValue = isActive === 'true' ? 1 : 0;
+      params.push(activeValue);
     }
 
     // Add ordering - use safe column names
@@ -35,19 +38,34 @@ export async function GET(request: NextRequest) {
       query += ' ORDER BY created_at DESC'; // default
     }
 
-    // Add limit
+    // Add limit - ensure it's a number
     if (limit) {
-      query += ' LIMIT ?';
-      params.push(parseInt(limit));
+      const limitNum = parseInt(limit);
+      if (!isNaN(limitNum) && limitNum > 0) {
+        query += ' LIMIT ?';
+        params.push(limitNum);
+      }
     }
 
-    const result = await executeQuery(query, params);
+    console.log('🔍 Shared Hosting Updates Query:', { query, params, isActive, limit, order });
+    
+    let result = await executeQuery(query, params);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: 'Failed to fetch updates', details: result.error },
-        { status: 500 }
-      );
+      console.error('❌ Shared Hosting Updates Query Failed:', { query, params, error: result.error });
+      
+      // Try a simpler query as fallback
+      console.log('🔄 Trying fallback query...');
+      const fallbackQuery = 'SELECT * FROM shared_hosting_updates ORDER BY created_at DESC LIMIT 10';
+      result = await executeQuery(fallbackQuery, []);
+      
+      if (!result.success) {
+        console.error('❌ Fallback query also failed:', result.error);
+        return NextResponse.json(
+          { error: 'Failed to fetch updates', details: result.error },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
