@@ -31,7 +31,8 @@ export const adminService = {
         return { success: false, data: { sections: [], permissions: [] } };
       }
 
-      const response = await fetch('http://localhost:3001/api/admin/sections', {
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${API_BASE}/admin/sections`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +72,8 @@ export const adminService = {
         return false;
       }
 
-      const response = await fetch(`/api/admin/sections/${sectionKey}/access`, {
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${API_BASE}/admin/sections/${sectionKey}/access`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
