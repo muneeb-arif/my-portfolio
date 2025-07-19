@@ -68,9 +68,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Transform the data to include package_url for automatic update service compatibility
+    const data = result.data as any[];
+    const transformedData = data.map((update: any) => {
+      // Extract package_url from files array for automatic update service
+      const packageUrl = update.files && update.files.length > 0 && update.files[0].url 
+        ? update.files[0].url 
+        : null;
+      
+      return {
+        ...update,
+        package_url: packageUrl
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      data: result.data
+      data: transformedData
     });
 
   } catch (error) {
@@ -132,9 +146,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Transform the data to include package_url for automatic update service compatibility
+    const updateData = getResult.data[0] as any;
+    const packageUrl = updateData.files && updateData.files.length > 0 && updateData.files[0].url 
+      ? updateData.files[0].url 
+      : null;
+    
+    const transformedData = {
+      ...updateData,
+      package_url: packageUrl
+    };
+
     return NextResponse.json({
       success: true,
-      data: getResult.data[0],
+      data: transformedData,
       message: 'Update created successfully'
     }, { status: 201 });
 

@@ -258,31 +258,23 @@ export class AutomaticUpdateService {
     const createBackup = options.createBackup !== undefined ? options.createBackup : true;
     const progressCallback = options.progressCallback || null;
 
-    // Get package URL from files array or direct package_url
-    const packageUrl = updateInfo.package_url || 
-                      (updateInfo.files && updateInfo.files.length > 0 && updateInfo.files[0].url) ||
-                      null;
-
     this.debugLogger.log('info', 'apply_update', 'Starting update process', {
       updateId,
       version: updateInfo.version,
-      packageUrl: packageUrl,
+      packageUrl: updateInfo.package_url,
       createBackup,
       hasProgressCallback: !!progressCallback
     });
 
     try {
-
       // Validate update info
-      if (!packageUrl || !updateInfo.version) {
+      if (!updateInfo.package_url || !updateInfo.version) {
         const error = 'Invalid update information - missing package_url or version';
         this.debugLogger.log('error', 'apply_update', error, {
           updateInfo: {
             id: updateInfo.id,
             version: updateInfo.version,
             package_url: updateInfo.package_url ? 'PROVIDED' : 'MISSING',
-            files: updateInfo.files ? `${updateInfo.files.length} files` : 'MISSING',
-            extracted_package_url: packageUrl,
             title: updateInfo.title
           }
         });
@@ -329,14 +321,14 @@ export class AutomaticUpdateService {
       // Prepare update request
       const requestBody = {
         api_key: this.apiKey,
-        download_url: packageUrl,
+        download_url: updateInfo.package_url,
         version: updateInfo.version,
         create_backup: createBackup,
         client_id: this.clientId
       };
 
       this.debugLogger.log('info', 'apply_update', 'Preparing update request', {
-        requestBody: { ...requestBody, api_key: 'REDACTED', download_url: `${packageUrl.substring(0, 50)}...` },
+        requestBody: { ...requestBody, api_key: 'REDACTED', download_url: `${updateInfo.package_url.substring(0, 50)}...` },
         endpoint: this.updateEndpoint
       });
 
