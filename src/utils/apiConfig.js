@@ -5,7 +5,7 @@
 
 export const getApiBaseUrl = () => {
   // Use the environment variable (which is set correctly in .env)
-  return process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  return process.env.REACT_APP_API_URL || 'https://my-portfolio-apis.vercel.app/api';
 };
 
 export const API_BASE = getApiBaseUrl(); 
