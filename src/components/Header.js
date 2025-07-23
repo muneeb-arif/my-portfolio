@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ClientOnboardingForm from './ClientOnboardingForm';
 import ContactForm from './ContactForm';
 import { FileText, Mail, Phone } from 'lucide-react';
@@ -35,6 +35,8 @@ const Header = ({ additionalDataLoading }) => {
     setIsContactFormOpen(false);
   };
 
+
+
   const handleCall = () => {
     const phoneNumber = getSetting('phone_number');
     if (phoneNumber) {
@@ -53,6 +55,38 @@ const Header = ({ additionalDataLoading }) => {
 
   // Don't render navigation until we know what sections have data
   const showNavigation = !settingsLoading && settingsInitialized && !sectionsData.loading;
+  
+  // Get section visibility settings
+  const sectionVisibility = {
+    portfolio: getSetting('section_portfolio_visible') !== undefined ? getSetting('section_portfolio_visible') : false,
+    technologies: getSetting('section_technologies_visible') !== undefined ? getSetting('section_technologies_visible') : false,
+    domains: getSetting('section_domains_visible') !== undefined ? getSetting('section_domains_visible') : false,
+    projectCycle: getSetting('section_project_cycle_visible') !== undefined ? getSetting('section_project_cycle_visible') : false
+  };
+
+  // Debug: Log settings values to understand the issue
+  console.log('🔍 Header Debug - Section Visibility Settings:', {
+    portfolio: {
+      raw: getSetting('section_portfolio_visible'),
+      processed: sectionVisibility.portfolio,
+      type: typeof getSetting('section_portfolio_visible')
+    },
+    technologies: {
+      raw: getSetting('section_technologies_visible'),
+      processed: sectionVisibility.technologies,
+      type: typeof getSetting('section_technologies_visible')
+    },
+    domains: {
+      raw: getSetting('section_domains_visible'),
+      processed: sectionVisibility.domains,
+      type: typeof getSetting('section_domains_visible')
+    },
+    projectCycle: {
+      raw: getSetting('section_project_cycle_visible'),
+      processed: sectionVisibility.projectCycle,
+      type: typeof getSetting('section_project_cycle_visible')
+    }
+  });
 
   return (
     <>
@@ -111,7 +145,7 @@ const Header = ({ additionalDataLoading }) => {
                 Home
               </a>
               
-              {showNavigation && sectionsData.hasProjects && (
+              {showNavigation && sectionsData.hasProjects && sectionVisibility.portfolio && (
                 <button 
                   onClick={() => scrollToSection('portfolio')}
                   className="text-white hover:text-white/80 transition-colors"
@@ -120,7 +154,7 @@ const Header = ({ additionalDataLoading }) => {
                 </button>
               )}
               
-              {showNavigation && sectionsData.hasTechnologies && (
+              {showNavigation && sectionsData.hasTechnologies && sectionVisibility.technologies && (
                 <button 
                   onClick={() => scrollToSection('technologies')}
                   className="text-white hover:text-white/80 transition-colors"
@@ -129,7 +163,7 @@ const Header = ({ additionalDataLoading }) => {
                 </button>
               )}
               
-              {showNavigation && sectionsData.hasDomains && (
+              {showNavigation && sectionsData.hasDomains && sectionVisibility.domains && (
                 <button 
                   onClick={() => scrollToSection('domains')}
                   className="text-white hover:text-white/80 transition-colors"
@@ -138,12 +172,14 @@ const Header = ({ additionalDataLoading }) => {
                 </button>
               )}
               
-              <button 
-                onClick={() => scrollToSection('process')}
-                className="text-white hover:text-white/80 transition-colors"
-              >
-                Process
-              </button>
+              {showNavigation && sectionVisibility.projectCycle && (
+                <button 
+                  onClick={() => scrollToSection('process')}
+                  className="text-white hover:text-white/80 transition-colors"
+                >
+                  Process
+                </button>
+              )}
             </nav>
 
             {/* CTA Buttons */}

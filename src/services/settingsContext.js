@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { settingsService } from './settingsService';
 import portfolioService from './portfolioService';
-import { portfolioConfig } from '../config/portfolio';
-import { loadThemeFromPublicSettings, applyTheme } from '../utils/themeUtils';
+// import { portfolioConfig } from '../config/portfolio';
+import { applyTheme } from '../utils/themeUtils';
 import { updateManifest } from '../utils/manifestUtils';
 
 const SettingsContext = createContext();
@@ -78,9 +78,10 @@ export const SettingsProvider = ({ children }) => {
 
   // Enhanced settings loading with retry mechanism
   const loadSettingsGlobally = useCallback(async (force = false) => {
-    // Prevent multiple simultaneous loads unless forced
-    if (initialized && !force) {
-      console.log('⏭️ Settings already initialized, skipping load');
+    // For public mode, always load fresh settings from API
+    // For dashboard mode, only prevent multiple loads unless forced
+    if (isDashboard && initialized && !force) {
+      console.log('⏭️ Dashboard: Settings already initialized, skipping load');
       return settings;
     }
 
@@ -111,10 +112,66 @@ export const SettingsProvider = ({ children }) => {
         settingsCount: Object.keys(userSettings || {}).length,
         hasTheme: !!userSettings.theme_name,
         hasBannerName: !!userSettings.banner_name,
-        hasAvatar: !!userSettings.avatar_image
+        hasAvatar: !!userSettings.avatar_image,
+        sectionPortfolioVisible: userSettings.section_portfolio_visible,
+        sectionTechnologiesVisible: userSettings.section_technologies_visible,
+        sectionDomainsVisible: userSettings.section_domains_visible,
+        sectionProjectCycleVisible: userSettings.section_project_cycle_visible
+      });
+
+      // Debug: Log the exact values and their types
+      console.log('🔍 SETTINGS DEBUG - Raw API Response:', {
+        'section_portfolio_visible': {
+          value: userSettings.section_portfolio_visible,
+          type: typeof userSettings.section_portfolio_visible,
+          truthy: !!userSettings.section_portfolio_visible
+        },
+        'section_technologies_visible': {
+          value: userSettings.section_technologies_visible,
+          type: typeof userSettings.section_technologies_visible,
+          truthy: !!userSettings.section_technologies_visible
+        },
+        'section_domains_visible': {
+          value: userSettings.section_domains_visible,
+          type: typeof userSettings.section_domains_visible,
+          truthy: !!userSettings.section_domains_visible
+        },
+        'section_project_cycle_visible': {
+          value: userSettings.section_project_cycle_visible,
+          type: typeof userSettings.section_project_cycle_visible,
+          truthy: !!userSettings.section_project_cycle_visible
+        }
       });
       
       const mergedSettings = { ...defaultSettings, ...userSettings };
+      
+      // Debug: Log the merged settings to see if defaults are overriding API values
+      console.log('🔍 SETTINGS DEBUG - After Merging with Defaults:', {
+        'section_portfolio_visible': {
+          default: defaultSettings.section_portfolio_visible,
+          api: userSettings.section_portfolio_visible,
+          final: mergedSettings.section_portfolio_visible,
+          type: typeof mergedSettings.section_portfolio_visible
+        },
+        'section_technologies_visible': {
+          default: defaultSettings.section_technologies_visible,
+          api: userSettings.section_technologies_visible,
+          final: mergedSettings.section_technologies_visible,
+          type: typeof mergedSettings.section_technologies_visible
+        },
+        'section_domains_visible': {
+          default: defaultSettings.section_domains_visible,
+          api: userSettings.section_domains_visible,
+          final: mergedSettings.section_domains_visible,
+          type: typeof mergedSettings.section_domains_visible
+        },
+        'section_project_cycle_visible': {
+          default: defaultSettings.section_project_cycle_visible,
+          api: userSettings.section_project_cycle_visible,
+          final: mergedSettings.section_project_cycle_visible,
+          type: typeof mergedSettings.section_project_cycle_visible
+        }
+      });
       
       // Apply theme immediately from loaded settings
       const themeName = mergedSettings.theme_name || 'sand';
@@ -125,6 +182,20 @@ export const SettingsProvider = ({ children }) => {
       updateManifest(mergedSettings);
       
       // Set state
+      console.log('🔍 SETTINGS DEBUG - About to set state with:', {
+        sectionPortfolioVisible: mergedSettings.section_portfolio_visible,
+        sectionTechnologiesVisible: mergedSettings.section_technologies_visible,
+        sectionDomainsVisible: mergedSettings.section_domains_visible,
+        sectionProjectCycleVisible: mergedSettings.section_project_cycle_visible
+      });
+      
+      console.log('🔍 SETTINGS DEBUG - Current settings state before update:', {
+        sectionPortfolioVisible: settings.section_portfolio_visible,
+        sectionTechnologiesVisible: settings.section_technologies_visible,
+        sectionDomainsVisible: settings.section_domains_visible,
+        sectionProjectCycleVisible: settings.section_project_cycle_visible
+      });
+      
       setSettings(mergedSettings);
       setInitialized(true);
       setRetryCount(0); // Reset retry count on success
@@ -160,7 +231,7 @@ export const SettingsProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [isDashboard, defaultSettings, initialized, settings, retryCount]);
+  }, [isDashboard, defaultSettings, initialized, retryCount]);
 
   // Initialize settings once on mount
   useEffect(() => {
@@ -168,6 +239,17 @@ export const SettingsProvider = ({ children }) => {
       loadSettingsGlobally();
     }
   }, [loadSettingsGlobally, initialized]);
+
+  // Debug: Monitor settings state changes
+  useEffect(() => {
+    console.log('🔍 SETTINGS STATE CHANGED:', {
+      sectionPortfolioVisible: settings.section_portfolio_visible,
+      sectionTechnologiesVisible: settings.section_technologies_visible,
+      sectionDomainsVisible: settings.section_domains_visible,
+      sectionProjectCycleVisible: settings.section_project_cycle_visible,
+      totalSettings: Object.keys(settings).length
+    });
+  }, [settings]);
 
   // Update settings (Dashboard only)
   const updateSettings = useCallback(async (newSettings) => {
@@ -217,6 +299,18 @@ export const SettingsProvider = ({ children }) => {
   // Get individual setting (from loaded state, not database)
   const getSetting = useCallback((key) => {
     const value = settings[key] || defaultSettings[key] || '';
+    
+    // Debug: Log section visibility settings when accessed
+    if (key.includes('section_') && key.includes('_visible')) {
+      console.log(`🔍 GETSETTING DEBUG - ${key}:`, {
+        fromSettings: settings[key],
+        fromDefaults: defaultSettings[key],
+        finalValue: value,
+        type: typeof value,
+        truthy: !!value
+      });
+    }
+    
     return value;
   }, [settings, defaultSettings]);
 

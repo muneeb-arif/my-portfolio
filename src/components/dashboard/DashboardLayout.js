@@ -2109,9 +2109,10 @@ const AppearanceSection = () => {
 };
 
 const SettingsSection = ({ user }) => {
-  const { settings, loading, updateSettings } = useSettings();
+  const { settings, loading, updateSettings, refreshSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState({});
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState('');
 
   // Initialize local settings from global context
@@ -2136,6 +2137,26 @@ const SettingsSection = ({ user }) => {
       ...prev,
       [sectionKey]: isVisible
     }));
+  };
+
+  const handleRefreshSettings = async () => {
+    if (refreshing) return; // Prevent multiple simultaneous refreshes
+    
+    setRefreshing(true);
+    setMessage('🔄 Refreshing settings cache...');
+    
+    try {
+      console.log('🔄 Dashboard: Manual settings refresh...');
+      await refreshSettings();
+      console.log('✅ Dashboard: Manual settings refresh completed');
+      setMessage('✅ Settings cache refreshed successfully!');
+    } catch (error) {
+      console.error('❌ Dashboard: Manual settings refresh failed:', error);
+      setMessage('❌ Failed to refresh settings cache: ' + error.message);
+    } finally {
+      setRefreshing(false);
+      setTimeout(() => setMessage(''), 3000);
+    }
   };
 
   const handleSave = async () => {
@@ -2353,15 +2374,31 @@ const SettingsSection = ({ user }) => {
         </div>
       </div>
 
-      <div className="form-actions" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-        <button 
-          className="btn-primary"
-          onClick={handleSave}
-          disabled={saving || loading}
-          style={{ minWidth: '150px' }}
-        >
-          {saving ? '💾 Saving...' : '💾 Save Settings'}
-        </button>
+      <div className="form-actions" style={{ marginTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="form-actions-left">
+          <button 
+            className="btn-secondary"
+            onClick={handleRefreshSettings}
+            disabled={refreshing || loading}
+            style={{ minWidth: '180px' }}
+          >
+            {refreshing ? '🔄 Refreshing...' : '🔄 Refresh Settings Cache'}
+          </button>
+          <small style={{ display: 'block', marginTop: '8px', color: '#666', fontSize: '12px' }}>
+            Use this to refresh settings cache on the frontend website
+          </small>
+        </div>
+        
+        <div className="form-actions-right">
+          <button 
+            className="btn-primary"
+            onClick={handleSave}
+            disabled={saving || loading}
+            style={{ minWidth: '150px' }}
+          >
+            {saving ? '💾 Saving...' : '💾 Save Settings'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -22,7 +22,9 @@ class PortfolioService {
       const domain = this.getCurrentDomain();
       console.log('🌐 PORTFOLIO SERVICE: Getting settings for domain:', domain);
       
-      const response = await fetch(`${this.baseUrl}/settings`, {
+      // Add cache-busting timestamp to ensure fresh data
+      const timestamp = Date.now();
+      const response = await fetch(`${this.baseUrl}/settings?t=${timestamp}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
