@@ -241,7 +241,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
         // Show success notification
         Swal.fire({
           title: 'Questionnaire Submitted! 🎉',
-          text: `Thank you for providing detailed project information. Your questionnaire has been sent directly to Muneeb Arif. ${dbResult.success ? 'It has also been saved to our database.' : ''} I'll review them to get back to you with a detailed proposal within 48 hours.`,
+          text: `Thank you for providing detailed project information. Your questionnaire has been sent. ${dbResult.success ? 'It has also been saved to our database.' : ''} I'll review them to get back to you with a detailed proposal within 48 hours.`,
           icon: 'success',
           showCancelButton: true,
           confirmButtonColor: '#B8936A',
@@ -300,7 +300,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
           // Show partial success notification
           Swal.fire({
             title: 'Questionnaire Saved! ⚠️',
-            text: `Your questionnaire has been saved to our database, but email sending failed. Muneeb Arif will still see your questionnaire in the dashboard. Error: ${emailResult.error}`,
+            text: `Your questionnaire has been saved to our database, but email sending failed. We will still see your questionnaire in the dashboard. Error: ${emailResult.error}`,
             icon: 'warning',
             confirmButtonColor: '#B8936A',
             confirmButtonText: 'Understood',
@@ -313,7 +313,7 @@ const ClientOnboardingForm = ({ isOpen, onClose }) => {
           // Both failed - show error
           Swal.fire({
             title: 'Error Submitting Questionnaire',
-            text: `Both email sending and database save failed. Please try again or contact Muneeb Arif directly. Email error: ${emailResult.error}`,
+            text: `Both email sending and database save failed. Please try again or contact us directly. Email error: ${emailResult.error}`,
             icon: 'error',
             confirmButtonColor: '#B8936A',
             confirmButtonText: 'Try Again',

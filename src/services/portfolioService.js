@@ -1,5 +1,7 @@
 import { getCurrentOrigin } from '../utils/domainUtils';
 import { API_BASE } from '../utils/apiConfig';
+import { fallbackDataService } from './fallbackDataService';
+import { fallbackUtils } from '../utils/fallbackUtils';
 
 // Portfolio service for public data (domain-based)
 class PortfolioService {
@@ -31,7 +33,9 @@ class PortfolioService {
 
       if (!response.ok) {
         console.error(`❌ PORTFOLIO SERVICE: Settings API returned ${response.status}`);
-        return {}; // Return empty object instead of throwing error
+        // Show fallback notification and return fallback data
+        fallbackUtils.showFallbackNotification();
+        return fallbackDataService.getSettings ? fallbackDataService.getSettings() : {};
       }
 
       const data = await response.json();
@@ -41,11 +45,15 @@ class PortfolioService {
         return data.data || {};
       } else {
         console.error('❌ PORTFOLIO SERVICE: Failed to load settings:', data.error);
-        return {}; // Return empty object for graceful fallback
+        // Show fallback notification and return fallback data
+        fallbackUtils.showFallbackNotification();
+        return fallbackDataService.getSettings ? fallbackDataService.getSettings() : {};
       }
     } catch (error) {
       console.error('❌ PORTFOLIO SERVICE: Error loading settings:', error);
-      return {};
+      // Show fallback notification and return fallback data
+      fallbackUtils.showFallbackNotification();
+      return fallbackDataService.getSettings ? fallbackDataService.getSettings() : {};
     }
   }
 
@@ -76,11 +84,13 @@ class PortfolioService {
         return this.transformApiProjects(rawProjects);
       } else {
         console.error('❌ PORTFOLIO SERVICE: Failed to load projects:', data.error);
-        return [];
+        throw new Error(data.error || 'Failed to load projects');
       }
     } catch (error) {
       console.error('❌ PORTFOLIO SERVICE: Error loading projects:', error);
-      return [];
+      // Show fallback notification and return fallback data
+      fallbackUtils.showFallbackNotification();
+      return fallbackDataService.getProjects();
     }
   }
 
@@ -110,11 +120,13 @@ class PortfolioService {
         return data.data || [];
       } else {
         console.error('❌ PORTFOLIO SERVICE: Failed to load categories:', data.error);
-        return [];
+        throw new Error(data.error || 'Failed to load categories');
       }
     } catch (error) {
       console.error('❌ PORTFOLIO SERVICE: Error loading categories:', error);
-      return [];
+      // Show fallback notification and return fallback data
+      fallbackUtils.showFallbackNotification();
+      return fallbackDataService.getCategories();
     }
   }
 
@@ -144,11 +156,13 @@ class PortfolioService {
         return data.data || [];
       } else {
         console.error('❌ PORTFOLIO SERVICE: Failed to load technologies:', data.error);
-        return [];
+        throw new Error(data.error || 'Failed to load technologies');
       }
     } catch (error) {
       console.error('❌ PORTFOLIO SERVICE: Error loading technologies:', error);
-      return [];
+      // Show fallback notification and return fallback data
+      fallbackUtils.showFallbackNotification();
+      return fallbackDataService.getTechnologies();
     }
   }
 
@@ -178,11 +192,13 @@ class PortfolioService {
         return data.data || [];
       } else {
         console.error('❌ PORTFOLIO SERVICE: Failed to load niches:', data.error);
-        return [];
+        throw new Error(data.error || 'Failed to load niches');
       }
     } catch (error) {
       console.error('❌ PORTFOLIO SERVICE: Error loading niches:', error);
-      return [];
+      // Show fallback notification and return fallback data
+      fallbackUtils.showFallbackNotification();
+      return fallbackDataService.getNiches();
     }
   }
 

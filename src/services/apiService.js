@@ -416,6 +416,38 @@ class ApiService {
     return await this.makeRequest(endpoint);
   }
 
+  async getThemeUpdates(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.is_active !== undefined) queryParams.append('is_active', params.is_active);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.order) queryParams.append('order', params.order);
+    
+    const queryString = queryParams.toString();
+    const endpoint = `/theme-updates${queryString ? `?${queryString}` : ''}`;
+    
+    return await this.makeRequest(endpoint);
+  }
+
+  async createThemeUpdate(updateData) {
+    return await this.makeRequest('/theme-updates', {
+      method: 'POST',
+      body: JSON.stringify(updateData)
+    });
+  }
+
+  async updateThemeUpdate(updateId, updateData) {
+    return await this.makeRequest(`/theme-updates?id=${updateId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData)
+    });
+  }
+
+  async deleteThemeUpdate(updateId) {
+    return await this.makeRequest(`/theme-updates?id=${updateId}`, {
+      method: 'DELETE'
+    });
+  }
+
   async createSharedHostingUpdate(updateData) {
     return await this.makeRequest('/shared-hosting-updates', {
       method: 'POST',

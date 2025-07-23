@@ -122,6 +122,13 @@ const SharedHostingUpdateManager = () => {
 
       if (result.success) {
         await loadData();
+        
+        // If deactivating an update, trigger refresh of UpdateNotificationBar
+        if (currentStatus) { // currentStatus is true, so we're deactivating
+          localStorage.setItem('update_status_changed', Date.now().toString());
+          window.dispatchEvent(new Event('updateStatusChanged'));
+        }
+        
         alert(currentStatus ? '✅ Update deactivated' : '✅ Update activated');
       } else {
         setError('Failed to update status: ' + result.error);

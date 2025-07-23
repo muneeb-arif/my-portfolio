@@ -19,44 +19,92 @@ const UpdateNotificationBar = () => {
     // Check for updates every 5 minutes
     const interval = setInterval(checkForUpdates, 5 * 60 * 1000);
     
-    return () => clearInterval(interval);
+    // Listen for storage events (when updates are deactivated from other tabs)
+    const handleStorageChange = (e) => {
+      if (e.key === 'update_status_changed') {
+        console.log('🔄 [UpdateNotificationBar] Update status changed, refreshing...');
+        checkForUpdates();
+      }
+    };
+    
+    // Listen for custom events (when updates are deactivated from same tab)
+    const handleUpdateStatusChange = () => {
+      console.log('🔄 [UpdateNotificationBar] Update status change event received, refreshing...');
+      checkForUpdates();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('updateStatusChanged', handleUpdateStatusChange);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('updateStatusChanged', handleUpdateStatusChange);
+    };
   }, []);
 
   const checkForUpdates = async () => {
     try {
-      // Get the latest active update using local API
-      const result = await apiService.getSharedHostingUpdates({
-        is_active: true,
-        limit: 1,
-        order: 'created_at DESC'
-      });
-
-      if (!result.success) {
-        console.warn('Failed to check for updates:', result.error);
-        return;
-      }
-
-      const updates = result.data || [];
-      if (updates.length === 0) {
-        setIsVisible(false);
-        return;
-      }
-
-      const latestUpdate = updates[0];
-      const currentVersion = localStorage.getItem('theme_version') || '1.0.0';
+      console.log('🔍 [UpdateNotificationBar] Checking for updates...');
       
-      // Check if this is a newer version (no dismiss option anymore)
-      const hasNewerUpdate = isVersionNewer(latestUpdate.version, currentVersion);
-      
-      if (hasNewerUpdate) {
-        setUpdateInfo(latestUpdate);
-        setIsVisible(true);
-        console.log('🆕 Update available:', latestUpdate.version);
-      } else {
-        setIsVisible(false);
+      // Check both shared hosting updates and theme updates
+      const [sharedHostingResult, themeResult] = await Promise.all([
+        apiService.getSharedHostingUpdates({
+          is_active: true,
+          limit: 1,
+          order: 'created_at DESC'
+        }),
+        apiService.getThemeUpdates({
+          is_active: true,
+          limit: 1,
+          order: 'created_at DESC'
+        })
+      ]);
+
+      console.log('🔍 [UpdateNotificationBar] Shared hosting updates:', sharedHostingResult);
+      console.log('🔍 [UpdateNotificationBar] Theme updates:', themeResult);
+
+      // Check shared hosting updates first (primary system)
+      if (sharedHostingResult.success && sharedHostingResult.data && sharedHostingResult.data.length > 0) {
+        const latestSharedUpdate = sharedHostingResult.data[0];
+        const currentVersion = localStorage.getItem('theme_version') || '1.0.0';
+        
+        // Check if this is a newer version
+        const hasNewerSharedUpdate = isVersionNewer(latestSharedUpdate.version, currentVersion);
+        
+        if (hasNewerSharedUpdate) {
+          setUpdateInfo(latestSharedUpdate);
+          setIsVisible(true);
+          console.log('🆕 [UpdateNotificationBar] Shared hosting update available:', latestSharedUpdate.version);
+          return;
+        }
       }
+
+      // Check theme updates (secondary system)
+      // if (themeResult.success && themeResult.data && themeResult.data.length > 0) {
+      //   const latestThemeUpdate = themeResult.data[0];
+      //   const currentVersion = localStorage.getItem('theme_version') || '1.0.0';
+        
+      //   // Check if this is a newer version
+      //   const hasNewerThemeUpdate = isVersionNewer(latestThemeUpdate.version, currentVersion);
+        
+      //   if (hasNewerThemeUpdate) {
+      //     setUpdateInfo(latestThemeUpdate);
+      //     setIsVisible(true);
+      //     console.log('🆕 [UpdateNotificationBar] Theme update available:', latestThemeUpdate.version);
+      //     return;
+      //   }
+      // }
+
+      // No active updates found
+      console.log('✅ [UpdateNotificationBar] No active updates available');
+      setIsVisible(false);
+      setUpdateInfo(null);
+      
     } catch (error) {
-      console.warn('Error checking for updates:', error);
+      console.warn('❌ [UpdateNotificationBar] Error checking for updates:', error);
+      setIsVisible(false);
+      setUpdateInfo(null);
     }
   };
 

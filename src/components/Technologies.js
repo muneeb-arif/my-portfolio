@@ -77,10 +77,10 @@ const Technologies = ({ additionalDataLoading }) => {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-4">
-          Technologies
+          Skill set
           </h2>
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-            A comprehensive overview of the technologies, frameworks, and methodologies I work with to bring ideas to life.
+            A comprehensive overview of the skill-set, frameworks, and methodologies I work with to bring ideas to life.
           </p>
         </div>
 

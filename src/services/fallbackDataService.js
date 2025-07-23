@@ -121,34 +121,34 @@ export const fallbackDataService = {
   // Fallback technologies data
   getTechnologies() {
     const technologies = [
-      {
-        id: 1,
-        title: "Web Development",
-        type: "domain",
-        sort_order: 1,
-        icon: "Code"
-      },
-      {
-        id: 2,
-        title: "Mobile Development",
-        type: "domain",
-        sort_order: 2,
-        icon: "Smartphone"
-      },
-      {
-        id: 3,
-        title: "AI/ML",
-        type: "domain",
-        sort_order: 3,
-        icon: "Cpu"
-      },
-      {
-        id: 4,
-        title: "Cloud Computing",
-        type: "domain",
-        sort_order: 4,
-        icon: "Cloud"
-      },
+      // {
+      //   id: 1,
+      //   title: "Web Development",
+      //   type: "domain",
+      //   sort_order: 1,
+      //   icon: "Code"
+      // },
+      // {
+      //   id: 2,
+      //   title: "Mobile Development",
+      //   type: "domain",
+      //   sort_order: 2,
+      //   icon: "Smartphone"
+      // },
+      // {
+      //   id: 3,
+      //   title: "AI/ML",
+      //   type: "domain",
+      //   sort_order: 3,
+      //   icon: "Cpu"
+      // },
+      // {
+      //   id: 4,
+      //   title: "Cloud Computing",
+      //   type: "domain",
+      //   sort_order: 4,
+      //   icon: "Cloud"
+      // },
       {
         id: 5,
         title: "Blockchain",
@@ -156,13 +156,13 @@ export const fallbackDataService = {
         sort_order: 5,
         icon: "Link"
       },
-      {
-        id: 6,
-        title: "Cybersecurity",
-        type: "domain",
-        sort_order: 6,
-        icon: "Shield"
-      },
+      // {
+      //   id: 6,
+      //   title: "Cybersecurity",
+      //   type: "domain",
+      //   sort_order: 6,
+      //   icon: "Shield"
+      // },
       {
         id: 7,
         title: "Data Science",
@@ -323,16 +323,16 @@ export const fallbackDataService = {
   // Fallback niches data
   getNiches() {
     return [
-      {
-        id: 1,
-        title: "E-Commerce Solutions",
-        overview: "Comprehensive e-commerce platforms with modern UI/UX, payment processing, and inventory management systems.",
-        tools: "React, Node.js, Stripe, MongoDB, Redis",
-        key_features: "User authentication, Product catalog, Shopping cart, Payment processing, Admin dashboard, Analytics",
-        image: "/images/hero-bg.png",
-        sort_order: 1,
-        ai_driven: false
-      },
+      // {
+      //   id: 1,
+      //   title: "E-Commerce Solutions",
+      //   overview: "Comprehensive e-commerce platforms with modern UI/UX, payment processing, and inventory management systems.",
+      //   tools: "React, Node.js, Stripe, MongoDB, Redis",
+      //   key_features: "User authentication, Product catalog, Shopping cart, Payment processing, Admin dashboard, Analytics",
+      //   image: "/images/hero-bg.png",
+      //   sort_order: 1,
+      //   ai_driven: false
+      // },
       {
         id: 2,
         title: "AI-Powered Applications",
@@ -429,6 +429,27 @@ export const fallbackDataService = {
       { id: 8, name: "DevOps", description: "Development operations and automation", color: "#84cc16" },
       { id: 9, name: "UI/UX Design", description: "User interface and experience design", color: "#ec4899" }
     ];
+  },
+
+  // Fallback settings data
+  getSettings() {
+    return {
+      banner_name: 'Muneeb Arif',
+      banner_title: 'Full Stack Developer',
+      banner_tagline: 'Building modern web applications with passion and precision',
+      theme_name: 'sand',
+      avatar_image: '/images/profile/avatar.jpeg',
+      hero_image: '/images/hero-bg.png',
+      section_hero_visible: true,
+      section_portfolio_visible: true,
+      section_technologies_visible: true,
+      section_domains_visible: true,
+      section_project_cycle_visible: true,
+      section_prompts_visible: false,
+      show_resume_download: true,
+      logo_type: 'initials',
+      site_url: 'https://my-portfolio-apis.vercel.app'
+    };
   }
 };
 

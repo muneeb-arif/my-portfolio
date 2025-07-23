@@ -204,10 +204,10 @@ const Hero = ({ isLoading = false }) => {
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight drop-shadow-lg">
                   {bannerName}
                 </h1>
-                <h2 className="text-center lg:text-left text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold text-white/90 drop-shadow-lg">
+                <h2 className="text-left lg:text-left text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-semibold text-white/90 drop-shadow-lg">
                   {bannerTitle}
                 </h2>
-                <p className="text-center lg:text-left text-sm sm:text-base md:text-lg lg:text-xl text-white/80 max-w-lg leading-relaxed drop-shadow-lg">
+                <p className="text-left lg:text-left text-sm sm:text-base md:text-lg lg:text-xl text-white/80 max-w-lg leading-relaxed drop-shadow-lg">
                   {bannerTagline}
                 </p>
               </div>

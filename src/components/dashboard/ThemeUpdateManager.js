@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../config/supabase';
 import { themeUpdateService } from '../../services/themeUpdateService';
+import { apiService } from '../../services/apiService';
 import './ThemeUpdateManager.css';
 
 const ThemeUpdateManager = () => {
@@ -61,12 +62,13 @@ const ThemeUpdateManager = () => {
 
       if (clientsError) throw clientsError;
 
-      const { data: updatesData, error: updatesError } = await supabase
-        .from('theme_updates')
-        .select('*')
-        .eq('is_active', true);
-
-      if (updatesError) throw updatesError;
+      // Use apiService to get active updates
+      const result = await apiService.getThemeUpdates({ is_active: true });
+      
+      let activeUpdates = 0;
+      if (result.success) {
+        activeUpdates = result.data?.length || 0;
+      }
 
       const { data: logsData, error: logsError } = await supabase
         .from('theme_update_logs')
@@ -78,7 +80,6 @@ const ThemeUpdateManager = () => {
 
       // Calculate stats
       const totalClients = clientsData?.length || 0;
-      const activeUpdates = updatesData?.length || 0;
       const successfulUpdates = logsData?.filter(log => log.status === 'success').length || 0;
       const totalUpdateAttempts = logsData?.length || 0;
       const successRate = totalUpdateAttempts > 0 ? (successfulUpdates / totalUpdateAttempts) * 100 : 0;
@@ -112,25 +113,24 @@ const ThemeUpdateManager = () => {
 
   const loadUpdates = async () => {
     try {
-      const { data, error } = await supabase
-        .from('theme_updates')
-        .select(`
-          *,
-          theme_update_logs (
-            id,
-            client_id,
-            status,
-            applied_at,
-            error_message
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      console.log('🔍 [ThemeUpdateManager] Loading updates...');
+      console.log('🔍 [ThemeUpdateManager] Using apiService...');
       
-      setUpdates(data || []);
+      // Use apiService instead of direct fetch
+      const result = await apiService.getThemeUpdates();
+      
+      console.log('🔍 [ThemeUpdateManager] API result:', result);
+      
+      if (result.success) {
+        console.log('🔍 [ThemeUpdateManager] Loaded updates:', result.data);
+        console.log('🔍 [ThemeUpdateManager] Updates count:', result.data?.length || 0);
+        setUpdates(result.data || []);
+      } else {
+        throw new Error(result.error || 'Failed to load updates');
+      }
     } catch (error) {
       console.error('❌ Failed to load updates:', error);
+      console.error('❌ Error details:', error.message);
     }
   };
 
@@ -145,22 +145,19 @@ const ThemeUpdateManager = () => {
         return;
       }
 
-      // Create the update
-      const { data, error } = await supabase
-        .from('theme_updates')
-        .insert({
-          title: newUpdate.title,
-          description: newUpdate.description,
-          version: newUpdate.version,
-          channel: newUpdate.channel,
-          files: newUpdate.files,
-          is_active: newUpdate.isActive,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+      // Create the update using apiService
+      const result = await apiService.createThemeUpdate({
+        title: newUpdate.title,
+        description: newUpdate.description,
+        version: newUpdate.version,
+        channel: newUpdate.channel,
+        files: newUpdate.files,
+        is_active: newUpdate.isActive
+      });
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create update');
+      }
 
       setMessage('✅ Update created successfully!');
       
@@ -191,14 +188,19 @@ const ThemeUpdateManager = () => {
 
   const handleDeactivateUpdate = async (updateId) => {
     try {
-      const { error } = await supabase
-        .from('theme_updates')
-        .update({ is_active: false })
-        .eq('id', updateId);
+      // Use apiService instead of direct fetch
+      const result = await apiService.updateThemeUpdate(updateId, { is_active: false });
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to deactivate update');
+      }
 
       setMessage('✅ Update deactivated successfully');
+      
+      // Trigger refresh of UpdateNotificationBar
+      localStorage.setItem('update_status_changed', Date.now().toString());
+      window.dispatchEvent(new Event('updateStatusChanged'));
+      
       await loadDashboardData();
     } catch (error) {
       console.error('❌ Failed to deactivate update:', error);
@@ -211,17 +213,14 @@ const ThemeUpdateManager = () => {
     try {
       setMessage('🔄 Pushing update to all clients...');
       
-      // This would trigger notifications to all clients
-      // For now, we'll just reactivate the update
-      const { error } = await supabase
-        .from('theme_updates')
-        .update({ 
-          is_active: true,
-          pushed_at: new Date().toISOString()
-        })
-        .eq('id', updateId);
+      // Use apiService to reactivate the update
+      const result = await apiService.updateThemeUpdate(updateId, { 
+        is_active: true
+      });
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to push update');
+      }
 
       setMessage('✅ Update pushed to all clients!');
       await loadDashboardData();
@@ -275,11 +274,23 @@ const ThemeUpdateManager = () => {
   };
 
   const getUpdateStatusStats = (update) => {
+    // Since we're using the API, theme_update_logs might not be available
+    // For now, return basic stats based on the update data
     const logs = update.theme_update_logs || [];
     const total = logs.length;
     const success = logs.filter(log => log.status === 'success').length;
     const failed = logs.filter(log => log.status === 'failed').length;
     const pending = clients.length - total;
+    
+    // If no logs available, show basic stats
+    if (total === 0) {
+      return { 
+        total: 0, 
+        success: update.success_count || 0, 
+        failed: update.failure_count || 0, 
+        pending: clients.length 
+      };
+    }
     
     return { total, success, failed, pending };
   };
@@ -402,86 +413,97 @@ const ThemeUpdateManager = () => {
     </div>
   );
 
-  const renderUpdates = () => (
-    <div className="updates-section">
-      <div className="section-header">
-        <h3>Theme Updates</h3>
-        <button 
-          className="btn-create-update"
-          onClick={() => setActiveTab('create')}
-        >
-          + Create Update
-        </button>
-      </div>
-      
-      <div className="updates-list">
-        {updates.map(update => {
-          const stats = getUpdateStatusStats(update);
-          return (
-            <div key={update.id} className="update-card">
-              <div className="update-header">
-                <div className="update-title">{update.title}</div>
-                <div className="update-version">v{update.version}</div>
-                <div className="update-channel">{update.channel}</div>
-              </div>
-              
-              <div className="update-description">
-                {update.description}
-              </div>
-              
-              <div className="update-stats">
-                <div className="stat-item">
-                  <span className="stat-count success">{stats.success}</span>
-                  <span className="stat-label">Success</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-count failed">{stats.failed}</span>
-                  <span className="stat-label">Failed</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-count pending">{stats.pending}</span>
-                  <span className="stat-label">Pending</span>
-                </div>
-              </div>
-              
-              <div className="update-meta">
-                <span>Created: {formatDate(update.created_at)}</span>
-                {update.pushed_at && (
-                  <span>Pushed: {formatDate(update.pushed_at)}</span>
-                )}
-              </div>
-              
-              <div className="update-actions">
-                {update.is_active ? (
-                  <>
-                    <button 
-                      className="btn-push"
-                      onClick={() => handlePushUpdate(update.id)}
-                    >
-                      📤 Push to All
-                    </button>
-                    <button 
-                      className="btn-deactivate"
-                      onClick={() => handleDeactivateUpdate(update.id)}
-                    >
-                      ⏸️ Deactivate
-                    </button>
-                  </>
-                ) : (
-                  <button 
-                    className="btn-activate"
-                    onClick={() => handlePushUpdate(update.id)}
-                  >
-                    ▶️ Activate
-                  </button>
-                )}
-              </div>
+  const renderUpdates = () => {
+    console.log('🔍 [ThemeUpdateManager] Rendering updates, count:', updates.length);
+    console.log('🔍 [ThemeUpdateManager] Updates data:', updates);
+    
+    return (
+      <div className="updates-section">
+        <div className="section-header">
+          <h3>Theme Updates</h3>
+          <button 
+            className="btn-create-update"
+            onClick={() => setActiveTab('create')}
+          >
+            + Create Update
+          </button>
+        </div>
+        
+        <div className="updates-list">
+          {updates.length === 0 ? (
+            <div className="no-updates">
+              <p>No theme updates found.</p>
             </div>
-          );
-        })}
+          ) : (
+            updates.map(update => {
+              const stats = getUpdateStatusStats(update);
+              return (
+                <div key={update.id} className="update-card">
+                  <div className="update-header">
+                    <div className="update-title">{update.title}</div>
+                    <div className="update-version">v{update.version}</div>
+                    <div className="update-channel">{update.channel}</div>
+                  </div>
+                  
+                  <div className="update-description">
+                    {update.description}
+                  </div>
+                  
+                  <div className="update-stats">
+                    <div className="stat-item">
+                      <span className="stat-count success">{stats.success}</span>
+                      <span className="stat-label">Success</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-count failed">{stats.failed}</span>
+                      <span className="stat-label">Failed</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-count pending">{stats.pending}</span>
+                      <span className="stat-label">Pending</span>
+                    </div>
+                  </div>
+                  
+                  <div className="update-meta">
+                    <span>Created: {formatDate(update.created_at)}</span>
+                    {update.pushed_at && (
+                      <span>Pushed: {formatDate(update.pushed_at)}</span>
+                    )}
+                  </div>
+                  
+                  <div className="update-actions">
+                    {update.is_active ? (
+                      <>
+                        <button 
+                          className="btn-push"
+                          onClick={() => handlePushUpdate(update.id)}
+                        >
+                          📤 Push to All
+                        </button>
+                        <button 
+                          className="btn-deactivate"
+                          onClick={() => handleDeactivateUpdate(update.id)}
+                        >
+                          ⏸️ Deactivate
+                        </button>
+                      </>
+                    ) : (
+                      <button 
+                        className="btn-activate"
+                        onClick={() => handlePushUpdate(update.id)}
+                      >
+                        ▶️ Activate
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderCreateUpdate = () => (
     <div className="create-update-section">
