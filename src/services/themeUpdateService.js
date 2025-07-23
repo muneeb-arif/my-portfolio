@@ -350,11 +350,27 @@ export class ThemeUpdateService {
       // Log successful update
       await this.logUpdateApplication(updateId, 'success');
       
-      this.showUpdateProgress('Update complete! Reloading...', true);
+      this.showUpdateProgress('Update complete! Clearing data and logging out...', true);
       
-      // Reload page to apply changes
+      // Clear all data and logout
       setTimeout(() => {
-        window.location.reload();
+        // Clear all localStorage data
+        localStorage.clear();
+        
+        // Clear session storage
+        sessionStorage.clear();
+        
+        // Clear cookies
+        document.cookie.split(";").forEach(function(c) { 
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        // Redirect to main site
+        if (window.location.pathname.includes('/dashboard')) {
+          window.location.replace('/');
+        } else {
+          window.location.reload();
+        }
       }, 2000);
       
       return { success: true };

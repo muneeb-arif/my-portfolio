@@ -222,15 +222,32 @@ const UpdateNotificationBar = () => {
           backupCreated: result.backupCreated
         }));
 
-        // Update successful
+        // Update successful - clear all data and logout
         localStorage.setItem('theme_version', updateInfo.version);
         setIsVisible(false);
         
-        // Show success and reload
+        // Show success and clear data
         setTimeout(() => {
-          alert('🎉 Update applied successfully! Reloading page...');
+          alert('🎉 Update applied successfully! Clearing data and logging out...');
+          
+          // Clear all localStorage data
+          localStorage.clear();
+          
+          // Clear session storage
+          sessionStorage.clear();
+          
+          // Clear cookies
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+          
+          // Redirect to main site after clearing data
           setTimeout(() => {
-            window.location.reload();
+            if (window.location.pathname.includes('/dashboard')) {
+              window.location.replace('/');
+            } else {
+              window.location.reload();
+            }
           }, 2000);
         }, 2000);
       } else {

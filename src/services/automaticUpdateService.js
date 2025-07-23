@@ -761,11 +761,32 @@ export class AutomaticUpdateService {
       });
 
       if (result.success) {
-        progressCallback('🎉 Update completed! Reloading page...', 'success');
+        progressCallback('🎉 Update completed! Clearing data and logging out...', 'success');
         
-        // Auto-reload page after 3 seconds
+        // Clear all localStorage data
+        progressCallback('🧹 Clearing local data...', 'info');
+        localStorage.clear();
+        
+        // Clear any auth tokens and session data
+        progressCallback('🔐 Clearing authentication data...', 'info');
+        sessionStorage.clear();
+        
+        // Clear any cookies that might be set
+        document.cookie.split(";").forEach(function(c) { 
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        // Auto-logout and redirect after 3 seconds
         setTimeout(() => {
-          window.location.reload();
+          // Check if we're on dashboard and redirect to main site
+          if (window.location.pathname.includes('/dashboard')) {
+            progressCallback('🚪 Logging out and redirecting to main site...', 'info');
+            // Force redirect to main site without /dashboard
+            window.location.replace('/');
+          } else {
+            // If not on dashboard, just reload
+            window.location.reload();
+          }
         }, 3000);
       } else {
         progressCallback(`❌ Update failed: ${result.error}`, 'error');
