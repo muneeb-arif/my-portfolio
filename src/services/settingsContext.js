@@ -50,6 +50,12 @@ export const SettingsProvider = ({ children }) => {
     whatsapp_preview_image: '', // Optimized image for WhatsApp sharing
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
     show_resume_download: true,
+    show_view_work_button: true,
+    
+    // Custom Button
+    custom_button_title: '',
+    custom_button_link: '',
+    custom_button_target: '_self',
     
     // Social & Contact
     social_email: 'muneeb@example.com',
@@ -78,6 +84,8 @@ export const SettingsProvider = ({ children }) => {
 
   // Enhanced settings loading with retry mechanism
   const loadSettingsGlobally = useCallback(async (force = false) => {
+    console.log('🚀 LOAD SETTINGS CALLED:', { isDashboard, initialized, force });
+    
     // For public mode, always load fresh settings from API
     // For dashboard mode, only prevent multiple loads unless forced
     if (isDashboard && initialized && !force) {
@@ -200,6 +208,14 @@ export const SettingsProvider = ({ children }) => {
       setInitialized(true);
       setRetryCount(0); // Reset retry count on success
       
+      // Debug: Log immediately after setting state
+      console.log('🔍 SETTINGS DEBUG - State set successfully with:', {
+        sectionPortfolioVisible: mergedSettings.section_portfolio_visible,
+        sectionTechnologiesVisible: mergedSettings.section_technologies_visible,
+        sectionDomainsVisible: mergedSettings.section_domains_visible,
+        sectionProjectCycleVisible: mergedSettings.section_project_cycle_visible
+      });
+      
       console.log('✅ GLOBAL SETTINGS LOAD: Complete!', {
         finalTheme: mergedSettings.theme_name,
         finalBannerName: mergedSettings.banner_name,
@@ -231,12 +247,16 @@ export const SettingsProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [isDashboard, defaultSettings, initialized, retryCount]);
+  }, [isDashboard, initialized, retryCount]);
 
   // Initialize settings once on mount
   useEffect(() => {
+    console.log('🔧 INITIALIZATION EFFECT:', { initialized, isDashboard });
     if (!initialized) {
+      console.log('🔧 CALLING LOAD SETTINGS FROM INIT EFFECT');
       loadSettingsGlobally();
+    } else {
+      console.log('🔧 ALREADY INITIALIZED, SKIPPING LOAD');
     }
   }, [loadSettingsGlobally, initialized]);
 
@@ -298,12 +318,14 @@ export const SettingsProvider = ({ children }) => {
 
   // Get individual setting (from loaded state, not database)
   const getSetting = useCallback((key) => {
-    const value = settings[key] || defaultSettings[key] || '';
+    // Check if the key exists in settings first (even if it's false)
+    const value = settings.hasOwnProperty(key) ? settings[key] : (defaultSettings[key] || '');
     
     // Debug: Log section visibility settings when accessed
     if (key.includes('section_') && key.includes('_visible')) {
       console.log(`🔍 GETSETTING DEBUG - ${key}:`, {
         fromSettings: settings[key],
+        hasOwnProperty: settings.hasOwnProperty(key),
         fromDefaults: defaultSettings[key],
         finalValue: value,
         type: typeof value,

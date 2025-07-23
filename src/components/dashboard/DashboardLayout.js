@@ -1408,6 +1408,10 @@ const AppearanceSection = () => {
     site_url: 'https://your-domain.com',
     resume_file: '/images/profile/principal-software-engineer-muneeb.resume.pdf',
     show_resume_download: true,
+    show_view_work_button: true,
+    custom_button_title: '',
+    custom_button_link: '',
+    custom_button_target: '_self',
     social_email: 'muneeb@example.com',
     social_github: 'https://github.com/muneebarif',
     social_instagram: '',
@@ -2043,6 +2047,58 @@ const AppearanceSection = () => {
                      Show "Download Resume" button on homepage
                    </label>
                    <small className="form-help">Uncheck to hide the resume download button from the homepage banner</small>
+                 </div>
+               </div>
+
+               {/* Hero Button Controls Section */}
+               <div className="settings-group">
+                 <h3>🔘 Hero Buttons</h3>
+                 <div className="form-group">
+                   <label>
+                     <input
+                       type="checkbox"
+                       checked={localSettings.show_view_work_button === undefined ? true : localSettings.show_view_work_button}
+                       onChange={(e) => handleInputChange('show_view_work_button', e.target.checked)}
+                       style={{ marginRight: '8px' }}
+                     />
+                     Show "View My Work" button on homepage
+                   </label>
+                   <small className="form-help">Uncheck to hide the "View My Work" button from the homepage banner</small>
+                 </div>
+                 
+                 {/* Custom Button */}
+                 <div className="form-group">
+                   <label>Custom Button Title</label>
+                   <input
+                     type="text"
+                     value={localSettings.custom_button_title || ''}
+                     onChange={(e) => handleInputChange('custom_button_title', e.target.value)}
+                     placeholder="e.g., Contact Me, Hire Me, View Portfolio"
+                   />
+                   <small className="form-help">Leave empty to hide the custom button</small>
+                 </div>
+                 
+                 <div className="form-group">
+                   <label>Custom Button Link</label>
+                   <input
+                     type="url"
+                     value={localSettings.custom_button_link || ''}
+                     onChange={(e) => handleInputChange('custom_button_link', e.target.value)}
+                     placeholder="https://example.com or #contact"
+                   />
+                   <small className="form-help">URL or anchor link (e.g., #contact for same page)</small>
+                 </div>
+                 
+                 <div className="form-group">
+                   <label>Custom Button Target</label>
+                   <select
+                     value={localSettings.custom_button_target || '_self'}
+                     onChange={(e) => handleInputChange('custom_button_target', e.target.value)}
+                   >
+                     <option value="_self">Same Window (_self)</option>
+                     <option value="_blank">New Window (_blank)</option>
+                   </select>
+                   <small className="form-help">Choose how the link opens when clicked</small>
                  </div>
                </div>
 

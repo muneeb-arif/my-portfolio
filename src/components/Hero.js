@@ -54,6 +54,10 @@ const Hero = ({ isLoading = false }) => {
   const resumeFile = settings.resume_file;
   // Fix: Properly handle the boolean setting - default to true only if undefined, otherwise respect the actual value
   const showResumeDownload = settings.show_resume_download === undefined ? true : settings.show_resume_download;
+  const showViewWorkButton = settings.show_view_work_button === undefined ? true : settings.show_view_work_button;
+  const customButtonTitle = settings.custom_button_title || '';
+  const customButtonLink = settings.custom_button_link || '';
+  const customButtonTarget = settings.custom_button_target || '_self';
 
   const scrollToPortfolio = () => {
     const element = document.getElementById('portfolio');
@@ -108,6 +112,24 @@ const Hero = ({ isLoading = false }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+  };
+
+  const handleCustomButtonClick = () => {
+    if (customButtonLink) {
+      if (customButtonLink.startsWith('#')) {
+        // Handle anchor links (same page)
+        const element = document.querySelector(customButtonLink);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      } else {
+        // Handle external links
+        window.open(customButtonLink, customButtonTarget);
+      }
     }
   };
 
@@ -214,18 +236,28 @@ const Hero = ({ isLoading = false }) => {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start pt-4 sm:pt-6">
-                <button
-                  onClick={scrollToPortfolio}
-                  className="px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white/20 backdrop-blur-sm text-gray-800 font-semibold rounded-full hover:bg-white/30 hover:text-gray-900 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30 whitespace-nowrap text-sm sm:text-base"
-                >
-                  View My Work
-                </button>
+                {showViewWorkButton && (
+                  <button
+                    onClick={scrollToPortfolio}
+                    className="px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white/20 backdrop-blur-sm text-gray-800 font-semibold rounded-full hover:bg-white/30 hover:text-gray-900 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30 whitespace-nowrap text-sm sm:text-base"
+                  >
+                    View My Work
+                  </button>
+                )}
                 {resumeFile && showResumeDownload && (
                   <button
                     onClick={downloadResume}
                     className="px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white/90 backdrop-blur-sm text-sand-dark font-semibold rounded-full hover:bg-white transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/50 whitespace-nowrap text-sm sm:text-base"
                   >
                     Download Resume
+                  </button>
+                )}
+                {customButtonTitle && customButtonLink && (
+                  <button
+                    onClick={handleCustomButtonClick}
+                    className="px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-white/20 backdrop-blur-sm text-gray-800 font-semibold rounded-full hover:bg-white/30 hover:text-gray-900 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl border border-white/30 whitespace-nowrap text-sm sm:text-base"
+                  >
+                    {customButtonTitle}
                   </button>
                 )}
               </div>

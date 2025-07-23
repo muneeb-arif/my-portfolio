@@ -97,6 +97,10 @@ export async function GET(request: NextRequest) {
         section_project_cycle_visible: true,
         section_prompts_visible: false,
         show_resume_download: true,
+        show_view_work_button: true,
+        custom_button_title: '',
+        custom_button_link: '',
+        custom_button_target: '_self',
         logo_type: 'initials',
         site_url: 'https://my-portfolio-apis.vercel.app'
       };

@@ -13,6 +13,7 @@ import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import ScrollToTop from './components/ScrollToTop';
 import Dashboard from './components/dashboard/Dashboard';
+import Signup from './components/Signup';
 import DynamicHead from './components/DynamicHead';
 import Toast from './components/Toast';
 import ToastContainer from './components/ToastContainer';
@@ -44,6 +45,9 @@ function App() {
         <Routes>
           {/* Dashboard route */}
           <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Signup route */}
+          <Route path="/signup" element={<Signup />} />
           
           {/* Main portfolio route */}
           <Route path="/" element={

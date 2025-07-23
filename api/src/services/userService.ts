@@ -180,6 +180,156 @@ export class UserService {
     return { success: false, error: 'Domain not found' };
   }
 
+  // Create new user with subdomain
+  static async createUserWithSubdomain(email: string, password: string, subdomain: string): Promise<DbResult<User>> {
+    // Check if user already exists
+    const existingUser = await this.getUserByEmail(email);
+    if (existingUser.success) {
+      return { success: false, error: 'User already exists' };
+    }
+
+    // Check if subdomain already exists
+    const domainName = `https://${subdomain}.theexpertways.com/`;
+    const existingDomain = await this.getDomainByName(domainName);
+    if (existingDomain.success) {
+      return { success: false, error: 'Subdomain already exists' };
+    }
+
+    const userId = crypto.randomUUID();
+    const hashedPassword = await hashPassword(password);
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    
+    try {
+      // 1. Create user
+      const userQuery = `
+        INSERT INTO users (id, email, password_hash, name, full_name, email_verified, is_admin, created_at, updated_at) 
+        VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?)
+      `;
+      
+      const userName = email.split('@')[0]; // Use email prefix as name
+      const userResult = await executeQuery(userQuery, [userId, email, hashedPassword, userName, userName, now, now]);
+      if (!userResult.success) {
+        return { success: false, error: userResult.error || 'Failed to create user' };
+      }
+
+      // 2. Create domain
+      const domainQuery = `
+        INSERT INTO domains (user_id, name, status, created_at, updated_at) 
+        VALUES (?, ?, 1, ?, ?)
+      `;
+      
+      const domainResult = await executeQuery(domainQuery, [userId, domainName, now, now]);
+      if (!domainResult.success) {
+        return { success: false, error: domainResult.error || 'Failed to create domain' };
+      }
+
+      // 3. Create default settings
+      const defaultSettings = [
+        { key: 'banner_name', value: userName },
+        { key: 'banner_title', value: 'Software Engineer' },
+        { key: 'banner_tagline', value: 'I craft dreams, not projects.' },
+        { key: 'theme_name', value: 'sand' },
+        { key: 'section_hero_visible', value: 'true' },
+        { key: 'section_portfolio_visible', value: 'true' },
+        { key: 'section_technologies_visible', value: 'true' },
+        { key: 'section_domains_visible', value: 'true' },
+        { key: 'section_project_cycle_visible', value: 'true' },
+        { key: 'section_prompts_visible', value: 'false' },
+        { key: 'social_email', value: email },
+        { key: 'copyright_text', value: `© 2025 ${userName}. All rights reserved.` }
+      ];
+
+      for (const setting of defaultSettings) {
+        const settingId = crypto.randomUUID();
+        const settingsQuery = `
+          INSERT INTO settings (id, user_id, setting_key, setting_value, created_at, updated_at) 
+          VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        
+        const settingsResult = await executeQuery(settingsQuery, [settingId, userId, setting.key, setting.value, now, now]);
+        if (!settingsResult.success) {
+          console.warn(`Failed to create setting: ${setting.key}`);
+        }
+      }
+
+      // 4. Create default categories
+      const defaultCategories = [
+        'Web Development',
+        'Mobile Development', 
+        'UI/UX Design',
+        'E-commerce',
+        'SaaS Platform'
+      ];
+
+      for (const categoryName of defaultCategories) {
+        const categoryId = crypto.randomUUID();
+        const categoryQuery = `
+          INSERT INTO categories (id, user_id, name, created_at, updated_at) 
+          VALUES (?, ?, ?, ?, ?)
+        `;
+        
+        const categoryResult = await executeQuery(categoryQuery, [categoryId, userId, categoryName, now, now]);
+        if (!categoryResult.success) {
+          console.warn(`Failed to create default category: ${categoryName}`);
+        }
+      }
+
+      // 5. Create default technologies
+      const defaultTechnologies = [
+        'React',
+        'Node.js',
+        'Laravel',
+        'Vue.js',
+        'MySQL',
+        'MongoDB',
+        'AWS',
+        'Docker'
+      ];
+
+      for (const techName of defaultTechnologies) {
+        const techId = crypto.randomUUID();
+        const techQuery = `
+          INSERT INTO domains_technologies (id, user_id, type, title, sort_order, created_at, updated_at) 
+          VALUES (?, ?, 'technology', ?, ?, ?, ?)
+        `;
+        
+        const techResult = await executeQuery(techQuery, [techId, userId, techName, 1, now, now]);
+        if (!techResult.success) {
+          console.warn(`Failed to create default technology: ${techName}`);
+        }
+      }
+
+      // 6. Create default niches
+      const defaultNiches = [
+        'E-commerce',
+        'Healthcare',
+        'Education',
+        'Finance',
+        'Real Estate'
+      ];
+
+      for (const nicheName of defaultNiches) {
+        const nicheId = crypto.randomUUID();
+        const nicheQuery = `
+          INSERT INTO niche (id, user_id, name, sort_order, created_at, updated_at) 
+          VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        
+        const nicheResult = await executeQuery(nicheQuery, [nicheId, userId, nicheName, 1, now, now]);
+        if (!nicheResult.success) {
+          console.warn(`Failed to create default niche: ${nicheName}`);
+        }
+      }
+      
+      // Return the created user
+      return this.getUserById(userId);
+      
+    } catch (error) {
+      console.error('Error creating user with subdomain:', error);
+      return { success: false, error: 'Failed to create user and setup portfolio' };
+    }
+  }
+
   // Create new user (legacy method - kept for backward compatibility)
   static async createUser(email: string, password: string): Promise<DbResult<User>> {
     // Check if user already exists
