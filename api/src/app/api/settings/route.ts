@@ -69,6 +69,10 @@ export async function GET(request: NextRequest) {
         // Extract domain from origin/referer
         // const domain = origin.replace(/^https?:\/\//, '').split('/')[0];
 
+        console.log('============================')
+        console.log('🔍 origin:', origin);
+        console.log('============================')
+
         userId = await getUserByDomain(origin);
       }
     }

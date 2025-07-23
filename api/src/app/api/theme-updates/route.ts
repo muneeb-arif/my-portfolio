@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedRequest } from '@/middleware/auth';
 import { executeQuery } from '@/lib/database';
+import crypto from 'crypto';
 
 // GET /api/theme-updates - Get theme updates
 export async function GET(request: NextRequest) {
@@ -95,21 +96,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const themeUpdateId = crypto.randomUUID();
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    
     const insertQuery = `
-      INSERT INTO theme_updates (version, title, description, files, is_active, channel)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO theme_updates (id, version, title, description, files, is_active, channel, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const filesJson = files ? JSON.stringify(files) : null;
     const activeValue = is_active ? 1 : 0;
 
     const result = await executeQuery(insertQuery, [
+      themeUpdateId,
       version,
       title,
       description || '',
       filesJson,
       activeValue,
-      channel
+      channel,
+      now,
+      now
     ]);
 
     if (!result.success) {
@@ -119,10 +126,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get the created theme update
+    const getQuery = 'SELECT * FROM theme_updates WHERE id = ?';
+    const getResult = await executeQuery(getQuery, [themeUpdateId]);
+    
+    if (!getResult.success) {
+      return NextResponse.json(
+        { error: 'Failed to retrieve created theme update', details: getResult.error },
+        { status: 500 }
+      );
+    }
+
+    const createdUpdate = Array.isArray(getResult.data) ? getResult.data[0] : null;
+
     return NextResponse.json({
       success: true,
-      data: { id: result.insertId, version, title, description, is_active, channel }
-    });
+      data: createdUpdate || { id: themeUpdateId, version, title, description, is_active, channel }
+    }, { status: 201 });
 
   } catch (error) {
     console.error('❌ POST /api/theme-updates error:', error);
