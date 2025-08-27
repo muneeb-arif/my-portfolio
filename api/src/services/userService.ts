@@ -235,6 +235,7 @@ export class UserService {
         { key: 'section_domains_visible', value: 'true' },
         { key: 'section_project_cycle_visible', value: 'true' },
         { key: 'section_prompts_visible', value: 'false' },
+        { key: 'section_gallery_visible', value: 'true' },
         { key: 'social_email', value: email },
         { key: 'copyright_text', value: `© 2025 ${userName}. All rights reserved.` }
       ];

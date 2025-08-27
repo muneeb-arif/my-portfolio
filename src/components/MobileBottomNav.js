@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Code, Globe, CheckCircle, Mail, Phone } from 'lucide-react';
+import { Briefcase, Code, Globe, CheckCircle, Mail, Phone, Image } from 'lucide-react';
 import ContactForm from './ContactForm';
 import { useSettings } from '../services/settingsContext';
 import { usePublicData } from '../services/PublicDataContext';
@@ -15,6 +15,7 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
     hasProjects: projects && projects.length > 0 && getSetting('section_portfolio_visible') !== false,
     hasTechnologies: technologies && technologies.length > 0 && getSetting('section_technologies_visible') !== false,
     hasDomains: niches && niches.length > 0 && getSetting('section_domains_visible') !== false,
+    hasGallery: getSetting('section_gallery_visible') !== false,
     loading: publicLoading
   };
 
@@ -118,6 +119,15 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
       label: 'Domains',
       icon: Globe,
       onClick: () => scrollToSection('domains')
+    });
+  }
+
+  if (sectionsData.hasGallery) {
+    navItems.push({
+      id: 'gallery',
+      label: 'Gallery',
+      icon: Image,
+      onClick: () => scrollToSection('gallery')
     });
   }
 

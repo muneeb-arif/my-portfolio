@@ -446,6 +446,7 @@ export const fallbackDataService = {
       section_domains_visible: true,
       section_project_cycle_visible: true,
       section_prompts_visible: false,
+      section_gallery_visible: true,
       show_resume_download: true,
       show_view_work_button: true,
       custom_button_title: '',

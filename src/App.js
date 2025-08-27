@@ -9,6 +9,7 @@ import Technologies from './components/Technologies';
 import DomainsNiche from './components/DomainsNiche';
 import ProjectLifeCycle from './components/ProjectLifeCycle';
 import PromptsSection from './components/PromptsSection';
+import Gallery from './components/Gallery';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import ScrollToTop from './components/ScrollToTop';
@@ -89,6 +90,7 @@ function AppContent() {
     domains: settings.section_domains_visible !== undefined ? settings.section_domains_visible : true,
     projectCycle: settings.section_project_cycle_visible !== undefined ? settings.section_project_cycle_visible : true,
     prompts: settings.section_prompts_visible !== undefined ? settings.section_prompts_visible : false,
+    gallery: settings.section_gallery_visible !== undefined ? settings.section_gallery_visible : true,
   };
 
   // Check for missing environment variables on app load
@@ -357,6 +359,9 @@ function AppContent() {
 
         {/* Prompts Section */}
         {sectionVisibility.prompts && <PromptsSection />}
+
+        {/* Gallery Section */}
+        {sectionVisibility.gallery && <Gallery />}
 
         {/* Footer */}
         <Footer />

@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { X, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ImageLightbox = ({ 
-  images, 
-  currentIndex, 
-  isOpen, 
+  image, 
   onClose, 
-  onNavigate 
+  onPrevious, 
+  onNext, 
+  hasPrevious, 
+  hasNext, 
+  totalImages, 
+  currentIndex 
 }) => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -14,29 +17,27 @@ const ImageLightbox = ({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
 
-  const currentImage = images[currentIndex] || images[0] || { url: '', caption: 'Image' };
+  const currentImage = image || { url: '', caption: 'Image' };
 
   // Reset zoom and position when image changes
   useEffect(() => {
     setZoomLevel(1);
     setRotation(0);
     setImagePosition({ x: 0, y: 0 });
-  }, [currentIndex]);
+  }, [image]);
 
   // Handle keyboard controls
   useEffect(() => {
-    if (!isOpen) return;
-
     const handleKeyDown = (e) => {
       switch (e.key) {
         case 'Escape':
           onClose();
           break;
         case 'ArrowLeft':
-          if (currentIndex > 0) onNavigate(currentIndex - 1);
+          if (hasPrevious) onPrevious();
           break;
         case 'ArrowRight':
-          if (currentIndex < images.length - 1) onNavigate(currentIndex + 1);
+          if (hasNext) onNext();
           break;
         case '+':
         case '=':
@@ -56,7 +57,7 @@ const ImageLightbox = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, currentIndex, images.length, onClose, onNavigate]);
+  }, [hasPrevious, hasNext, onClose, onPrevious, onNext]);
 
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 0.25, 3));
@@ -99,7 +100,7 @@ const ImageLightbox = ({
     setIsDragging(false);
   };
 
-  if (!isOpen || !images || images.length === 0) return null;
+  if (!image || !image.url) return null;
 
   return (
     <div 
@@ -114,7 +115,7 @@ const ImageLightbox = ({
           {/* Image Info */}
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">
-              {currentIndex + 1} / {images.length}
+              {currentIndex} / {totalImages}
             </span>
             {currentImage?.caption && (
               <span className="text-sm text-gray-300">
@@ -166,19 +167,19 @@ const ImageLightbox = ({
       </div>
 
       {/* Navigation Arrows */}
-      {currentIndex > 0 && (
+      {hasPrevious && (
         <button
-          onClick={() => onNavigate(currentIndex - 1)}
+          onClick={onPrevious}
           className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors text-white"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
       )}
 
-      {currentIndex < images.length - 1 && (
+      {hasNext && (
         <button
-          onClick={() => onNavigate(currentIndex + 1)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors text-white"
+          onClick={onNext}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center transition-colors text-white"
         >
           <ChevronRight className="w-6 h-6" />
         </button>
@@ -209,7 +210,7 @@ const ImageLightbox = ({
       {/* Keyboard Hints */}
       <div className="absolute bottom-4 right-4 text-white/70 text-xs space-y-1">
         <div>ESC: Close</div>
-        <div>↑↓: Navigate</div>
+        <div>←→: Navigate</div>
         <div>+/-: Zoom</div>
         <div>R: Rotate</div>
       </div>

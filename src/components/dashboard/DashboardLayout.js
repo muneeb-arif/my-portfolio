@@ -10,6 +10,7 @@ import { adminService } from '../../services/adminService';
 import { API_BASE } from '../../utils/apiConfig';
 import ProjectsManager from './ProjectsManager';
 import PromptsManager from './PromptsManager';
+import GallerySection from './GallerySection';
 import CategoriesManager from './CategoriesManager';
 import DomainsTechnologiesManager from './DomainsTechnologiesManager';
 import NicheManager from './NicheManager';
@@ -129,6 +130,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
       { id: 'overview', label: 'Overview', icon: '📊', adminOnly: false, sectionKey: null },
       { id: 'projects', label: 'Projects', icon: '💼', adminOnly: false, sectionKey: 'section_portfolio_visible' },
       { id: 'prompts', label: 'Prompts', icon: '💡', adminOnly: false, sectionKey: 'section_prompts_visible' },
+      { id: 'gallery', label: 'Gallery', icon: '🖼️', adminOnly: false, sectionKey: 'section_gallery_visible' },
       { id: 'queries', label: 'Contact Queries', icon: '📨', adminOnly: false, sectionKey: null },
       { id: 'domains-technologies', label: 'Technologies', icon: '🎯', adminOnly: false, sectionKey: 'section_technologies_visible' },
       { id: 'niche', label: 'Domains / Niche', icon: '🏆', adminOnly: false, sectionKey: 'section_domains_visible' },
@@ -612,6 +614,8 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
         return <ProjectsManager projects={projects} onProjectsChange={loadDashboardData} editingProject={editingProject} onEditingProjectChange={setEditingProject} />;
       case 'prompts':
         return <PromptsManager prompts={prompts} onPromptsChange={loadDashboardData} editingPrompt={editingPrompt} onEditingPromptChange={setEditingPrompt} />;
+      case 'gallery':
+        return <GallerySection />;
       case 'queries':
         return <QueriesManager />;
       case 'domains-technologies':
@@ -2189,6 +2193,7 @@ const SettingsSection = ({ user }) => {
         section_domains_visible: settings.section_domains_visible !== undefined ? settings.section_domains_visible : true,
         section_project_cycle_visible: settings.section_project_cycle_visible !== undefined ? settings.section_project_cycle_visible : true,
         section_prompts_visible: settings.section_prompts_visible !== undefined ? settings.section_prompts_visible : false,
+        section_gallery_visible: settings.section_gallery_visible !== undefined ? settings.section_gallery_visible : true,
         phone_number: settings.phone_number || '',
         address: settings.address || '',
         map_location_url: settings.map_location_url || '',
@@ -2431,6 +2436,19 @@ const SettingsSection = ({ user }) => {
                     <span className="section-title">💡 Prompts Section</span>
                   </label>
                   <small className="form-help">AI prompts and templates showcase</small>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.section_gallery_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('section_gallery_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">🖼️ Gallery Section</span>
+                  </label>
+                  <small className="form-help">Showcase your media collection</small>
                 </div>
               </div>
             )}
