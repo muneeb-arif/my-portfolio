@@ -65,9 +65,11 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
     console.log('📥 POST /api/projects/[id]/images - Received request:', {
       projectId,
       imageName: name,
-      order_index,
-      url: url?.substring(0, 50) + '...'
+      order_index: !order_index ? 1 : order_index,
+      url: url
     });
+
+    console.log('===========================================')
 
     // Validate input
     if (!url || !path || !name) {

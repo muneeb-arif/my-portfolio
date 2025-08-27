@@ -116,6 +116,12 @@ export async function GET(request: NextRequest) {
       SELECT * FROM settings 
       WHERE user_id = ?
     `;
+
+
+    console.log('============================')
+    console.log('🔍 userId:', userId);
+    console.log('============================')
+
     const result = await executeQuery(query, [userId]);
     if (!result.success) {
       return NextResponse.json(

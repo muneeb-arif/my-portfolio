@@ -129,32 +129,36 @@ const PromptsManager = ({ prompts, onPromptsChange, editingPrompt: externalEditi
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    setImageFiles(prev => [...prev, ...files]);
-    
-    files.forEach((file, index) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newImage = {
-          url: e.target.result,
-          name: file.name,
-          original_name: file.name,
-          size: file.size,
-          type: file.type,
-          isNew: true,
-          uploadIndex: imageFiles.length + index,
-          order_index: selectedImages.length + index + 1
+    setImageFiles(prev => {
+      const newImageFiles = [...prev, ...files];
+      
+      // Process files after updating imageFiles state
+      files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newImage = {
+            url: e.target.result,
+            name: file.name,
+            original_name: file.name,
+            size: file.size,
+            type: file.type,
+            isNew: true,
+            order_index: selectedImages.length + index + 1
+          };
+          
+          setSelectedImages(prev => [...prev, newImage]);
+          
+          // Initialize progress for this image
+          setImageUploadProgress(prev => [...prev, {
+            fileName: file.name,
+            progress: 0,
+            status: 'pending'
+          }]);
         };
-        
-        setSelectedImages(prev => [...prev, newImage]);
-        
-        // Initialize progress for this image
-        setImageUploadProgress(prev => [...prev, {
-          fileIndex: imageFiles.length + index,
-          progress: 0,
-          status: 'pending'
-        }]);
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      });
+      
+      return newImageFiles;
     });
   };
 
@@ -204,60 +208,7 @@ const PromptsManager = ({ prompts, onPromptsChange, editingPrompt: externalEditi
     setDragOverIndex(null);
   };
 
-  const updatePromptImages = async (promptId) => {
-    try {
-      console.log('🔄 Starting prompt image update for prompt ID:', promptId);
-      
-      // First, delete all existing images for this prompt
-      const deleteResult = await imageService.deleteProjectImages(promptId);
-      if (!deleteResult.success) {
-        console.error('Error deleting existing prompt images:', deleteResult.error);
-        throw new Error(`Failed to delete existing prompt images: ${deleteResult.error}`);
-      }
 
-      // Normalize current images to ensure they have all required properties
-      const normalizedCurrentImages = selectedImages.map((image, index) => ({
-        ...image,
-        order_index: index + 1,
-        url: image.url || '',
-        name: image.name || image.original_name || `image_${index + 1}`,
-        original_name: image.original_name || image.name || `image_${index + 1}`,
-        size: image.size || 0,
-        type: image.type || 'image/jpeg'
-      }));
-
-      // Then, add all current images to the database in the exact order they appear
-      if (normalizedCurrentImages.length > 0) {
-        for (let i = 0; i < normalizedCurrentImages.length; i++) {
-          const image = normalizedCurrentImages[i];
-          
-          const imageData = {
-            url: image.url,
-            path: image.fullPath || image.url,
-            name: image.name || image.original_name,
-            original_name: image.original_name || image.name,
-            size: image.size,
-            type: image.type,
-            bucket: 'images',
-            order_index: i + 1
-          };
-
-          const result = await imageService.saveImageMetadata(promptId, imageData);
-          if (!result.success) {
-            console.error('Error inserting prompt image:', result.error);
-            throw new Error(`Failed to save prompt images: ${result.error}`);
-          }
-        }
-
-        console.log(`✅ Successfully updated ${normalizedCurrentImages.length} prompt images`);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error updating prompt images:', error);
-      throw error;
-    }
-  };
 
   const handleChooseMedia = () => {
     setShowMediaModal(true);
@@ -291,18 +242,107 @@ const PromptsManager = ({ prompts, onPromptsChange, editingPrompt: externalEditi
         result = await projectsService.createProject(promptData);
       }
 
-      if (result.success) {
-        const savedPrompt = result.data;
+      if (result) {
+        const savedPrompt = result;
         
-        // Handle image uploads for new images
-        if (selectedImages.some(img => img.isNew)) {
+        console.log('🔍 Debug: Image upload state:', {
+          imageFilesLength: imageFiles.length,
+          selectedImagesLength: selectedImages.length,
+          savedPromptId: savedPrompt?.id,
+          imageFileNames: imageFiles.map(f => f.name),
+          selectedImageNames: selectedImages.map(img => img.original_name)
+        });
+
+        // Upload images after prompt is created/updated (same as ProjectsManager)
+        if (imageFiles.length > 0 && savedPrompt && savedPrompt.id) {
           setUploadingImages(true);
-          try {
-            await updatePromptImages(savedPrompt.id);
-          } finally {
-            setUploadingImages(false);
+          const uploadedImages = [];
+          
+          for (let i = 0; i < imageFiles.length; i++) {
+            const file = imageFiles[i];
+            const progressIndex = imageUploadProgress.findIndex(p => p.fileName === file.name);
+            
+            if (progressIndex !== -1) {
+              // Update progress to uploading
+              setImageUploadProgress(prev => prev.map((p, idx) => 
+                idx === progressIndex ? { ...p, status: 'uploading', progress: 0 } : p
+              ));
+            }
+            
+            console.log(`🔄 Uploading image ${i + 1}/${imageFiles.length}: ${file.name}`);
+            
+            try {
+              const imageData = await imageService.uploadProjectImage(savedPrompt.id, file);
+              if (!imageData.success) {
+                throw new Error(`Failed to upload image ${file.name}: ${imageData.error}`);
+              }
+              uploadedImages.push(imageData.data);
+              
+              if (progressIndex !== -1) {
+                // Update progress to completed
+                setImageUploadProgress(prev => prev.map((p, idx) => 
+                  idx === progressIndex ? { ...p, status: 'completed', progress: 100 } : p
+                ));
+              }
+              
+              console.log(`✅ Uploaded image: ${file.name}`, imageData.data);
+            } catch (error) {
+              console.error('Error uploading image:', error);
+              if (progressIndex !== -1) {
+                // Update progress to failed
+                setImageUploadProgress(prev => prev.map((p, idx) => 
+                  idx === progressIndex ? { ...p, status: 'failed', error: error.message } : p
+                ));
+              }
+              throw error;
+            }
+          }
+          
+          setUploadingImages(false);
+          
+          // Replace blob URLs with actual Supabase URLs in selectedImages
+          setSelectedImages(prev => {
+            const updatedImages = [...prev];
+            
+            // For each uploaded image, find the corresponding blob URL and replace it
+            uploadedImages.forEach((uploadedImg, index) => {
+              const blobImageIndex = updatedImages.findIndex(img => 
+                img.isNew && img.original_name === uploadedImg.original_name
+              );
+              
+              if (blobImageIndex !== -1) {
+                // Replace blob URL with Supabase URL
+                updatedImages[blobImageIndex] = {
+                  ...uploadedImg,
+                  isNew: false, // These are now saved images
+                  isFromMedia: false // Not from media library
+                };
+                
+                // Clean up the blob URL
+                if (updatedImages[blobImageIndex].url && updatedImages[blobImageIndex].url.startsWith('blob:')) {
+                  URL.revokeObjectURL(updatedImages[blobImageIndex].url);
+                }
+                
+                console.log(`🔄 Replaced blob URL with Supabase URL for: ${uploadedImg.original_name}`);
+              } else {
+                console.log(`❌ Could not find matching selected image for uploaded image: ${uploadedImg.original_name}`);
+              }
+            });
+            
+            return updatedImages;
+          });
+          
+          // Show success toast for image uploads
+          if (uploadedImages.length > 0) {
+            const imageText = uploadedImages.length === 1 ? 'image' : 'images';
+            toastService.success(`${uploadedImages.length} ${imageText} uploaded successfully! 📸`);
           }
         }
+
+        // Note: Images are already uploaded and linked to the prompt
+        // No need to call updatePromptImages as it would cause base64 overflow issues
+        // The imageService.uploadProjectImage already handles metadata saving
+        console.log('✅ Images already uploaded and linked to prompt - skipping metadata update');
 
         toastService.success(editingPrompt ? 'Prompt updated successfully!' : 'Prompt created successfully!');
         setShowForm(false);
@@ -338,7 +378,7 @@ const PromptsManager = ({ prompts, onPromptsChange, editingPrompt: externalEditi
 
     try {
       const result = await projectsService.deleteProject(promptId);
-      if (result.success) {
+      if (result) {
         toastService.success('Prompt deleted successfully!');
         if (onPromptsChange) {
           onPromptsChange();
@@ -525,7 +565,7 @@ const PromptsManager = ({ prompts, onPromptsChange, editingPrompt: externalEditi
                 };
                 
                 const progressEntry = safeImage.isNew 
-                  ? imageUploadProgress.find(p => p.fileIndex === safeImage.uploadIndex)
+                  ? imageUploadProgress.find(p => p.fileName === safeImage.name)
                   : null;
                 
                 const isDragging = draggedIndex === index;
