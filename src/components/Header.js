@@ -194,9 +194,10 @@ const Header = ({ additionalDataLoading }) => {
               
               <button
                 onClick={openContactForm}
-                className="bg-white/20 text-white p-2 rounded-lg hover:bg-white/30 transition-colors"
+                className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
               >
                 <Mail size={16} />
+                <span className="hidden sm:inline">Contact</span>
               </button>
               
               {/* Call Button - Only show on mobile when phone number is set */}

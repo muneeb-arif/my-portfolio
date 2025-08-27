@@ -191,7 +191,7 @@ const Signup = () => {
         setSuccess('Setup completed successfully! Your portfolio is ready!');
         
         // Redirect to the new subdomain in a new tab
-        const subdomainUrl = `https://${formData.subdomain}.theexpertways.com/`;
+        const subdomainUrl = `https://${formData.subdomain}.theexpertways.com/dashboard`;
         window.open(subdomainUrl, '_blank');
         
         // Navigate to dashboard

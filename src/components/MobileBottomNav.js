@@ -10,11 +10,11 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
   const [activeSection, setActiveSection] = useState('hero');
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
   
-  // Track which sections have data
+  // Track which sections have data and are visible
   const sectionsData = {
-    hasProjects: projects && projects.length > 0,
-    hasTechnologies: technologies && technologies.length > 0,
-    hasDomains: niches && niches.length > 0,
+    hasProjects: projects && projects.length > 0 && getSetting('section_portfolio_visible') !== false,
+    hasTechnologies: technologies && technologies.length > 0 && getSetting('section_technologies_visible') !== false,
+    hasDomains: niches && niches.length > 0 && getSetting('section_domains_visible') !== false,
     loading: publicLoading
   };
 

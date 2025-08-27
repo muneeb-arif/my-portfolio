@@ -30,6 +30,7 @@ import './NicheManager.css';
 import { themeUpdateService } from '../../services/themeUpdateService';
 
 const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) => {
+  const { settings } = useSettings();
   const [activeSection, setActiveSection] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projects, setProjects] = useState([]);
@@ -122,40 +123,47 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
     }
   };
 
-  // Navigation items with admin filtering
+  // Navigation items with admin filtering and section visibility
   const navItems = useMemo(() => {
     const allNavItems = [
-      { id: 'overview', label: 'Overview', icon: '📊', adminOnly: false },
-      { id: 'projects', label: 'Projects', icon: '💼', adminOnly: false },
-      { id: 'prompts', label: 'Prompts', icon: '💡', adminOnly: false },
-      { id: 'queries', label: 'Contact Queries', icon: '📨', adminOnly: false },
-      { id: 'domains-technologies', label: 'Technologies', icon: '🎯', adminOnly: false },
-      { id: 'niche', label: 'Domains / Niche', icon: '🏆', adminOnly: false },
-      { id: 'media', label: 'Media Library', icon: '🖼️', adminOnly: false },
-      { id: 'backup-files', label: 'Backup Files', icon: '📦', adminOnly: true },
-      { id: 'categories', label: 'Categories', icon: '📁', adminOnly: false },
-      { id: 'appearance', label: 'Appearance', icon: '🎨', adminOnly: false },
-      { id: 'theme-updates', label: 'Theme Updates', icon: '🚀', adminOnly: true },
-      { id: 'settings', label: 'Settings', icon: '⚙️', adminOnly: false },
-      { id: 'export', label: 'Import/Export', icon: '📤', adminOnly: true },
-      { id: 'debug', label: 'Debug Sync', icon: '🔧', adminOnly: true }
+      { id: 'overview', label: 'Overview', icon: '📊', adminOnly: false, sectionKey: null },
+      { id: 'projects', label: 'Projects', icon: '💼', adminOnly: false, sectionKey: 'section_portfolio_visible' },
+      { id: 'prompts', label: 'Prompts', icon: '💡', adminOnly: false, sectionKey: 'section_prompts_visible' },
+      { id: 'queries', label: 'Contact Queries', icon: '📨', adminOnly: false, sectionKey: null },
+      { id: 'domains-technologies', label: 'Technologies', icon: '🎯', adminOnly: false, sectionKey: 'section_technologies_visible' },
+      { id: 'niche', label: 'Domains / Niche', icon: '🏆', adminOnly: false, sectionKey: 'section_domains_visible' },
+      { id: 'media', label: 'Media Library', icon: '🖼️', adminOnly: false, sectionKey: null },
+      { id: 'backup-files', label: 'Backup Files', icon: '📦', adminOnly: true, sectionKey: null },
+      { id: 'categories', label: 'Categories', icon: '📁', adminOnly: false, sectionKey: null },
+      { id: 'appearance', label: 'Appearance', icon: '🎨', adminOnly: false, sectionKey: null },
+      { id: 'theme-updates', label: 'Theme Updates', icon: '🚀', adminOnly: true, sectionKey: null },
+      { id: 'settings', label: 'Settings', icon: '⚙️', adminOnly: false, sectionKey: null },
+      { id: 'export', label: 'Import/Export', icon: '📤', adminOnly: true, sectionKey: null },
+      { id: 'debug', label: 'Debug Sync', icon: '🔧', adminOnly: true, sectionKey: null }
     ];
 
-    // Filter navigation items based on admin permissions
+    // Filter navigation items based on admin permissions and section visibility
     return allNavItems.filter(item => {
-      if (!item.adminOnly) {
-        return true; // Show non-admin items to everyone
-      }
-      
-      // For admin-only items, check if user has access
-      if (item.adminOnly && isAdmin) {
-        // Check if user has access to this specific section
+      // First check admin permissions
+      if (item.adminOnly) {
+        if (!isAdmin) {
+          return false; // Hide admin-only items from non-admin users
+        }
+        // For admin-only items, check if user has access to this specific section
         return accessibleSectionKeys.includes(item.id);
       }
       
-      return false; // Hide admin-only items from non-admin users
+      // For non-admin items, check section visibility if applicable
+      if (item.sectionKey) {
+        const isSectionVisible = settings[item.sectionKey];
+        if (isSectionVisible === false) {
+          return false; // Hide items when their section is disabled
+        }
+      }
+      
+      return true; // Show item if all checks pass
     });
-  }, [isAdmin, accessibleSectionKeys]);
+  }, [isAdmin, accessibleSectionKeys, settings]);
 
   // Load dashboard data
   useEffect(() => {

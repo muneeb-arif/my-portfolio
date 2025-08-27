@@ -6,6 +6,8 @@ const DashboardMobileNav = ({ activeSection, onNavClick, navItems }) => {
   const { getSetting } = useSettings();
   
   // Filter navItems to only show the 5 specified items for mobile
+  // Note: navItems are already filtered by parent DashboardLayout based on section visibility
+  // So sections with is_on_frontend=false will automatically be hidden here
   const mobileNavItems = navItems.filter(item => 
     ['projects', 'prompts', 'queries', 'media', 'categories'].includes(item.id)
   );
