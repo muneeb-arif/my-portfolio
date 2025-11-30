@@ -57,12 +57,17 @@ export async function getSupabaseByDomain(domain: string): Promise<SupabaseClien
     if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
       const domainData = result.data[0] as any;
 
-      // If domain has custom Supabase config, use it
-      if (domainData.supabase_url && domainData.supabase_anon_key) {
+      // If domain has custom Supabase config (both URL and key are NOT NULL), use it
+      if (domainData.supabase_url != null && 
+          domainData.supabase_anon_key != null && 
+          domainData.supabase_url.trim() !== '' && 
+          domainData.supabase_anon_key.trim() !== '') {
         console.log(`✅ Using custom Supabase for domain: ${domain}`);
         const client = createClient(domainData.supabase_url, domainData.supabase_anon_key);
         clientCache.set(domain, client);
         return client;
+      } else {
+        console.log(`📦 Domain found but has NULL Supabase config, using default for: ${domain}`);
       }
     }
   } catch (error) {

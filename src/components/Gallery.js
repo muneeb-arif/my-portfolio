@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useSettings } from '../services/settingsContext';
 import { apiService } from '../services/apiService';
 import ImageLightbox from './ImageLightbox';
 import './Gallery.css';
 
 const Gallery = () => {
-  const { getSetting } = useSettings();
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -59,6 +57,34 @@ const Gallery = () => {
     if (selectedImage && selectedImage.index < images.length - 1) {
       const newIndex = selectedImage.index + 1;
       setSelectedImage({ ...images[newIndex], index: newIndex });
+    }
+  };
+
+  const handleDownload = async (e, image) => {
+    e.stopPropagation(); // Prevent opening lightbox
+    
+    try {
+      // Fetch the image as a blob
+      const response = await fetch(image.url);
+      const blob = await response.blob();
+      
+      // Create a temporary URL for the blob
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element and trigger download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = image.name || `image-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      // Fallback: open in new tab
+      window.open(image.url, '_blank');
     }
   };
 
@@ -119,6 +145,16 @@ const Gallery = () => {
                     e.target.src = '/images/hero-bg.png';
                   }}
                 />
+                <div className="gallery-item-overlay">
+                  <button
+                    className="gallery-download-btn"
+                    onClick={(e) => handleDownload(e, image)}
+                    title="Download image"
+                    aria-label="Download image"
+                  >
+                    ⬇️ Download
+                  </button>
+                </div>
               </div>
             ))}
           </div>

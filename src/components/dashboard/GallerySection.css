@@ -29,6 +29,124 @@
   gap: 12px;
 }
 
+/* Storage Summary */
+.storage-summary {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid #dee2e6;
+}
+
+.storage-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.storage-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.storage-label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.storage-value {
+  color: #333;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.storage-separator {
+  color: #6c757d;
+  margin: 0 4px;
+}
+
+.storage-total {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.storage-remaining {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.remaining-label {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.remaining-value {
+  color: #28a745;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.storage-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.storage-progress-bar {
+  flex: 1;
+  height: 24px;
+  background: #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.storage-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 12px;
+  min-width: 2px;
+}
+
+.storage-percentage {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  min-width: 45px;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .storage-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .storage-stats {
+    font-size: 14px;
+  }
+  
+  .storage-value {
+    font-size: 16px;
+  }
+  
+  .storage-progress-container {
+    width: 100%;
+  }
+}
+
 /* Gallery Grid */
 .gallery-grid {
   display: grid;

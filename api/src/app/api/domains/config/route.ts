@@ -29,8 +29,11 @@ export async function GET(request: NextRequest) {
     if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
       const domainData = result.data[0] as any;
       
-      // If domain has custom Supabase config, return it
-      if (domainData.supabase_url && domainData.supabase_anon_key) {
+      // If domain has custom Supabase config (both URL and key are NOT NULL), return it
+      if (domainData.supabase_url != null && 
+          domainData.supabase_anon_key != null && 
+          domainData.supabase_url.trim() !== '' && 
+          domainData.supabase_anon_key.trim() !== '') {
         console.log('✅ Found custom Supabase config for domain:', domain);
         return NextResponse.json({
           success: true,
@@ -38,6 +41,8 @@ export async function GET(request: NextRequest) {
           supabase_anon_key: domainData.supabase_anon_key,
           is_custom: true
         });
+      } else {
+        console.log('📦 Domain found but has NULL Supabase config, returning default for:', domain);
       }
     }
     

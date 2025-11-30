@@ -105,6 +105,30 @@ const GallerySection = () => {
     setSelectedImages([]);
   };
 
+  // Format file size helper
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Calculate total storage used
+  const calculateTotalSize = () => {
+    return images.reduce((total, image) => {
+      // Supabase storage list returns size in metadata
+      const size = image.metadata?.size || image.size || 0;
+      return total + (typeof size === 'number' ? size : 0);
+    }, 0);
+  };
+
+  // Get storage limit (1 GB for free tier)
+  const STORAGE_LIMIT = 1024 * 1024 * 1024; // 1 GB in bytes
+  const totalSizeUsed = calculateTotalSize();
+  const storagePercentage = (totalSizeUsed / STORAGE_LIMIT) * 100;
+  const remainingStorage = STORAGE_LIMIT - totalSizeUsed;
+
   if (loading) {
     return (
       <div className="gallery-section">
@@ -145,6 +169,36 @@ const GallerySection = () => {
             </label>
           </div>
         </div>
+
+        {/* Storage Summary */}
+        {images.length > 0 && (
+          <div className="storage-summary">
+            <div className="storage-info">
+              <div className="storage-stats">
+                <span className="storage-label">📦 Storage Used:</span>
+                <span className="storage-value">{formatFileSize(totalSizeUsed)}</span>
+                <span className="storage-separator">/</span>
+                <span className="storage-total">{formatFileSize(STORAGE_LIMIT)}</span>
+              </div>
+              <div className="storage-remaining">
+                <span className="remaining-label">Remaining:</span>
+                <span className="remaining-value">{formatFileSize(remainingStorage)}</span>
+              </div>
+            </div>
+            <div className="storage-progress-container">
+              <div className="storage-progress-bar">
+                <div 
+                  className="storage-progress-fill" 
+                  style={{ 
+                    width: `${Math.min(storagePercentage, 100)}%`,
+                    backgroundColor: storagePercentage > 90 ? '#dc3545' : storagePercentage > 70 ? '#ffc107' : '#28a745'
+                  }}
+                />
+              </div>
+              <span className="storage-percentage">{storagePercentage.toFixed(1)}%</span>
+            </div>
+          </div>
+        )}
 
         {images.length === 0 ? (
           <div className="empty-state">
@@ -189,7 +243,9 @@ const GallerySection = () => {
                 </div>
                 <div className="image-info">
                   <p className="image-name">{image.name}</p>
-                  <p className="image-size">{(image.metadata?.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="image-size">
+                    {formatFileSize(image.metadata?.size || image.size || 0)}
+                  </p>
                 </div>
               </div>
             ))}
