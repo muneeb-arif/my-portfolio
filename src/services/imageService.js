@@ -1,4 +1,5 @@
-import { supabase, BUCKETS } from '../config/supabase';
+import { BUCKETS } from '../config/supabase';
+import { getSupabaseByDomain } from './supabaseByDomain';
 import { getCurrentUser } from './authUtils';
 import { apiService } from './apiService';
 
@@ -12,6 +13,9 @@ export const imageService = {
       if (!user) {
         throw new Error('User not authenticated');
       }
+
+      // Get domain-specific Supabase client
+      const supabase = await getSupabaseByDomain();
 
       // Sanitize filename
       const sanitizeFilename = (filename) => {
@@ -74,6 +78,7 @@ export const imageService = {
   // Delete image
   async deleteImage(imagePath, bucket = BUCKETS.IMAGES) {
     try {
+      const supabase = await getSupabaseByDomain();
       const { error } = await supabase.storage
         .from(bucket)
         .remove([imagePath]);
@@ -87,7 +92,8 @@ export const imageService = {
   },
 
   // Get image URL
-  getImageUrl(imagePath, bucket = BUCKETS.IMAGES) {
+  async getImageUrl(imagePath, bucket = BUCKETS.IMAGES) {
+    const supabase = await getSupabaseByDomain();
     const { data } = supabase.storage
       .from(bucket)
       .getPublicUrl(imagePath);
@@ -101,6 +107,9 @@ export const imageService = {
       if (!user) {
         throw new Error('User not authenticated');
       }
+
+      // Get domain-specific Supabase client
+      const supabase = await getSupabaseByDomain();
 
       const { data, error } = await supabase.storage
         .from(bucket)
@@ -116,11 +125,18 @@ export const imageService = {
           file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
           !file.name.startsWith('.')
         )
-        .map(file => ({
-          ...file,
-          fullPath: `${user.id}/${file.name}`,
-          url: this.getImageUrl(`${user.id}/${file.name}`, bucket)
-        }));
+        .map(file => {
+          const fullPath = `${user.id}/${file.name}`;
+          const { data: urlData } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(fullPath);
+          
+          return {
+            ...file,
+            fullPath,
+            url: urlData.publicUrl
+          };
+        });
 
       return { success: true, data: imageFiles };
     } catch (error) {
