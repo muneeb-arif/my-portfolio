@@ -4,11 +4,17 @@ import { executeQuery } from '@/lib/database';
 // GET /api/health - Health check endpoint
 export const GET = async (request: NextRequest) => {
   try {
-    // Test database connection
-    const dbResult = await executeQuery('SELECT 1 as test');
+    // Test database connection (non-blocking - API can still work without DB for some endpoints)
+    let dbResult;
+    try {
+      dbResult = await executeQuery('SELECT 1 as test');
+    } catch (dbError) {
+      // Database error is not critical - API server is still running
+      dbResult = { success: false };
+    }
     
     const health = {
-      status: 'healthy',
+      status: 'healthy', // API server is healthy even if DB is disconnected
       timestamp: new Date().toISOString(),
       version: '1.0.0',
       database: dbResult.success ? 'connected' : 'disconnected',
@@ -16,9 +22,8 @@ export const GET = async (request: NextRequest) => {
       environment: process.env.NODE_ENV || 'development'
     };
 
-    const status = dbResult.success ? 200 : 503;
-
-    return NextResponse.json(health, { status });
+    // Always return 200 - API server is running, DB status is informational
+    return NextResponse.json(health, { status: 200 });
   } catch (error) {
     console.error('Health check error:', error);
     

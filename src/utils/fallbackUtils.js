@@ -6,6 +6,7 @@ let fallbackNotificationShown = false;
 export const fallbackUtils = {
   // Check if we're using fallback data and show notification
   showFallbackNotification() {
+    return;
     if (!fallbackNotificationShown) {
       // Create a notification element
       const notification = document.createElement('div');

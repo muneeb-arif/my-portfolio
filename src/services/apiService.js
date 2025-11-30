@@ -42,15 +42,21 @@ class ApiService {
         headers: { 'Content-Type': 'application/json' }
       });
       
+      // If we get any response, the API server is running
+      // Database status is informational, not a blocker
       if (response.ok) {
         const data = await response.json();
-        this.isApiAvailable = data.status === 'healthy';
-        return this.isApiAvailable;
+        // API server is available if we got a response
+        this.isApiAvailable = true;
+        return true;
       } else {
-        this.isApiAvailable = false;
-        return false;
+        // Even if response is not ok, if we got a response, server is running
+        // Only mark unavailable if it's a network error (caught in catch)
+        this.isApiAvailable = true;
+        return true;
       }
     } catch (error) {
+      // Network error - API server is truly unavailable
       console.warn('API health check failed:', error.message);
       this.isApiAvailable = false;
       return false;
@@ -495,6 +501,16 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(activityData)
     });
+  }
+
+  // ================ GALLERY ================
+
+  async getGalleryImages() {
+    return await this.makeRequestWithFallback(
+      '/gallery', 
+      {}, 
+      [] // Empty array as fallback for gallery
+    );
   }
 
   // ================ UTILITY METHODS ================

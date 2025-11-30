@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSettings } from '../services/settingsContext';
-import { imageService } from '../services/imageService';
+import { apiService } from '../services/apiService';
 import ImageLightbox from './ImageLightbox';
 import './Gallery.css';
 
@@ -18,11 +18,11 @@ const Gallery = () => {
   const loadGalleryImages = async () => {
     try {
       setLoading(true);
-      const result = await imageService.listUserImages();
+      const result = await apiService.getGalleryImages();
       
       if (result.success) {
         // Filter to only show images (not other file types)
-        const imageFiles = result.data.filter(file => 
+        const imageFiles = (result.data || []).filter(file => 
           file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
         );
         setImages(imageFiles);
