@@ -13,6 +13,7 @@ import Gallery from './components/Gallery';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import ScrollToTop from './components/ScrollToTop';
+import DynamicSections from './components/DynamicSections';
 import Dashboard from './components/dashboard/Dashboard';
 import Signup from './components/Signup';
 import DynamicHead from './components/DynamicHead';
@@ -324,6 +325,9 @@ function AppContent() {
         {/* Hero Section */}
         {sectionVisibility.hero && <Hero />}
 
+        {/* Dynamic Sections after Hero */}
+        <DynamicSections positionAfter="hero" />
+
         {/* Portfolio Section */}
         {sectionVisibility.portfolio && (
           <>
@@ -344,6 +348,9 @@ function AppContent() {
           </>
         )}
 
+        {/* Dynamic Sections after Portfolio */}
+        <DynamicSections positionAfter="portfolio" />
+
         {/* Technologies Section */}
         {sectionVisibility.technologies && (
           <Technologies additionalDataLoading={additionalDataLoading} />
@@ -362,6 +369,12 @@ function AppContent() {
 
         {/* Gallery Section */}
         {sectionVisibility.gallery && <Gallery />}
+
+        {/* Dynamic Sections after Gallery */}
+        <DynamicSections positionAfter="gallery" />
+
+        {/* Dynamic Sections at the end (no specific position) */}
+        <DynamicSections positionAfter={null} />
 
         {/* Footer */}
         <Footer />

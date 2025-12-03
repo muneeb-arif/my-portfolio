@@ -39,7 +39,8 @@ class ApiService {
     try {
       const response = await fetch(`${this.baseUrl}/health`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000) // 5 second timeout
       });
       
       // If we get any response, the API server is running
@@ -56,9 +57,10 @@ class ApiService {
         return true;
       }
     } catch (error) {
-      // Network error - API server is truly unavailable
+      // Network error - API server might be unavailable
+      // But don't mark as unavailable immediately - let the actual request try
       console.warn('API health check failed:', error.message);
-      this.isApiAvailable = false;
+      // Don't set isApiAvailable to false here - let the actual request determine
       return false;
     }
   }
@@ -67,16 +69,9 @@ class ApiService {
   async makeRequest(endpoint, options = {}) {
     // console.log(`🔍 API SERVICE: Making request to ${endpoint}`);
     
-    // Check API health first if we haven't already
-    if (this.isApiAvailable) {
-      await this.checkApiHealth();
-    }
-
-    // If API is not available, throw error to trigger fallback
-    if (!this.isApiAvailable) {
-      // console.log(`🔍 API SERVICE: API not available, throwing error for ${endpoint}`);
-      throw new Error('API server is not available');
-    }
+    // Skip health check for now - let the actual request determine availability
+    // Health checks can be unreliable and block legitimate requests
+    // The actual fetch will fail if API is truly unavailable
 
     const token = this.getToken();
     const headers = {

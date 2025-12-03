@@ -118,4 +118,76 @@ export interface DbResult<T = any> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+// Dynamic Section types
+export type SectionType = 'title' | 'subtitle' | 'image_text' | 'text_image' | 'image_only' | 'video_only' | 'text_only' | 'accordion' | 'social_embed' | 'map_embed' | 'form' | 'code_snippet' | 'custom_html';
+export type Alignment = 'left' | 'right' | 'center';
+export type EmbedType = 'facebook_post' | 'facebook_video' | 'instagram_post' | 'instagram_reel' | 'twitter' | 'tiktok' | 'linkedin' | 'pinterest' | 'youtube' | 'vimeo' | 'spotify' | 'soundcloud' | 'calendly' | 'google_maps' | 'custom';
+export type CTAButtonTarget = '_self' | '_blank';
+export type CTAButtonStyle = 'primary' | 'secondary' | 'outline';
+
+export interface AccordionItem {
+  title: string;
+  content: string;
+}
+
+export interface DynamicSection {
+  id: string;
+  user_id: string;
+  section_type: SectionType;
+  title?: string;
+  subtitle?: string;
+  content?: string;
+  image_url?: string;
+  video_url?: string;
+  alignment: Alignment;
+  position_after?: string;
+  is_visible: boolean;
+  sort_order: number;
+  section_id?: string;
+  background_color?: string;
+  background_image_url?: string;
+  padding_top: number;
+  padding_bottom: number;
+  cta_button_text?: string;
+  cta_button_link?: string;
+  cta_button_target: CTAButtonTarget;
+  cta_button_style: CTAButtonStyle;
+  embed_type?: EmbedType;
+  embed_url?: string;
+  embed_code?: string;
+  accordion_items?: AccordionItem[];
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface CreateDynamicSectionRequest {
+  section_type: SectionType;
+  title?: string;
+  subtitle?: string;
+  content?: string;
+  image_url?: string;
+  video_url?: string;
+  alignment?: Alignment;
+  position_after?: string;
+  is_visible?: boolean;
+  sort_order?: number;
+  section_id?: string;
+  background_color?: string;
+  background_image_url?: string;
+  padding_top?: number;
+  padding_bottom?: number;
+  cta_button_text?: string;
+  cta_button_link?: string;
+  cta_button_target?: CTAButtonTarget;
+  cta_button_style?: CTAButtonStyle;
+  embed_type?: EmbedType;
+  embed_url?: string;
+  embed_code?: string;
+  accordion_items?: AccordionItem[];
+}
+
+export interface UpdateDynamicSectionRequest extends Partial<CreateDynamicSectionRequest> {
+  id: string;
 } 

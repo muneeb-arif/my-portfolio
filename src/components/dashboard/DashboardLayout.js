@@ -15,6 +15,7 @@ import CategoriesManager from './CategoriesManager';
 import DomainsTechnologiesManager from './DomainsTechnologiesManager';
 import NicheManager from './NicheManager';
 import QueriesManager from './QueriesManager';
+import DynamicSectionsManager from './DynamicSectionsManager';
 import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
 import AutomaticUpdateDashboard from './AutomaticUpdateDashboard';
@@ -131,6 +132,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
       { id: 'projects', label: 'Projects', icon: '💼', adminOnly: false, sectionKey: 'section_portfolio_visible' },
       { id: 'prompts', label: 'Prompts', icon: '💡', adminOnly: false, sectionKey: 'section_prompts_visible' },
       { id: 'gallery', label: 'Gallery', icon: '🖼️', adminOnly: false, sectionKey: 'section_gallery_visible' },
+      { id: 'dynamic-sections', label: 'Dynamic Sections', icon: '📝', adminOnly: false, sectionKey: null },
       { id: 'queries', label: 'Contact Queries', icon: '📨', adminOnly: false, sectionKey: null },
       { id: 'domains-technologies', label: 'Technologies', icon: '🎯', adminOnly: false, sectionKey: 'section_technologies_visible' },
       { id: 'niche', label: 'Domains / Niche', icon: '🏆', adminOnly: false, sectionKey: 'section_domains_visible' },
@@ -616,6 +618,8 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
         return <PromptsManager prompts={prompts} onPromptsChange={loadDashboardData} editingPrompt={editingPrompt} onEditingPromptChange={setEditingPrompt} />;
       case 'gallery':
         return <GallerySection />;
+      case 'dynamic-sections':
+        return <DynamicSectionsManager />;
       case 'queries':
         return <QueriesManager />;
       case 'domains-technologies':
