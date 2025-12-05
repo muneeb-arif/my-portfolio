@@ -127,6 +127,20 @@ const Footer = () => {
           window.open(menu.link_url, '_blank', 'noopener,noreferrer');
         }
         break;
+      case 'custom':
+        if (menu.link_url) {
+          if (menu.link_url.startsWith('#')) {
+            // Anchor link - scroll to section
+            const element = document.querySelector(menu.link_url);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          } else {
+            // External link
+            window.open(menu.link_url, '_blank', 'noopener,noreferrer');
+          }
+        }
+        break;
       default:
         break;
     }
@@ -252,8 +266,9 @@ const Footer = () => {
                         <button 
                           onClick={() => handleMenuClick(menu)}
                           className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
+                          title={menu.label || (menu.icon ? 'Menu item' : '')}
                         >
-                          {menu.icon && <span className="mr-1">{menu.icon}</span>}
+                          {menu.icon && <span className={menu.label ? "mr-1" : ""}>{menu.icon}</span>}
                           {menu.label}
                           <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
                         </button>

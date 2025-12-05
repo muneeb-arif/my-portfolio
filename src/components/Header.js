@@ -229,8 +229,9 @@ const Header = ({ additionalDataLoading }) => {
                     key={menu.id}
                     onClick={() => handleMenuClick(menu)}
                     className="text-white hover:text-white/80 transition-colors"
+                    title={menu.label || (menu.icon ? 'Menu item' : '')}
                   >
-                    {menu.icon && <span className="mr-1">{menu.icon}</span>}
+                    {menu.icon && <span className={menu.label ? "mr-1" : ""}>{menu.icon}</span>}
                     {menu.label}
                   </button>
                 ))

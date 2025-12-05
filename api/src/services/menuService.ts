@@ -4,7 +4,7 @@ import { DbResult } from '@/types';
 export interface Menu {
   id: string;
   user_id: string;
-  menu_type: 'section' | 'contact' | 'start_project' | 'call' | 'social_facebook' | 'social_linkedin' | 'social_github' | 'social_instagram';
+  menu_type: 'section' | 'contact' | 'start_project' | 'call' | 'social_facebook' | 'social_linkedin' | 'social_github' | 'social_instagram' | 'custom';
   section_id?: string;
   label: string;
   icon?: string;
@@ -19,7 +19,7 @@ export interface Menu {
 }
 
 export interface CreateMenuRequest {
-  menu_type: 'section' | 'contact' | 'start_project' | 'call' | 'social_facebook' | 'social_linkedin' | 'social_github' | 'social_instagram';
+  menu_type: 'section' | 'contact' | 'start_project' | 'call' | 'social_facebook' | 'social_linkedin' | 'social_github' | 'social_instagram' | 'custom';
   section_id?: string;
   label: string;
   icon?: string;
@@ -221,8 +221,9 @@ export class MenuService {
       return 'Menu type is required';
     }
 
-    if (!menu.label || menu.label.trim().length === 0) {
-      return 'Label is required';
+    // Label is required unless icon is provided
+    if ((!menu.label || menu.label.trim().length === 0) && (!menu.icon || menu.icon.trim().length === 0)) {
+      return 'Label or icon is required';
     }
 
     if (menu.menu_type === 'section' && !menu.section_id) {
@@ -232,6 +233,10 @@ export class MenuService {
     if ((menu.menu_type === 'social_facebook' || menu.menu_type === 'social_linkedin' || 
          menu.menu_type === 'social_github' || menu.menu_type === 'social_instagram') && !menu.link_url) {
       return 'Link URL is required for social menu types';
+    }
+
+    if (menu.menu_type === 'custom' && !menu.link_url) {
+      return 'Link URL is required for custom menu type';
     }
 
     return null;

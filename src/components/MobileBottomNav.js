@@ -122,6 +122,20 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
           window.open(menu.link_url, '_blank', 'noopener,noreferrer');
         }
         break;
+      case 'custom':
+        if (menu.link_url) {
+          if (menu.link_url.startsWith('#')) {
+            // Anchor link - scroll to section
+            const element = document.querySelector(menu.link_url);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth' });
+            }
+          } else {
+            // External link
+            window.open(menu.link_url, '_blank', 'noopener,noreferrer');
+          }
+        }
+        break;
       default:
         break;
     }
@@ -178,7 +192,7 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
       const Icon = getMenuIcon(menu);
       navItems.push({
         id: menu.id,
-        label: menu.label,
+        label: menu.label || '', // Allow empty label if icon is present
         icon: Icon,
         iconEmoji: menu.icon && menu.icon.match(/[\u{1F300}-\u{1F9FF}]/u) ? menu.icon : null,
         onClick: () => handleMenuClick(menu)
@@ -261,6 +275,7 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
+              const showIconOnly = !item.label && (item.iconEmoji || Icon);
               
               return (
                 <button
@@ -278,7 +293,7 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
                   ) : Icon ? (
                     <Icon size={18} />
                   ) : null}
-                  <span className="text-xs mt-1 font-bold">{item.label}</span>
+                  {item.label && <span className="text-xs mt-1 font-bold">{item.label}</span>}
                 </button>
               );
             })}

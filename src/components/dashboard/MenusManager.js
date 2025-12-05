@@ -11,6 +11,7 @@ const MenusManager = () => {
   const [sectionOptions, setSectionOptions] = useState([]);
   const [locationFilter, setLocationFilter] = useState('all'); // 'all', 'header', 'footer', 'mobile'
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [iconSelectValue, setIconSelectValue] = useState(''); // Controlled value for icon dropdown
   const [formData, setFormData] = useState({
     menu_type: 'section',
     section_id: '',
@@ -43,9 +44,11 @@ const MenusManager = () => {
         show_in_footer: editingMenu.show_in_footer !== undefined ? editingMenu.show_in_footer : false,
         show_in_mobile: editingMenu.show_in_mobile !== undefined ? editingMenu.show_in_mobile : false
       });
+      setIconSelectValue(''); // Reset icon dropdown when editing
     } else {
       resetForm();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingMenu]);
 
   const loadMenus = async () => {
@@ -95,6 +98,7 @@ const MenusManager = () => {
       show_in_footer: false,
       show_in_mobile: false
     });
+    setIconSelectValue(''); // Reset icon dropdown
   };
 
   const handleInputChange = (e) => {
@@ -299,6 +303,7 @@ const MenusManager = () => {
                 <option value="social_linkedin">LinkedIn</option>
                 <option value="social_github">GitHub</option>
                 <option value="social_instagram">Instagram</option>
+                <option value="custom">Custom</option>
               </select>
             </div>
 
@@ -334,7 +339,10 @@ const MenusManager = () => {
 
             {/* Label */}
             <div className="form-group">
-              <label htmlFor="label">Label *</label>
+              <label htmlFor="label">
+                Label {!formData.icon && '*'}
+                {formData.icon && <span className="text-gray-500 text-sm">(Optional if icon is set)</span>}
+              </label>
               <input
                 type="text"
                 id="label"
@@ -342,8 +350,11 @@ const MenusManager = () => {
                 value={formData.label}
                 onChange={handleInputChange}
                 placeholder="Enter menu label"
-                required
+                required={!formData.icon}
               />
+              {formData.icon && !formData.label && (
+                <small className="form-help text-blue-600">Menu will show icon only since no label is provided.</small>
+              )}
             </div>
 
             {/* Icon */}
@@ -360,10 +371,15 @@ const MenusManager = () => {
                   style={{ flex: 1 }}
                 />
                 <select
+                  value={iconSelectValue}
                   onChange={(e) => {
-                    if (e.target.value) {
-                      setFormData(prev => ({ ...prev, icon: e.target.value }));
-                      e.target.value = ''; // Reset dropdown
+                    const selectedIcon = e.target.value;
+                    if (selectedIcon) {
+                      setFormData(prev => ({ ...prev, icon: selectedIcon }));
+                      // Reset dropdown after a brief delay to ensure state update
+                      setTimeout(() => {
+                        setIconSelectValue('');
+                      }, 100);
                     }
                   }}
                   style={{ width: 'auto', padding: '8px' }}
@@ -397,6 +413,13 @@ const MenusManager = () => {
                     <option value="📷">📷 Instagram</option>
                     <option value="🐦">🐦 Twitter</option>
                     <option value="▶️">▶️ YouTube</option>
+                    <option value="💬">💬 WhatsApp</option>
+                  </optgroup>
+                  <optgroup label="Shopping">
+                    <option value="🛒">🛒 Shopping Cart</option>
+                    <option value="🛍️">🛍️ Shopping Bag</option>
+                    <option value="💰">💰 Money</option>
+                    <option value="💳">💳 Credit Card</option>
                   </optgroup>
                   <optgroup label="Actions">
                     <option value="➕">➕ Add</option>
@@ -421,22 +444,26 @@ const MenusManager = () => {
               <small className="form-help">Emoji or icon identifier. You can type directly or select from suggestions.</small>
             </div>
 
-            {/* Link URL - For social links */}
+            {/* Link URL - For social links and custom */}
             {(formData.menu_type === 'social_facebook' || 
               formData.menu_type === 'social_linkedin' || 
               formData.menu_type === 'social_github' || 
-              formData.menu_type === 'social_instagram') && (
+              formData.menu_type === 'social_instagram' ||
+              formData.menu_type === 'custom') && (
               <div className="form-group">
                 <label htmlFor="link_url">Link URL *</label>
                 <input
-                  type="url"
+                  type={formData.menu_type === 'custom' ? 'text' : 'url'}
                   id="link_url"
                   name="link_url"
                   value={formData.link_url}
                   onChange={handleInputChange}
-                  placeholder="https://..."
+                  placeholder={formData.menu_type === 'custom' ? "e.g., https://example.com or #section-id" : "https://..."}
                   required
                 />
+                {formData.menu_type === 'custom' && (
+                  <small className="form-help">Use #section-id for anchor links or full URL for external links</small>
+                )}
               </div>
             )}
 

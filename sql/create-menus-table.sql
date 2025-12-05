@@ -11,7 +11,7 @@
 CREATE TABLE IF NOT EXISTS menus (
   id VARCHAR(36) PRIMARY KEY,
   user_id VARCHAR(36) NOT NULL,
-  menu_type ENUM('section', 'contact', 'start_project', 'call', 'social_facebook', 'social_linkedin', 'social_github', 'social_instagram') NOT NULL,
+  menu_type ENUM('section', 'contact', 'start_project', 'call', 'social_facebook', 'social_linkedin', 'social_github', 'social_instagram', 'custom') NOT NULL,
   section_id VARCHAR(100), -- For section types, references section (hero, portfolio, etc.) or dynamic section ID
   label VARCHAR(255) NOT NULL, -- Display label for the menu item
   icon VARCHAR(100), -- Icon identifier (optional)
