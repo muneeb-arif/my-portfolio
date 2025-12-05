@@ -75,9 +75,21 @@ export const SettingsProvider = ({ children }) => {
     section_prompts_visible: false,
     section_gallery_visible: true,
     
+    // Footer & Header Visibility
+    footer_visible: true,
+    footer_about_visible: true,
+    footer_quick_links_visible: true,
+    footer_services_visible: true,
+    footer_contact_info_visible: true,
+    start_project_visible: true,
+    header_contact_visible: true,
+    
     // Styling & Theme
     theme_name: 'sand',
     theme_color: '#E9CBA7',
+    
+    // Footer Content
+    footer_about_text: '',
     
     // Legal
     copyright_text: '© 2024 Muneeb Arif. All rights reserved.',

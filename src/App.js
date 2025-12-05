@@ -92,6 +92,7 @@ function AppContent() {
     projectCycle: settings.section_project_cycle_visible !== undefined ? settings.section_project_cycle_visible : true,
     prompts: settings.section_prompts_visible !== undefined ? settings.section_prompts_visible : false,
     gallery: settings.section_gallery_visible !== undefined ? settings.section_gallery_visible : true,
+    footer: settings.footer_visible !== undefined ? settings.footer_visible : true,
   };
 
   // Check for missing environment variables on app load
@@ -377,7 +378,7 @@ function AppContent() {
         <DynamicSections positionAfter={null} />
 
         {/* Footer */}
-        <Footer />
+        {sectionVisibility.footer && <Footer />}
 
         {/* Mobile Bottom Navigation */}
         <MobileBottomNav additionalDataLoading={additionalDataLoading} />

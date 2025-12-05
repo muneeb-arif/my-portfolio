@@ -53,6 +53,38 @@ const Footer = () => {
     }
   };
 
+  // Get visibility settings
+  const footerVisible = getSetting('footer_visible') !== undefined ? getSetting('footer_visible') : true;
+  const footerAboutVisible = getSetting('footer_about_visible') !== undefined ? getSetting('footer_about_visible') : true;
+  const footerQuickLinksVisible = getSetting('footer_quick_links_visible') !== undefined ? getSetting('footer_quick_links_visible') : true;
+  const footerServicesVisible = getSetting('footer_services_visible') !== undefined ? getSetting('footer_services_visible') : true;
+  const footerContactInfoVisible = getSetting('footer_contact_info_visible') !== undefined ? getSetting('footer_contact_info_visible') : true;
+  const startProjectVisible = getSetting('start_project_visible') !== undefined ? getSetting('start_project_visible') : true;
+
+  // Don't render footer if it's hidden
+  if (!footerVisible) {
+    return (
+      <>
+        {/* Client Onboarding Form Modal - still available even if footer is hidden */}
+        <ClientOnboardingForm isOpen={isFormOpen} onClose={closeForm} />
+      </>
+    );
+  }
+
+  // Calculate visible sections for grid layout
+  const visibleSections = [
+    footerAboutVisible,
+    footerQuickLinksVisible,
+    footerServicesVisible,
+    footerContactInfoVisible
+  ].filter(Boolean).length;
+
+  // Determine grid columns based on visible sections
+  const gridCols = visibleSections === 0 ? 'md:grid-cols-1' : 
+                   visibleSections === 1 ? 'md:grid-cols-3' :
+                   visibleSections === 2 ? 'md:grid-cols-4' :
+                   visibleSections === 3 ? 'md:grid-cols-5' : 'md:grid-cols-5';
+
   return (
     <>
       <footer className="pt-12 pb-24 lg:pb-12 relative overflow-hidden" style={{ backgroundColor: 'var(--color-primary)' }}>
@@ -69,15 +101,17 @@ const Footer = () => {
 
         {/* Main Content - Above background */}
         <div className="container mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+          <div className={`grid grid-cols-1 ${gridCols} gap-8`}>
             
             {/* Brand Section */}
-            <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold text-white mb-4">Portfolio</h3>
-              <p className="text-white/80 text-sm leading-relaxed mb-6 max-w-md">
-                Principal Software Engineer specializing in scalable web applications, 
-                e-commerce solutions, and modern development practices. Let's bring your ideas to life.
-              </p>
+            {footerAboutVisible && (
+              <div className={visibleSections > 0 ? "md:col-span-2" : "md:col-span-1"}>
+              <h3 className="text-2xl font-bold text-white mb-4">About</h3>
+              {getSetting('footer_about_text') && (
+                <p className="text-white/80 text-sm leading-relaxed mb-6 max-w-md">
+                  {getSetting('footer_about_text')}
+                </p>
+              )}
               <div className="flex space-x-4">
                 <button 
                   onClick={handleEmailClick}
@@ -123,8 +157,10 @@ const Footer = () => {
                 )}
               </div>
             </div>
+            )}
 
             {/* Quick Links */}
+            {footerQuickLinksVisible && (
             <div>
               <h4 className="text-lg font-semibold text-white mb-4">Quick Links</h4>
               <ul className="space-y-2">
@@ -133,7 +169,7 @@ const Footer = () => {
                     onClick={() => scrollToSection('portfolio')}
                     className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
                   >
-                    Portfolio
+                    About
                     <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-16"></span>
                   </button>
                 </li>
@@ -166,8 +202,10 @@ const Footer = () => {
                 </li>
               </ul>
             </div>
+            )}
 
             {/* Services */}
+            {footerServicesVisible && (
             <div>
               <h4 className="text-lg font-semibold text-white mb-4">Services</h4>
               <ul className="space-y-2">
@@ -210,8 +248,10 @@ const Footer = () => {
                 </li>
               </ul>
             </div>
+            )}
 
             {/* Contact Information */}
+            {footerContactInfoVisible && (
             <div>
               <h4 className="text-lg font-semibold text-white mb-4">Contact Info</h4>
               <div className="space-y-3">
@@ -261,6 +301,7 @@ const Footer = () => {
                 )}
               </div>
             </div>
+            )}
           </div>
 
           {/* Bottom Section */}
@@ -287,12 +328,14 @@ const Footer = () => {
               >
                 Terms of Service
               </button>
-              <button 
-                onClick={openForm}
-                className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-4 py-2 rounded-lg hover:bg-white/10 hover:scale-105 transform hover:shadow-lg border border-transparent hover:border-white/20"
-              >
-                Start Project
-              </button>
+              {startProjectVisible && (
+                <button 
+                  onClick={openForm}
+                  className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-4 py-2 rounded-lg hover:bg-white/10 hover:scale-105 transform hover:shadow-lg border border-transparent hover:border-white/20"
+                >
+                  Start Project
+                </button>
+              )}
             </div>
           </div>
         </div>

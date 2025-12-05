@@ -184,21 +184,25 @@ const Header = ({ additionalDataLoading }) => {
 
             {/* CTA Buttons */}
             <div className="flex items-center space-x-4">
-              <button
-                onClick={openForm}
-                className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
-              >
-                <FileText size={16} />
-                <span className="hidden sm:inline">Start Project</span>
-              </button>
+              {getSetting('start_project_visible') !== false && (
+                <button
+                  onClick={openForm}
+                  className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
+                >
+                  <FileText size={16} />
+                  <span className="hidden sm:inline">Start Project</span>
+                </button>
+              )}
               
-              <button
-                onClick={openContactForm}
-                className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
-              >
-                <Mail size={16} />
-                <span className="hidden sm:inline">Contact</span>
-              </button>
+              {getSetting('header_contact_visible') !== false && (
+                <button
+                  onClick={openContactForm}
+                  className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
+                >
+                  <Mail size={16} />
+                  <span className="hidden sm:inline">Contact</span>
+                </button>
+              )}
               
               {/* Call Button - Only show on mobile when phone number is set */}
               {getSetting('phone_number') && (

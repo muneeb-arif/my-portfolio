@@ -102,7 +102,7 @@ const DynamicSection = ({ section }) => {
       case 'text_only':
         return (
           <div className={`dynamic-section-text-only dynamic-section-${section.alignment || 'center'}`}>
-            {section.title && <h2>{section.title}</h2>}
+            {/* {section.title && <h2>{section.title}</h2>} */}
             {section.subtitle && <h3>{section.subtitle}</h3>}
             {section.content && (
               <div 

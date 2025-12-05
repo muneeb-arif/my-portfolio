@@ -1110,6 +1110,10 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.settings-group * {
+  color: #000 !important
+}
+
 .settings-group h3 {
   margin: 0 0 1rem 0;
   font-size: 1.1rem;
@@ -2595,6 +2599,10 @@
   width: 18px;
   height: 18px;
   accent-color: #667eea;
+}
+
+.checkbox-label {
+  display: flex !important;
 }
 
 .section-title {

@@ -372,6 +372,17 @@ const DynamicSectionsManager = () => {
           {(formData.section_type === 'image_text' || formData.section_type === 'text_image' ||
             formData.section_type === 'image_only') && (
             <div className="form-group full-width">
+              <div className="form-group">
+              <label htmlFor="title">Title</label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Enter section title"
+              />
+            </div>
               <label htmlFor="image_url">Image</label>
               <div className="image-upload-section">
                 <input

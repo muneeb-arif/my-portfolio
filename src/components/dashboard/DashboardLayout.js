@@ -1432,6 +1432,7 @@ const AppearanceSection = () => {
     social_github: 'https://github.com/muneebarif',
     social_instagram: '',
     social_facebook: '',
+    footer_about_text: '',
     copyright_text: '© 2024 Muneeb Arif. All rights reserved.',
     theme_name: 'sand'
   }), []);
@@ -2163,6 +2164,17 @@ const AppearanceSection = () => {
                <div className="settings-group">
                  <h3>📄 Footer</h3>
                  <div className="form-group">
+                   <label>About Us</label>
+                   <textarea
+                     value={localSettings.footer_about_text || ''}
+                     onChange={(e) => handleInputChange('footer_about_text', e.target.value)}
+                     placeholder="Enter your about us description that will appear in the footer About section"
+                     rows={4}
+                     style={{ resize: 'vertical' }}
+                   />
+                   <small className="form-help">This text will be displayed in the footer About section (left most description)</small>
+                 </div>
+                 <div className="form-group">
                    <label>Copyright Text</label>
                    <input
                      type="text"
@@ -2198,6 +2210,13 @@ const SettingsSection = ({ user }) => {
         section_project_cycle_visible: settings.section_project_cycle_visible !== undefined ? settings.section_project_cycle_visible : true,
         section_prompts_visible: settings.section_prompts_visible !== undefined ? settings.section_prompts_visible : false,
         section_gallery_visible: settings.section_gallery_visible !== undefined ? settings.section_gallery_visible : true,
+        footer_visible: settings.footer_visible !== undefined ? settings.footer_visible : true,
+        footer_about_visible: settings.footer_about_visible !== undefined ? settings.footer_about_visible : true,
+        footer_quick_links_visible: settings.footer_quick_links_visible !== undefined ? settings.footer_quick_links_visible : true,
+        footer_services_visible: settings.footer_services_visible !== undefined ? settings.footer_services_visible : true,
+        footer_contact_info_visible: settings.footer_contact_info_visible !== undefined ? settings.footer_contact_info_visible : true,
+        start_project_visible: settings.start_project_visible !== undefined ? settings.start_project_visible : true,
+        header_contact_visible: settings.header_contact_visible !== undefined ? settings.header_contact_visible : true,
         phone_number: settings.phone_number || '',
         address: settings.address || '',
         map_location_url: settings.map_location_url || '',
@@ -2453,6 +2472,101 @@ const SettingsSection = ({ user }) => {
                     <span className="section-title">🖼️ Gallery Section</span>
                   </label>
                   <small className="form-help">Showcase your media collection</small>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.footer_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('footer_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">📄 Footer</span>
+                  </label>
+                  <small className="form-help">Show or hide the entire footer section</small>
+                </div>
+
+                {localSettings.footer_visible && (
+                  <>
+                    <div className="form-group" style={{ marginLeft: '24px' }}>
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={localSettings.footer_about_visible || false}
+                          onChange={(e) => handleSectionVisibilityChange('footer_about_visible', e.target.checked)}
+                          style={{ marginRight: '8px' }}
+                        />
+                        <span className="section-title">About (Footer)</span>
+                      </label>
+                      <small className="form-help">Left most description section in footer</small>
+                    </div>
+
+                    <div className="form-group" style={{ marginLeft: '24px' }}>
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={localSettings.footer_quick_links_visible || false}
+                          onChange={(e) => handleSectionVisibilityChange('footer_quick_links_visible', e.target.checked)}
+                          style={{ marginRight: '8px' }}
+                        />
+                        <span className="section-title">Quick Links (Footer)</span>
+                      </label>
+                      <small className="form-help">Quick navigation links in footer</small>
+                    </div>
+
+                    <div className="form-group" style={{ marginLeft: '24px' }}>
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={localSettings.footer_services_visible || false}
+                          onChange={(e) => handleSectionVisibilityChange('footer_services_visible', e.target.checked)}
+                          style={{ marginRight: '8px' }}
+                        />
+                        <span className="section-title">Services (Footer)</span>
+                      </label>
+                      <small className="form-help">Services section in footer</small>
+                    </div>
+
+                    <div className="form-group" style={{ marginLeft: '24px' }}>
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={localSettings.footer_contact_info_visible || false}
+                          onChange={(e) => handleSectionVisibilityChange('footer_contact_info_visible', e.target.checked)}
+                          style={{ marginRight: '8px' }}
+                        />
+                        <span className="section-title">Contact Info (Footer)</span>
+                      </label>
+                      <small className="form-help">Contact information section in footer</small>
+                    </div>
+                  </>
+                )}
+
+                <div className="form-group" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.start_project_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('start_project_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">🚀 Start Project Button</span>
+                  </label>
+                  <small className="form-help">Show or hide "Start Project" button/link from header and footer</small>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.header_contact_visible || false}
+                      onChange={(e) => handleSectionVisibilityChange('header_contact_visible', e.target.checked)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span className="section-title">📧 Header Contact Button</span>
+                  </label>
+                  <small className="form-help">Show or hide contact button from header</small>
                 </div>
               </div>
             )}
