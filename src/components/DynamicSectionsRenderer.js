@@ -44,12 +44,11 @@ const DynamicSectionsRenderer = ({ positionAfter, allSections }) => {
         <React.Fragment key={section.id}>
           <DynamicSection section={section} />
           {/* Recursively render sections that should appear after this one */}
-          {section.section_id && (
-            <DynamicSectionsRenderer 
-              positionAfter={section.section_id}
-              allSections={allSections}
-            />
-          )}
+          {/* Use section_id (which is now always set to UUID) or fallback to id */}
+          <DynamicSectionsRenderer 
+            positionAfter={section.section_id || section.id}
+            allSections={allSections}
+          />
         </React.Fragment>
       ))}
     </>

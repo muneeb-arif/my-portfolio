@@ -4,13 +4,37 @@ import ContactForm from './ContactForm';
 import { FileText, Mail, Phone } from 'lucide-react';
 import { useSettings } from '../services/settingsContext';
 import { usePublicData } from '../services/PublicDataContext';
+import { menuService } from '../services/menuService';
 
 const Header = ({ additionalDataLoading }) => {
   const { getSetting, loading: settingsLoading, initialized: settingsInitialized } = useSettings();
   const { projects, technologies, niches, loading: publicLoading } = usePublicData();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
+  const [headerMenus, setHeaderMenus] = useState([]);
+  const [menusLoading, setMenusLoading] = useState(true);
   
+  // Load dynamic menus for header
+  useEffect(() => {
+    const loadHeaderMenus = async () => {
+      try {
+        setMenusLoading(true);
+        const result = await menuService.getMenusByLocation('header');
+        if (result.success && result.data && result.data.length > 0) {
+          setHeaderMenus(result.data);
+        } else {
+          setHeaderMenus([]);
+        }
+      } catch (error) {
+        console.error('Error loading header menus:', error);
+        setHeaderMenus([]);
+      } finally {
+        setMenusLoading(false);
+      }
+    };
+    loadHeaderMenus();
+  }, []);
+
   // Track which sections have data
   const sectionsData = {
     hasProjects: projects && projects.length > 0,
@@ -47,9 +71,66 @@ const Header = ({ additionalDataLoading }) => {
   };
 
   const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
+    // Try to find the element
+    let element = document.getElementById(sectionId);
+    
+    // If not found immediately, wait a bit for dynamic content to load
+    if (!element) {
+      setTimeout(() => {
+        element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          console.warn(`Section with id "${sectionId}" not found`);
+        }
+      }, 100);
+    } else {
       element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Handle menu item click based on menu type
+  const handleMenuClick = (menu) => {
+    switch (menu.menu_type) {
+      case 'section':
+        if (menu.section_id) {
+          // Map hardcoded section IDs to actual section IDs on the page
+          // If not in map, assume it's a dynamic section UUID and use it directly
+          const sectionMap = {
+            'hero': 'hero',
+            'portfolio': 'portfolio',
+            'technologies': 'technologies',
+            'domains': 'domains',
+            'projectCycle': 'process',
+            'prompts': 'prompts',
+            'gallery': 'gallery',
+            'footer': 'footer'
+          };
+          // Check if it's a known hardcoded section, otherwise use the section_id directly (for dynamic sections)
+          const targetSection = sectionMap[menu.section_id] || menu.section_id;
+          console.log('🔗 Menu click - Section:', menu.section_id, '-> Target:', targetSection);
+          scrollToSection(targetSection);
+        }
+        break;
+      case 'contact':
+        openContactForm();
+        break;
+      case 'start_project':
+        openForm();
+        break;
+      case 'call':
+        handleCall();
+        break;
+      case 'social_facebook':
+      case 'social_linkedin':
+      case 'social_github':
+      case 'social_instagram':
+        if (menu.link_url) {
+          window.open(menu.link_url, '_blank', 'noopener,noreferrer');
+        }
+        break;
+      default:
+        break;
     }
   };
 
@@ -141,78 +222,125 @@ const Header = ({ additionalDataLoading }) => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#hero" className="text-white hover:text-white/80 transition-colors">
-                Home
-              </a>
-              
-              {showNavigation && sectionsData.hasProjects && sectionVisibility.portfolio && (
-                <button 
-                  onClick={() => scrollToSection('portfolio')}
-                  className="text-white hover:text-white/80 transition-colors"
-                >
-                  Portfolio
-                </button>
-              )}
-              
-              {showNavigation && sectionsData.hasTechnologies && sectionVisibility.technologies && (
-                <button 
-                  onClick={() => scrollToSection('technologies')}
-                  className="text-white hover:text-white/80 transition-colors"
-                >
-                  Technologies
-                </button>
-              )}
-              
-              {showNavigation && sectionsData.hasDomains && sectionVisibility.domains && (
-                <button 
-                  onClick={() => scrollToSection('domains')}
-                  className="text-white hover:text-white/80 transition-colors"
-                >
-                  Domains
-                </button>
-              )}
-              
-              {showNavigation && sectionVisibility.projectCycle && (
-                <button 
-                  onClick={() => scrollToSection('process')}
-                  className="text-white hover:text-white/80 transition-colors"
-                >
-                  Process
-                </button>
+              {!menusLoading && headerMenus.length > 0 ? (
+                // Render dynamic menus
+                headerMenus.map((menu) => (
+                  <button
+                    key={menu.id}
+                    onClick={() => handleMenuClick(menu)}
+                    className="text-white hover:text-white/80 transition-colors"
+                  >
+                    {menu.icon && <span className="mr-1">{menu.icon}</span>}
+                    {menu.label}
+                  </button>
+                ))
+              ) : (
+                // Fallback to default navigation
+                <>
+                  <a href="#hero" className="text-white hover:text-white/80 transition-colors">
+                    Home
+                  </a>
+                  
+                  {showNavigation && sectionsData.hasProjects && sectionVisibility.portfolio && (
+                    <button 
+                      onClick={() => scrollToSection('portfolio')}
+                      className="text-white hover:text-white/80 transition-colors"
+                    >
+                      Portfolio
+                    </button>
+                  )}
+                  
+                  {showNavigation && sectionsData.hasTechnologies && sectionVisibility.technologies && (
+                    <button 
+                      onClick={() => scrollToSection('technologies')}
+                      className="text-white hover:text-white/80 transition-colors"
+                    >
+                      Technologies
+                    </button>
+                  )}
+                  
+                  {showNavigation && sectionsData.hasDomains && sectionVisibility.domains && (
+                    <button 
+                      onClick={() => scrollToSection('domains')}
+                      className="text-white hover:text-white/80 transition-colors"
+                    >
+                      Domains
+                    </button>
+                  )}
+                  
+                  {showNavigation && sectionVisibility.projectCycle && (
+                    <button 
+                      onClick={() => scrollToSection('process')}
+                      className="text-white hover:text-white/80 transition-colors"
+                    >
+                      Process
+                    </button>
+                  )}
+                </>
               )}
             </nav>
 
             {/* CTA Buttons */}
             <div className="flex items-center space-x-4">
-              {getSetting('start_project_visible') !== false && (
-                <button
-                  onClick={openForm}
-                  className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
-                >
-                  <FileText size={16} />
-                  <span className="hidden sm:inline">Start Project</span>
-                </button>
-              )}
-              
-              {getSetting('header_contact_visible') !== false && (
-                <button
-                  onClick={openContactForm}
-                  className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
-                >
-                  <Mail size={16} />
-                  <span className="hidden sm:inline">Contact</span>
-                </button>
-              )}
-              
-              {/* Call Button - Only show on mobile when phone number is set */}
-              {getSetting('phone_number') && (
-                <button
-                  onClick={handleCall}
-                  className="md:hidden bg-white/20 text-white p-2 rounded-lg hover:bg-white/30 transition-colors"
-                  title={`Call ${getSetting('phone_number')}`}
-                >
-                  <Phone size={16} />
-                </button>
+              {!menusLoading && headerMenus.length > 0 ? (
+                // Render dynamic menu buttons (filter action items)
+                headerMenus
+                  .filter(menu => ['contact', 'start_project', 'call', 'social_facebook', 'social_linkedin', 'social_github', 'social_instagram'].includes(menu.menu_type))
+                  .map((menu) => {
+                    const getIcon = () => {
+                      switch (menu.menu_type) {
+                        case 'start_project': return <FileText size={16} />;
+                        case 'contact': return <Mail size={16} />;
+                        case 'call': return <Phone size={16} />;
+                        default: return null;
+                      }
+                    };
+                    
+                    return (
+                      <button
+                        key={menu.id}
+                        onClick={() => handleMenuClick(menu)}
+                        className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
+                      >
+                        {getIcon()}
+                        <span className="hidden sm:inline">{menu.label}</span>
+                      </button>
+                    );
+                  })
+              ) : (
+                // Fallback to default buttons
+                <>
+                  {getSetting('start_project_visible') !== false && (
+                    <button
+                      onClick={openForm}
+                      className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
+                    >
+                      <FileText size={16} />
+                      <span className="hidden sm:inline">Start Project</span>
+                    </button>
+                  )}
+                  
+                  {getSetting('header_contact_visible') !== false && (
+                    <button
+                      onClick={openContactForm}
+                      className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors flex items-center space-x-2"
+                    >
+                      <Mail size={16} />
+                      <span className="hidden sm:inline">Contact</span>
+                    </button>
+                  )}
+                  
+                  {/* Call Button - Only show on mobile when phone number is set */}
+                  {getSetting('phone_number') && (
+                    <button
+                      onClick={handleCall}
+                      className="md:hidden bg-white/20 text-white p-2 rounded-lg hover:bg-white/30 transition-colors"
+                      title={`Call ${getSetting('phone_number')}`}
+                    >
+                      <Phone size={16} />
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

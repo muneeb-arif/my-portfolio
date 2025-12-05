@@ -544,7 +544,7 @@ const DynamicSection = ({ section }) => {
 
   return (
     <section
-      id={section.section_id || undefined}
+      id={section.section_id || section.id}
       className={`dynamic-section dynamic-section-${section.section_type}`}
       style={sectionStyle}
     >

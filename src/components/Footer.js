@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ClientOnboardingForm from './ClientOnboardingForm';
 import { FileText, Mail, Github, Instagram, Phone, MapPin } from 'lucide-react';
 import { useSettings } from '../services/settingsContext';
+import { menuService } from '../services/menuService';
 
 const Footer = () => {
   const { getSetting } = useSettings();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [footerMenus, setFooterMenus] = useState([]);
+  const [menusLoading, setMenusLoading] = useState(true);
 
   const openForm = () => {
     setIsFormOpen(true);
@@ -38,18 +41,94 @@ const Footer = () => {
     }
   };
 
+  // Load dynamic menus for footer
+  useEffect(() => {
+    const loadFooterMenus = async () => {
+      try {
+        setMenusLoading(true);
+        const result = await menuService.getMenusByLocation('footer');
+        if (result.success && result.data && result.data.length > 0) {
+          setFooterMenus(result.data);
+        } else {
+          setFooterMenus([]);
+        }
+      } catch (error) {
+        console.error('Error loading footer menus:', error);
+        setFooterMenus([]);
+      } finally {
+        setMenusLoading(false);
+      }
+    };
+    loadFooterMenus();
+  }, []);
+
   // Smooth scroll to section function
   const scrollToSection = (sectionId) => {
-      // console.log('Scrolling to section:', sectionId);
-    const element = document.getElementById(sectionId);
-      // console.log('Found element:', element);
-    if (element) {
+    // Try to find the element
+    let element = document.getElementById(sectionId);
+    
+    // If not found immediately, wait a bit for dynamic content to load
+    if (!element) {
+      setTimeout(() => {
+        element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        } else {
+          console.warn(`Section with id "${sectionId}" not found`);
+        }
+      }, 100);
+    } else {
       element.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
-    } else {
-      // console.error('Element not found:', sectionId);
+    }
+  };
+
+  // Handle menu item click based on menu type
+  const handleMenuClick = (menu) => {
+    switch (menu.menu_type) {
+      case 'section':
+        if (menu.section_id) {
+          // Map hardcoded section IDs to actual section IDs on the page
+          // If not in map, assume it's a dynamic section UUID and use it directly
+          const sectionMap = {
+            'hero': 'hero',
+            'portfolio': 'portfolio',
+            'technologies': 'technologies',
+            'domains': 'domains',
+            'projectCycle': 'process',
+            'prompts': 'prompts',
+            'gallery': 'gallery',
+            'footer': 'footer'
+          };
+          // Check if it's a known hardcoded section, otherwise use the section_id directly (for dynamic sections)
+          const targetSection = sectionMap[menu.section_id] || menu.section_id;
+          scrollToSection(targetSection);
+        }
+        break;
+      case 'contact':
+        handleEmailClick();
+        break;
+      case 'start_project':
+        openForm();
+        break;
+      case 'call':
+        handlePhoneClick();
+        break;
+      case 'social_facebook':
+      case 'social_linkedin':
+      case 'social_github':
+      case 'social_instagram':
+        if (menu.link_url) {
+          window.open(menu.link_url, '_blank', 'noopener,noreferrer');
+        }
+        break;
+      default:
+        break;
     }
   };
 
@@ -163,44 +242,65 @@ const Footer = () => {
             {footerQuickLinksVisible && (
             <div>
               <h4 className="text-lg font-semibold text-white mb-4">Quick Links</h4>
-              <ul className="space-y-2">
-                <li>
-                  <button 
-                    onClick={() => scrollToSection('portfolio')}
-                    className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
-                  >
-                    About
-                    <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-16"></span>
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => scrollToSection('technologies')}
-                    className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
-                  >
-                    Technologies
-                    <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-20"></span>
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => scrollToSection('domains')}
-                    className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
-                  >
-                    Domains
-                    <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-16"></span>
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => scrollToSection('process')}
-                    className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
-                  >
-                    Process
-                    <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-14"></span>
-                  </button>
-                </li>
-              </ul>
+              {!menusLoading && footerMenus.length > 0 ? (
+                // Render dynamic menus (filter section type menus for Quick Links)
+                <ul className="space-y-2">
+                  {footerMenus
+                    .filter(menu => menu.menu_type === 'section')
+                    .map((menu) => (
+                      <li key={menu.id}>
+                        <button 
+                          onClick={() => handleMenuClick(menu)}
+                          className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
+                        >
+                          {menu.icon && <span className="mr-1">{menu.icon}</span>}
+                          {menu.label}
+                          <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full"></span>
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              ) : (
+                // Fallback to default Quick Links
+                <ul className="space-y-2">
+                  <li>
+                    <button 
+                      onClick={() => scrollToSection('portfolio')}
+                      className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
+                    >
+                      About
+                      <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-16"></span>
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => scrollToSection('technologies')}
+                      className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
+                    >
+                      Technologies
+                      <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-20"></span>
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => scrollToSection('domains')}
+                      className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
+                    >
+                      Domains
+                      <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-16"></span>
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => scrollToSection('process')}
+                      className="text-white/70 hover:text-white text-sm transition-all duration-300 text-left cursor-pointer bg-transparent border-none p-2 rounded-lg hover:bg-white/5 hover:translate-x-2 transform relative group"
+                    >
+                      Process
+                      <span className="absolute bottom-0 left-2 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-14"></span>
+                    </button>
+                  </li>
+                </ul>
+              )}
             </div>
             )}
 
@@ -328,13 +428,30 @@ const Footer = () => {
               >
                 Terms of Service
               </button>
-              {startProjectVisible && (
-                <button 
-                  onClick={openForm}
-                  className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-4 py-2 rounded-lg hover:bg-white/10 hover:scale-105 transform hover:shadow-lg border border-transparent hover:border-white/20"
-                >
-                  Start Project
-                </button>
+              {!menusLoading && footerMenus.length > 0 ? (
+                // Render dynamic menu buttons (filter action items)
+                footerMenus
+                  .filter(menu => ['start_project', 'contact', 'call', 'social_facebook', 'social_linkedin', 'social_github', 'social_instagram'].includes(menu.menu_type))
+                  .map((menu) => (
+                    <button
+                      key={menu.id}
+                      onClick={() => handleMenuClick(menu)}
+                      className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-4 py-2 rounded-lg hover:bg-white/10 hover:scale-105 transform hover:shadow-lg border border-transparent hover:border-white/20"
+                    >
+                      {menu.icon && <span className="mr-1">{menu.icon}</span>}
+                      {menu.label}
+                    </button>
+                  ))
+              ) : (
+                // Fallback to default Start Project button
+                startProjectVisible && (
+                  <button 
+                    onClick={openForm}
+                    className="text-white/60 hover:text-white text-sm transition-all duration-300 cursor-pointer bg-transparent border-none px-4 py-2 rounded-lg hover:bg-white/10 hover:scale-105 transform hover:shadow-lg border border-transparent hover:border-white/20"
+                  >
+                    Start Project
+                  </button>
+                )
               )}
             </div>
           </div>

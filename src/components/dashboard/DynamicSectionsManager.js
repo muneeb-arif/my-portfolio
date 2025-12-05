@@ -213,12 +213,12 @@ const DynamicSectionsManager = () => {
     try {
       setLoading(true);
       
-      // Auto-generate UUID for section_id if it doesn't exist
-      const finalSectionId = formData.section_id || generateUUID();
-      
+      // section_id will be set to database UUID on backend if not provided
+      // No need to generate it here - backend will handle it
       const sectionData = {
         ...formData,
-        section_id: finalSectionId,
+        // Only include section_id if user explicitly provided one (for custom anchors)
+        // Otherwise, backend will use the database UUID
         accordion_items: formData.accordion_items.length > 0 ? JSON.stringify(formData.accordion_items) : null
       };
 
@@ -611,11 +611,16 @@ const DynamicSectionsManager = () => {
               <option value="portfolio">After Portfolio</option>
               <option value="about">After About</option>
               <option value="contact">After Contact</option>
-              {positioningOptions.map(option => (
-                <option key={option.id} value={option.type === 'hardcoded' ? option.id : (option.section_id || option.id)}>
-                  After: {option.title || option.section_id || option.id}
-                </option>
-              ))}
+                {positioningOptions.map(option => {
+                  // For dynamic sections, use section_id (UUID) if available, otherwise use id
+                  // For hardcoded sections, use id directly
+                  const value = option.section_id || option.id;
+                  return (
+                    <option key={option.id} value={value}>
+                      After: {option.title || option.section_id || option.id}
+                    </option>
+                  );
+                })}
             </select>
           </div>
 

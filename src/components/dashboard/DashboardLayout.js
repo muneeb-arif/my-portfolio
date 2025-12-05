@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { projectsService } from '../../services/projectsService';
 import { syncService } from '../../services/syncService';
 import { dashboardService } from '../../services/dashboardService';
@@ -16,6 +17,7 @@ import DomainsTechnologiesManager from './DomainsTechnologiesManager';
 import NicheManager from './NicheManager';
 import QueriesManager from './QueriesManager';
 import DynamicSectionsManager from './DynamicSectionsManager';
+import MenusManager from './MenusManager';
 import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
 import AutomaticUpdateDashboard from './AutomaticUpdateDashboard';
@@ -33,8 +35,10 @@ import { themeUpdateService } from '../../services/themeUpdateService';
 
 const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) => {
   const { settings } = useSettings();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isInitialMount = useRef(true);
   const [projects, setProjects] = useState([]);
   const [prompts, setPrompts] = useState([]);
   const [isDatabaseEmpty, setIsDatabaseEmpty] = useState(false);
@@ -133,6 +137,7 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
       { id: 'prompts', label: 'Prompts', icon: '💡', adminOnly: false, sectionKey: 'section_prompts_visible' },
       { id: 'gallery', label: 'Gallery', icon: '🖼️', adminOnly: false, sectionKey: 'section_gallery_visible' },
       { id: 'dynamic-sections', label: 'Dynamic Sections', icon: '📝', adminOnly: false, sectionKey: null },
+      { id: 'menus', label: 'Menus', icon: '🔗', adminOnly: false, sectionKey: null },
       { id: 'queries', label: 'Contact Queries', icon: '📨', adminOnly: false, sectionKey: null },
       { id: 'domains-technologies', label: 'Technologies', icon: '🎯', adminOnly: false, sectionKey: 'section_technologies_visible' },
       { id: 'niche', label: 'Domains / Niche', icon: '🏆', adminOnly: false, sectionKey: 'section_domains_visible' },
@@ -168,6 +173,34 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
       return true; // Show item if all checks pass
     });
   }, [isAdmin, accessibleSectionKeys, settings]);
+
+  // Initialize activeSection from URL on mount and sync when URL changes
+  useEffect(() => {
+    const sectionFromUrl = searchParams.get('section');
+    if (sectionFromUrl) {
+      // Validate that the section exists in available nav items
+      const isValidSection = navItems.some(item => item.id === sectionFromUrl);
+      if (isValidSection && sectionFromUrl !== activeSection) {
+        setActiveSection(sectionFromUrl);
+      } else if (!isValidSection) {
+        // Invalid section in URL, default to overview and update URL
+        setActiveSection('overview');
+        setSearchParams({ section: 'overview' });
+      }
+    } else {
+      // No section in URL
+      if (isInitialMount.current) {
+        // On initial mount, set default and update URL
+        setActiveSection('overview');
+        setSearchParams({ section: 'overview' });
+        isInitialMount.current = false;
+      } else if (activeSection !== 'overview') {
+        // URL changed to have no section param, sync to overview
+        setActiveSection('overview');
+        setSearchParams({ section: 'overview' });
+      }
+    }
+  }, [searchParams, navItems, activeSection, setSearchParams]); // Run when searchParams, navItems, or activeSection change
 
   // Load dashboard data
   useEffect(() => {
@@ -568,6 +601,8 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
   const handleNavClick = (sectionId) => {
     setActiveSection(sectionId);
     setSidebarOpen(false); // Close mobile sidebar
+    // Update URL with section parameter
+    setSearchParams({ section: sectionId });
   };
 
   const handleEditProject = (project) => {
@@ -620,6 +655,8 @@ const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) =>
         return <GallerySection />;
       case 'dynamic-sections':
         return <DynamicSectionsManager />;
+      case 'menus':
+        return <MenusManager />;
       case 'queries':
         return <QueriesManager />;
       case 'domains-technologies':

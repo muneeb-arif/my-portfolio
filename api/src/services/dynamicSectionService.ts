@@ -74,7 +74,7 @@ export class DynamicSectionService {
       section.position_after || null,
       section.is_visible !== undefined ? section.is_visible : true,
       section.sort_order || 1,
-      section.section_id || null,
+      section.section_id || sectionId, // Use database UUID if section_id not provided
       section.background_color || null,
       section.background_image_url || null,
       section.padding_top !== undefined ? section.padding_top : 80,
@@ -153,7 +153,8 @@ export class DynamicSectionService {
     }
     if (updates.section_id !== undefined) {
       updateFields.push('section_id = ?');
-      updateValues.push(updates.section_id || null);
+      // If section_id is being cleared or set to empty, use the database UUID
+      updateValues.push(updates.section_id || sectionId);
     }
     if (updates.background_color !== undefined) {
       updateFields.push('background_color = ?');
@@ -313,7 +314,7 @@ export class DynamicSectionService {
     const dynamicSections = dynamicResult.success && dynamicResult.data
       ? dynamicResult.data.map(s => ({
           id: s.id,
-          section_id: s.section_id || undefined,
+          section_id: s.section_id || s.id, // Always use section_id (UUID) or fallback to id
           title: s.title || `Dynamic Section (${s.section_type})`,
           type: 'dynamic'
         }))
