@@ -46,7 +46,6 @@ const Hero = ({ isLoading = false }) => {
   }
 
   // Get values directly from settings with fallbacks
-  const avatarImage = settings.avatar_image || '/images/profile/avatar.jpeg';
   const heroBannerImage = settings.hero_banner_image || '/images/hero-bg.png';
   const bannerName = settings.banner_name || 'Developer';
   const bannerTitle = settings.banner_title || 'Full Stack Developer';

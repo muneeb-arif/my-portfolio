@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { projectsService } from '../../services/projectsService';
 import { categoriesService } from '../../services/categoriesService';
 import { imageService } from '../../services/imageService';
-import { useAuth } from '../../services/authContext';
 import MediaSelectionModal from './MediaSelectionModal';
 import toastService from '../../services/toastService';
 import './PromptsManager.css';
 
 const PromptsManager = ({ prompts, onPromptsChange, editingPrompt: externalEditingPrompt, onEditingPromptChange }) => {
-  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +16,7 @@ const PromptsManager = ({ prompts, onPromptsChange, editingPrompt: externalEditi
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(10);
   
   const [formData, setFormData] = useState({
     title: '',

@@ -22,7 +22,6 @@ export const syncService = {
         throw new Error('User not authenticated');
       }
 
-      const userId = user.id;
       let deletedCounts = {
         project_images: 0,
         tech_skills: 0,
@@ -939,147 +938,27 @@ export const syncService = {
       // Import categories first (no dependencies)
       if (backupData.data.categories?.length > 0) {
       // console.log('📁 Importing categories...');
-        for (const category of backupData.data.categories) {
-          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
-          //
-          // Example:
-          // const { error } = await supabase
-          //   .from('categories')
-          //   .insert({
-          //     user_id: userId,
-          //     name: category.name,
-          //     description: category.description,
-          //     color: category.color
-          //   });
-          // TODO: Implement via API if needed.
-          //
-          // (All other supabase.* lines removed)
-          // const { error } = await supabase
-          //   .from('categories')
-          //   .insert({
-          //     user_id: userId,
-          //     name: category.name,
-          //     description: category.description,
-          //     color: category.color
-          //   });
-          
-          // if (!error) importedCount++;
-        }
+        // Reserved for future API-based category import (see git history for supabase insert example)
+        backupData.data.categories.forEach(() => {});
       }
 
       // Import technologies
       if (backupData.data.technologies?.length > 0) {
       // console.log('🎯 Importing technologies...');
-        for (const tech of backupData.data.technologies) {
-          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
-          //
-          // Example:
-          // const { error } = await supabase
-          //   .from('domains_technologies')
-          //   .insert({
-          //     user_id: userId,
-          //     type: tech.type,
-          //     title: tech.title,
-          //     sort_order: tech.sort_order
-          //   });
-          // TODO: Implement via API if needed.
-          //
-          // (All other supabase.* lines removed)
-          // const { error } = await supabase
-          //   .from('domains_technologies')
-          //   .insert({
-          //     user_id: userId,
-          //     type: tech.type,
-          //     title: tech.title,
-          //     sort_order: tech.sort_order
-          //   });
-          
-          // if (!error) importedCount++;
-        }
+        backupData.data.technologies.forEach(() => {});
       }
 
       // Import niches
       if (backupData.data.niches?.length > 0) {
       // console.log('🏆 Importing niches...');
-        for (const niche of backupData.data.niches) {
-          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
-          //
-          // Example:
-          // const { error } = await supabase
-          //   .from('niche')
-          //   .insert({
-          //     user_id: userId,
-          //     title: niche.title,
-          //     overview: niche.overview,
-          //     tools: niche.tools,
-          //     key_features: niche.key_features,
-          //     image: niche.image,
-          //     sort_order: niche.sort_order,
-          //     ai_driven: niche.ai_driven
-          //   });
-          // TODO: Implement via API if needed.
-          //
-          // (All other supabase.* lines removed)
-          // const { error } = await supabase
-          //   .from('niche')
-          //   .insert({
-          //     user_id: userId,
-          //     title: niche.title,
-          //     overview: niche.overview,
-          //     tools: niche.tools,
-          //     key_features: niche.key_features,
-          //     image: niche.image,
-          //     sort_order: niche.sort_order,
-          //     ai_driven: niche.ai_driven
-          //   });
-          
-          // if (!error) importedCount++;
-        }
+        backupData.data.niches.forEach(() => {});
       }
 
       // Import projects
       if (backupData.data.projects?.length > 0) {
       // console.log('💼 Importing projects...');
-        for (const project of backupData.data.projects) {
-          // All direct supabase calls below are now commented out or marked as TODO for future API-based implementation.
-          //
-          // Example:
-          // const { error } = await supabase
-          //   .from('projects')
-          //   .insert({
-          //     user_id: userId,
-          //     title: project.title,
-          //     description: project.description,
-          //     category: project.category,
-          //     overview: project.overview,
-          //     technologies: project.technologies,
-          //     features: project.features,
-          //     live_url: project.live_url,
-          //     github_url: project.github_url,
-          //     status: project.status,
-          //     views: project.views
-          //   });
-          // TODO: Implement via API if needed.
-          //
-          // (All other supabase.* lines removed)
-          // const { error } = await supabase
-          //   .from('projects')
-          //   .insert({
-          //     user_id: userId,
-          //     title: project.title,
-          //     description: project.description,
-          //     category: project.category,
-          //     overview: project.overview,
-          //     technologies: project.technologies,
-          //     features: project.features,
-          //     live_url: project.live_url,
-          //     github_url: project.github_url,
-          //     status: project.status,
-          //     views: project.views
-          //   });
-          
-          // if (!error) importedCount++;
-        }
+        // Reserved for future API-based project import (see git history for supabase insert example)
+        backupData.data.projects.forEach(() => {});
       }
 
       // Import skills (after technologies are imported)

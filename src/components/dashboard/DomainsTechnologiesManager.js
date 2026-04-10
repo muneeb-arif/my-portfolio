@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, Star, GripVertical, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Star, Loader2 } from 'lucide-react';
 import { technologiesService } from '../../services/technologiesService';
 import toastService from '../../services/toastService';
 import './DomainsTechnologiesManager.css';
@@ -19,11 +19,11 @@ const DomainsTechnologiesManager = () => {
   
   // Loading states for specific operations
   const [savingItem, setSavingItem] = useState(false);
-  const [deletingItems, setDeletingItems] = useState(new Set());
-  const [reorderingItems, setReorderingItems] = useState(new Set());
-  const [addingSkills, setAddingSkills] = useState(new Set());
-  const [updatingSkills, setUpdatingSkills] = useState(new Set());
-  const [deletingSkills, setDeletingSkills] = useState(new Set());
+  const [, setDeletingItems] = useState(new Set());
+  const [, setReorderingItems] = useState(new Set());
+  const [, setAddingSkills] = useState(new Set());
+  const [, setUpdatingSkills] = useState(new Set());
+  const [, setDeletingSkills] = useState(new Set());
 
   // Available icons for selection
   const availableIcons = [
@@ -281,14 +281,6 @@ const DomainsTechnologiesManager = () => {
       sort_order: 1
     });
     setEditingItem(null);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   if (loading) {

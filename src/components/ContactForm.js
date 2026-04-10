@@ -182,7 +182,6 @@ const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {
     
     // Get dynamic values from settings
     const bannerName = getSetting('banner_name') || 'Muneeb Arif';
-    const socialEmail = getSetting('social_email') || 'muneeb@example.com';
     
     if (!validateForm()) {
       Swal.fire({

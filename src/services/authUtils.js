@@ -95,9 +95,11 @@ export const getCurrentUserId = async () => {
   return user?.id || null;
 };
 
-export default {
+const authUtils = {
   getCurrentUser,
   getCurrentUserId,
   isAuthenticated,
   clearAuthCache
-}; 
+};
+
+export default authUtils; 

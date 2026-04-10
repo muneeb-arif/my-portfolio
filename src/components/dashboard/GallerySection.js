@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { imageService } from '../../services/imageService';
-import { useAuth } from '../../services/authContext';
 import toastService from '../../services/toastService';
 import './GallerySection.css';
 
 const GallerySection = () => {
-  const { user } = useAuth();
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedImages, setSelectedImages] = useState([]);

@@ -1,6 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../../services/apiService';
 import { automaticUpdateService } from '../../services/automaticUpdateService';
+
+function isVersionNewer(newVersion, currentVersion) {
+  const parseVersion = (version) => version.split('.').map((num) => parseInt(num, 10));
+
+  const newParts = parseVersion(newVersion);
+  const currentParts = parseVersion(currentVersion);
+
+  for (let i = 0; i < Math.max(newParts.length, currentParts.length); i++) {
+    const newPart = newParts[i] || 0;
+    const currentPart = currentParts[i] || 0;
+
+    if (newPart > currentPart) return true;
+    if (newPart < currentPart) return false;
+  }
+
+  return false;
+}
 
 const UpdateNotificationBar = () => {
   const [updateInfo, setUpdateInfo] = useState(null);
@@ -13,37 +30,7 @@ const UpdateNotificationBar = () => {
     progress: 0
   });
 
-  useEffect(() => {
-    checkForUpdates();
-    
-    // Check for updates every 5 minutes
-    const interval = setInterval(checkForUpdates, 5 * 60 * 1000);
-    
-    // Listen for storage events (when updates are deactivated from other tabs)
-    const handleStorageChange = (e) => {
-      if (e.key === 'update_status_changed') {
-        console.log('🔄 [UpdateNotificationBar] Update status changed, refreshing...');
-        checkForUpdates();
-      }
-    };
-    
-    // Listen for custom events (when updates are deactivated from same tab)
-    const handleUpdateStatusChange = () => {
-      console.log('🔄 [UpdateNotificationBar] Update status change event received, refreshing...');
-      checkForUpdates();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('updateStatusChanged', handleUpdateStatusChange);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('updateStatusChanged', handleUpdateStatusChange);
-    };
-  }, []);
-
-  const checkForUpdates = async () => {
+  const checkForUpdates = useCallback(async () => {
     try {
       console.log('🔍 [UpdateNotificationBar] Checking for updates...');
       
@@ -106,26 +93,37 @@ const UpdateNotificationBar = () => {
       setIsVisible(false);
       setUpdateInfo(null);
     }
-  };
+  }, []);
 
-  const isVersionNewer = (newVersion, currentVersion) => {
-    const parseVersion = (version) => {
-      return version.split('.').map(num => parseInt(num, 10));
+  useEffect(() => {
+    checkForUpdates();
+    
+    // Check for updates every 5 minutes
+    const interval = setInterval(checkForUpdates, 5 * 60 * 1000);
+    
+    // Listen for storage events (when updates are deactivated from other tabs)
+    const handleStorageChange = (e) => {
+      if (e.key === 'update_status_changed') {
+        console.log('🔄 [UpdateNotificationBar] Update status changed, refreshing...');
+        checkForUpdates();
+      }
     };
-
-    const newParts = parseVersion(newVersion);
-    const currentParts = parseVersion(currentVersion);
-
-    for (let i = 0; i < Math.max(newParts.length, currentParts.length); i++) {
-      const newPart = newParts[i] || 0;
-      const currentPart = currentParts[i] || 0;
-
-      if (newPart > currentPart) return true;
-      if (newPart < currentPart) return false;
-    }
-
-    return false;
-  };
+    
+    // Listen for custom events (when updates are deactivated from same tab)
+    const handleUpdateStatusChange = () => {
+      console.log('🔄 [UpdateNotificationBar] Update status change event received, refreshing...');
+      checkForUpdates();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('updateStatusChanged', handleUpdateStatusChange);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('updateStatusChanged', handleUpdateStatusChange);
+    };
+  }, [checkForUpdates]);
 
   const handleApplyUpdate = async () => {
     const startTime = Date.now();

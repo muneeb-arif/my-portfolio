@@ -19,7 +19,7 @@ const ImagePositioner = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [currentPosition, setCurrentPosition] = useState({ x: positionX, y: positionY });
-  const [lastInputMethod, setLastInputMethod] = useState('initial'); // 'drag' or 'input'
+  const [, setLastInputMethod] = useState('initial'); // 'drag' or 'input'
   const containerRef = useRef(null);
 
   // Update position when props change

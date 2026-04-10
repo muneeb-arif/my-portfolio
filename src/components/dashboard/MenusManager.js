@@ -192,7 +192,6 @@ const MenusManager = () => {
     
     // Update sort_order based on new position
     // We need to update all menus, not just filtered ones
-    const allMenuIds = menus.map(m => m.id);
     const reorderedIds = newMenus.map(m => m.id);
     
     // Create mapping of new positions

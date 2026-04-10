@@ -34,20 +34,6 @@ const PromptsSection = () => {
     settingsKeys: settings ? Object.keys(settings) : []
   });
 
-  useEffect(() => {
-    // Only load prompts if settings are loaded and prompts section is visible
-    if (!settingsLoading && settings && settings.section_prompts_visible) {
-      console.log('🔍 PromptsSection: Settings ready, loading prompts...');
-      loadPrompts();
-    } else {
-      console.log('🔍 PromptsSection: Waiting for settings or prompts not visible:', {
-        settingsLoading,
-        hasSettings: !!settings,
-        section_prompts_visible: settings?.section_prompts_visible
-      });
-    }
-  }, [settingsLoading, settings]);
-
   const loadPrompts = useCallback(async () => {
     try {
       console.log('🔍 PromptsSection: Loading prompts...');
@@ -74,7 +60,9 @@ const PromptsSection = () => {
       
       if (Array.isArray(projects)) {
         // Filter to only prompts (is_prompt = 1) and published status
-        const filteredPrompts = projects.filter(p => p.is_prompt == 1 && p.status === 'published');
+        const filteredPrompts = projects.filter(
+          (p) => Number(p.is_prompt) === 1 && p.status === 'published'
+        );
         console.log('🔍 PromptsSection: Filtered prompts:', {
           totalPrompts: filteredPrompts.length,
           samplePrompt: filteredPrompts[0]
@@ -91,6 +79,20 @@ const PromptsSection = () => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    // Only load prompts if settings are loaded and prompts section is visible
+    if (!settingsLoading && settings && settings.section_prompts_visible) {
+      console.log('🔍 PromptsSection: Settings ready, loading prompts...');
+      loadPrompts();
+    } else {
+      console.log('🔍 PromptsSection: Waiting for settings or prompts not visible:', {
+        settingsLoading,
+        hasSettings: !!settings,
+        section_prompts_visible: settings?.section_prompts_visible
+      });
+    }
+  }, [settingsLoading, settings, loadPrompts]);
 
   // Check if prompts section is visible (after settings are loaded)
   console.log('🔍 PromptsSection Debug:', {

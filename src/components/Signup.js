@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../services/authContext';
 import { colorSchemes } from '../services/colorSchemes';
 import { apiService } from '../services/apiService';
 import './Signup.css';
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,9 +34,6 @@ const Signup = () => {
     sectionProjectCycleVisible: true,
     sectionPromptsVisible: false
   });
-
-  // User data after registration
-  const [userData, setUserData] = useState(null);
 
   // Handle input changes
   const handleInputChange = (field, value) => {
@@ -95,8 +90,6 @@ const Signup = () => {
       });
       
       if (response.success) {
-        setUserData(response.user);
-        
         // Set the token for authenticated requests
         if (response.token) {
           apiService.setToken(response.token);

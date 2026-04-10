@@ -2011,7 +2011,7 @@ const AppearanceSection = () => {
                      <div className="current-avatar-image">
                        <img 
                          src={tempAvatarUrl || localSettings.avatar_image} 
-                         alt="Profile Picture" 
+                         alt="Avatar preview" 
                          className="avatar-preview-thumb"
                        />
                        <div className="avatar-image-info">
@@ -2814,7 +2814,6 @@ const BackupFilesSection = () => {
     }
 
     try {
-      const fileName = file.name || file.file_name;
       let blobRel = null;
       if (file.storage_path && typeof file.storage_path === 'string') {
         const p = file.storage_path.replace(/^updates\//, '');

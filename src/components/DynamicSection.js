@@ -165,6 +165,7 @@ const DynamicSection = ({ section }) => {
             {section.embed_url && (
               <div className="map-embed-container">
                 <iframe
+                  title={section.title || 'Map location'}
                   src={section.embed_url}
                   width="100%"
                   height="450"
@@ -214,6 +215,7 @@ const DynamicSection = ({ section }) => {
       if (videoId) {
         return (
           <iframe
+            title="YouTube video"
             width="100%"
             height="500"
             src={`https://www.youtube.com/embed/${videoId}`}
@@ -231,6 +233,7 @@ const DynamicSection = ({ section }) => {
       if (videoId) {
         return (
           <iframe
+            title="Vimeo video"
             src={`https://player.vimeo.com/video/${videoId}`}
             width="100%"
             height="500"
@@ -284,6 +287,7 @@ const DynamicSection = ({ section }) => {
       return (
         <div className="social-embed-facebook">
           <iframe
+            title="Facebook embed"
             src={facebookUrl}
             width="100%"
             height="600"
@@ -307,7 +311,7 @@ const DynamicSection = ({ section }) => {
       // Handle different input formats
       if (username.includes('instagram.com/')) {
         // Extract username from URL
-        const match = username.match(/instagram\.com\/([^\/\?]+)/);
+        const match = username.match(/instagram\.com\/([^/?]+)/);
         username = match ? match[1].replace('@', '') : username.replace('@', '');
       } else {
         // Remove @ if present
@@ -385,7 +389,7 @@ const DynamicSection = ({ section }) => {
               style={{ maxWidth: '100%', minWidth: '325px' }}
             >
               <section>
-                <a target="_blank" title={tiktokId} href={url}>
+                <a target="_blank" rel="noopener noreferrer" title={tiktokId} href={url}>
                   View on TikTok
                 </a>
               </section>
@@ -401,6 +405,7 @@ const DynamicSection = ({ section }) => {
       return (
         <div className="social-embed-linkedin">
           <iframe
+            title="LinkedIn post"
             src={`https://www.linkedin.com/embed/feed/post/${extractLinkedInId(url)}`}
             width="100%"
             height="600"
@@ -420,7 +425,9 @@ const DynamicSection = ({ section }) => {
             data-pin-do="embedPin"
             data-pin-width="large"
             href={url}
-          />
+          >
+            <span className="sr-only">Pinterest pin</span>
+          </a>
           <script async defer src="//assets.pinterest.com/js/pinit.js"></script>
         </div>
       );
@@ -433,6 +440,7 @@ const DynamicSection = ({ section }) => {
         return (
           <div className="social-embed-youtube">
             <iframe
+              title="YouTube video"
               width="100%"
               height="500"
               src={`https://www.youtube.com/embed/${videoId}`}
@@ -452,6 +460,7 @@ const DynamicSection = ({ section }) => {
         return (
           <div className="social-embed-vimeo">
             <iframe
+              title="Vimeo video"
               src={`https://player.vimeo.com/video/${videoId}`}
               width="100%"
               height="500"
@@ -468,6 +477,7 @@ const DynamicSection = ({ section }) => {
     return (
       <div className="social-embed-iframe">
         <iframe
+          title="Embedded content"
           src={url}
           width="100%"
           height="500"
@@ -477,13 +487,6 @@ const DynamicSection = ({ section }) => {
         />
       </div>
     );
-  };
-
-  const extractInstagramId = (url) => {
-    // Extract Instagram post ID from URL
-    // Format: https://www.instagram.com/p/POST_ID/
-    const match = url.match(/instagram\.com\/p\/([^\/\?]+)/);
-    return match ? match[1] : null;
   };
 
   const extractTikTokId = (url) => {
@@ -497,18 +500,6 @@ const DynamicSection = ({ section }) => {
     // Extract LinkedIn post ID from URL
     // Format: https://www.linkedin.com/posts/activity-POST_ID
     const match = url.match(/linkedin\.com\/.*\/activity-(\d+)/);
-    return match ? match[1] : null;
-  };
-
-  const extractFacebookPostId = (url) => {
-    // Try to extract post ID from various Facebook URL formats
-    // Share URL: https://www.facebook.com/share/p/1Bgq1ruJ1E/
-    // Post URL: https://www.facebook.com/username/posts/POST_ID
-    if (url.includes('/share/p/')) {
-      const match = url.match(/\/share\/p\/([^\/\?]+)/);
-      return match ? match[1] : null;
-    }
-    const match = url.match(/facebook\.com\/.*\/posts\/(\d+)/);
     return match ? match[1] : null;
   };
 
@@ -718,7 +709,7 @@ const InstagramEmbed = ({ url }) => {
   // Extract Instagram post ID from URL
   // Format: https://www.instagram.com/p/POST_ID/
   const extractId = (url) => {
-    const match = url.match(/instagram\.com\/p\/([^\/\?]+)/);
+    const match = url.match(/instagram\.com\/p\/([^/?]+)/);
     return match ? match[1] : null;
   };
   

@@ -7,7 +7,7 @@ import { usePublicData } from '../services/PublicDataContext';
 import { menuService } from '../services/menuService';
 
 const MobileBottomNav = ({ additionalDataLoading }) => {
-  const { getSetting, loading: settingsLoading, initialized: settingsInitialized } = useSettings();
+  const { getSetting } = useSettings();
   const { projects, technologies, niches, loading: publicLoading } = usePublicData();
   const [activeSection, setActiveSection] = useState('hero');
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
@@ -167,10 +167,6 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
     setIsContactFormOpen(true);
   };
 
-  const closeContactForm = () => {
-    setIsContactFormOpen(false);
-  };
-
   const handleCall = () => {
     const phoneNumber = getSetting('phone_number');
     if (phoneNumber) {
@@ -179,9 +175,6 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
       window.location.href = `tel:${cleanPhone}`;
     }
   };
-
-  // Don't render navigation until we know what sections have data
-  const showNavigation = !settingsLoading && settingsInitialized && !sectionsData.loading;
 
   // Build navigation items - use dynamic menus if available, otherwise use default logic
   const navItems = [];
@@ -275,7 +268,6 @@ const MobileBottomNav = ({ additionalDataLoading }) => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
-              const showIconOnly = !item.label && (item.iconEmoji || Icon);
               
               return (
                 <button

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { dynamicSectionService } from '../services/dynamicSectionService';
 import DynamicSection from './DynamicSection';
 import './DynamicSections.css';
 

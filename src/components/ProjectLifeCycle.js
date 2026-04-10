@@ -15,14 +15,12 @@ import {
 import ContactForm from './ContactForm';
 
 const ProjectLifeCycle = () => {
-  const [visibleCards, setVisibleCards] = useState(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
-  const cardRefs = useRef([]);
   const containerRef = useRef(null);
 
   const phases = [
@@ -286,12 +284,6 @@ const ProjectLifeCycle = () => {
     }
   ];
 
-  // Make all cards visible by default for better performance
-  useEffect(() => {
-    // Set all cards as visible immediately
-    setVisibleCards(new Set(phases.map((_, index) => index)));
-  }, []);
-
   // Scroll state tracking
   useEffect(() => {
     const handleScroll = () => {
@@ -435,9 +427,8 @@ const ProjectLifeCycle = () => {
               msOverflowStyle: 'none',
             }}
           >
-            {phases.map((phase, index) => {
+            {phases.map((phase) => {
               const Icon = phase.icon;
-              const isVisible = visibleCards.has(index);
 
               return (
                 <div

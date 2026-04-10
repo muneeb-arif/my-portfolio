@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../../services/apiService';
 import './SharedHostingUpdateManager.css';
 
 const SharedHostingUpdateManager = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [clients, setClients] = useState([]);
   const [updates, setUpdates] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -19,11 +18,7 @@ const SharedHostingUpdateManager = () => {
     is_active: true
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -39,8 +34,9 @@ const SharedHostingUpdateManager = () => {
 
       console.log('🔍 Updates result:', updatesResult);
 
+      const loadedUpdates = updatesResult.success ? updatesResult.data || [] : [];
       if (updatesResult.success) {
-        setUpdates(updatesResult.data || []);
+        setUpdates(loadedUpdates);
       } else {
         setError('Failed to load updates: ' + updatesResult.error);
       }
@@ -55,7 +51,7 @@ const SharedHostingUpdateManager = () => {
       if (statsResult.success) {
         const activeUpdates = statsResult.data || [];
         setStats({
-          totalUpdates: updates.length,
+          totalUpdates: loadedUpdates.length,
           activeUpdates: activeUpdates.length,
           latestVersion: activeUpdates.length > 0 ? activeUpdates[0].version : '1.0.0'
         });
@@ -67,7 +63,11 @@ const SharedHostingUpdateManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const createUpdate = async (e) => {
     e.preventDefault();

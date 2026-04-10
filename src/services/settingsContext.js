@@ -260,7 +260,7 @@ export const SettingsProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [isDashboard, initialized, retryCount]);
+  }, [isDashboard, initialized, defaultSettings, settings]);
 
   // Initialize settings once on mount
   useEffect(() => {
@@ -271,7 +271,7 @@ export const SettingsProvider = ({ children }) => {
     } else {
       console.log('🔧 ALREADY INITIALIZED, SKIPPING LOAD');
     }
-  }, [loadSettingsGlobally, initialized]);
+  }, [loadSettingsGlobally, initialized, isDashboard]);
 
   // Debug: Monitor settings state changes
   useEffect(() => {

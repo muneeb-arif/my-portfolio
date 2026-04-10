@@ -46,7 +46,7 @@ class ApiService {
       // If we get any response, the API server is running
       // Database status is informational, not a blocker
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         // API server is available if we got a response
         this.isApiAvailable = true;
         return true;

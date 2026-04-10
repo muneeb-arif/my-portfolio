@@ -132,19 +132,10 @@ export const dashboardService = {
 
   // Get recent activity (placeholder for future implementation)
   async getRecentActivity() {
-    try {
-      // This could be implemented later to show recent changes
-      return {
-        success: true,
-        data: []
-      };
-    } catch (error) {
-      console.error('Error fetching recent activity:', error);
-      return {
-        success: false,
-        error: error.message,
-        data: []
-      };
-    }
+    // This could be implemented later to show recent changes
+    return {
+      success: true,
+      data: []
+    };
   }
 }; 
