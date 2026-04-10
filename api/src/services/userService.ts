@@ -55,13 +55,23 @@ export class UserService {
         return { success: false, error: userResult.error || 'Failed to create user' };
       }
 
-      // 2. Create domain
+      const nextIdRes = await executeQuery(
+        'SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM domains',
+        []
+      );
+      const nextDomainId =
+        nextIdRes.success &&
+        Array.isArray(nextIdRes.data) &&
+        nextIdRes.data[0]?.next_id != null
+          ? Number(nextIdRes.data[0].next_id)
+          : 1;
+
       const domainQuery = `
-        INSERT INTO domains (user_id, name, status, created_at, updated_at) 
-        VALUES (?, ?, 1, ?, ?)
+        INSERT INTO domains (id, user_id, name, status, created_at, updated_at) 
+        VALUES (?, ?, ?, 1, ?, ?)
       `;
-      
-      const domainResult = await executeQuery(domainQuery, [userId, domain, now, now]);
+
+      const domainResult = await executeQuery(domainQuery, [nextDomainId, userId, domain, now, now]);
       if (!domainResult.success) {
         return { success: false, error: domainResult.error || 'Failed to create domain' };
       }
@@ -104,18 +114,19 @@ export class UserService {
       ];
 
       for (const categoryName of defaultCategories) {
+        const categoryId = crypto.randomUUID();
         const categoryQuery = `
-          INSERT INTO categories (user_id, name, status, created_at, updated_at) 
-          VALUES (?, ?, 1, ?, ?)
+          INSERT INTO categories (id, user_id, name, created_at, updated_at) 
+          VALUES (?, ?, ?, ?, ?)
         `;
-        
-        const categoryResult = await executeQuery(categoryQuery, [userId, categoryName, now, now]);
+
+        const categoryResult = await executeQuery(categoryQuery, [categoryId, userId, categoryName, now, now]);
         if (!categoryResult.success) {
           console.warn(`Failed to create default category: ${categoryName}`);
         }
       }
 
-      // 5. Create default technologies
+      // 5. Create default technologies (domains_technologies)
       const defaultTechnologies = [
         'React',
         'Node.js',
@@ -128,12 +139,13 @@ export class UserService {
       ];
 
       for (const techName of defaultTechnologies) {
+        const techId = crypto.randomUUID();
         const techQuery = `
-          INSERT INTO technologies (user_id, name, status, created_at, updated_at) 
-          VALUES (?, ?, 1, ?, ?)
+          INSERT INTO domains_technologies (id, user_id, type, title, sort_order, created_at, updated_at) 
+          VALUES (?, ?, 'technology', ?, 1, ?, ?)
         `;
-        
-        const techResult = await executeQuery(techQuery, [userId, techName, now, now]);
+
+        const techResult = await executeQuery(techQuery, [techId, userId, techName, now, now]);
         if (!techResult.success) {
           console.warn(`Failed to create default technology: ${techName}`);
         }
@@ -149,12 +161,13 @@ export class UserService {
       ];
 
       for (const nicheName of defaultNiches) {
+        const nicheId = crypto.randomUUID();
         const nicheQuery = `
-          INSERT INTO niches (user_id, name, status, created_at, updated_at) 
-          VALUES (?, ?, 1, ?, ?)
+          INSERT INTO niche (id, user_id, title, sort_order, created_at, updated_at) 
+          VALUES (?, ?, ?, 1, ?, ?)
         `;
-        
-        const nicheResult = await executeQuery(nicheQuery, [userId, nicheName, now, now]);
+
+        const nicheResult = await executeQuery(nicheQuery, [nicheId, userId, nicheName, now, now]);
         if (!nicheResult.success) {
           console.warn(`Failed to create default niche: ${nicheName}`);
         }
@@ -212,13 +225,23 @@ export class UserService {
         return { success: false, error: userResult.error || 'Failed to create user' };
       }
 
-      // 2. Create domain
+      const nextIdRes = await executeQuery(
+        'SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM domains',
+        []
+      );
+      const nextDomainId =
+        nextIdRes.success &&
+        Array.isArray(nextIdRes.data) &&
+        nextIdRes.data[0]?.next_id != null
+          ? Number(nextIdRes.data[0].next_id)
+          : 1;
+
       const domainQuery = `
-        INSERT INTO domains (user_id, name, status, created_at, updated_at) 
-        VALUES (?, ?, 1, ?, ?)
+        INSERT INTO domains (id, user_id, name, status, created_at, updated_at) 
+        VALUES (?, ?, ?, 1, ?, ?)
       `;
-      
-      const domainResult = await executeQuery(domainQuery, [userId, domainName, now, now]);
+
+      const domainResult = await executeQuery(domainQuery, [nextDomainId, userId, domainName, now, now]);
       if (!domainResult.success) {
         return { success: false, error: domainResult.error || 'Failed to create domain' };
       }

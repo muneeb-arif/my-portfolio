@@ -1,5 +1,4 @@
-import { supabase } from '../config/supabase';
-import { portfolioConfigService } from './supabaseService';
+import { API_BASE } from '../utils/apiConfig';
 
 /**
  * Theme Update Service
@@ -85,24 +84,23 @@ export class ThemeUpdateService {
    */
   async registerClient() {
     try {
-      const { data, error } = await supabase
-        .from('theme_clients')
-        .upsert({
+      const res = await fetch(`${API_BASE}/theme-clients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           client_id: this.clientId,
           domain: window.location.hostname,
           current_version: this.currentVersion,
           update_channel: this.updateChannel,
-          last_seen: new Date().toISOString(),
           user_agent: navigator.userAgent,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-        }, {
-          onConflict: 'client_id'
-        });
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || res.statusText);
 
-      if (error) throw error;
-      
       console.log('✅ Client registered successfully');
-      return { success: true, data };
+      return { success: true, data: json };
     } catch (error) {
       console.error('❌ Failed to register client:', error);
       return { success: false, error: error.message };
@@ -124,15 +122,14 @@ export class ThemeUpdateService {
 
       console.log('🔍 Checking for theme updates...');
       
-      const { data: updateInfo, error } = await supabase
-        .from('theme_updates')
-        .select('*')
-        .eq('channel', this.updateChannel)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (error) throw error;
+      const u = new URL(`${API_BASE}/theme-updates`);
+      u.searchParams.set('is_active', 'true');
+      u.searchParams.set('channel', this.updateChannel);
+      u.searchParams.set('limit', '1');
+      const res = await fetch(u.toString());
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Theme updates fetch failed');
+      const updateInfo = json.data;
 
       this.lastCheckTime = now;
       localStorage.setItem('theme_last_check', now.toString());
@@ -324,13 +321,14 @@ export class ThemeUpdateService {
       this.showUpdateProgress('Downloading update...');
       
       // Get update details
-      const { data: updateInfo, error: fetchError } = await supabase
-        .from('theme_updates')
-        .select('*')
-        .eq('id', updateId)
-        .single();
-
-      if (fetchError) throw fetchError;
+      const u = new URL(`${API_BASE}/theme-updates`);
+      u.searchParams.set('id', updateId);
+      const res = await fetch(u.toString());
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Failed to load update');
+      const rows = json.data;
+      const updateInfo = Array.isArray(rows) && rows[0] ? rows[0] : null;
+      if (!updateInfo) throw new Error('Update not found');
 
       // Download update files
       const updateFiles = await this.downloadUpdateFiles(updateInfo);
@@ -563,15 +561,13 @@ export class ThemeUpdateService {
    */
   async updateClientVersion(version) {
     try {
-      const { error } = await supabase
-        .from('theme_clients')
-        .update({
-          current_version: version,
-          last_updated: new Date().toISOString()
-        })
-        .eq('client_id', this.clientId);
-
-      if (error) throw error;
+      const res = await fetch(`${API_BASE}/theme-clients`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: this.clientId, current_version: version }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || res.statusText);
       
       console.log('✅ Client version updated:', version);
     } catch (error) {
@@ -584,17 +580,19 @@ export class ThemeUpdateService {
    */
   async logUpdateApplication(updateId, status, errorMessage = null) {
     try {
-      const { error } = await supabase
-        .from('theme_update_logs')
-        .insert({
+      const res = await fetch(`${API_BASE}/theme/application-logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           update_id: updateId,
           client_id: this.clientId,
-          status: status,
+          status,
           error_message: errorMessage,
-          applied_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
+          domain: window.location.hostname,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || res.statusText);
     } catch (error) {
       console.error('❌ Failed to log update:', error);
     }
@@ -632,16 +630,13 @@ export class ThemeUpdateService {
    */
   async getUpdateStats() {
     try {
-      const { data: stats, error } = await supabase
-        .from('theme_update_stats')
-        .select('*')
-        .eq('client_id', this.clientId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      const u = new URL(`${API_BASE}/theme/stats`);
+      u.searchParams.set('client_id', this.clientId);
+      const res = await fetch(u.toString());
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || res.statusText);
 
-      if (error) throw error;
-      
-      return { success: true, stats: stats || [] };
+      return { success: true, stats: json.stats || [] };
     } catch (error) {
       console.error('❌ Failed to get update stats:', error);
       return { success: false, error: error.message };

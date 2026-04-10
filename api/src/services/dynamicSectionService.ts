@@ -58,7 +58,7 @@ export class DynamicSectionService {
         cta_button_text, cta_button_link, cta_button_target, cta_button_style,
         embed_type, embed_url, embed_code, accordion_items,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?)
     `;
     
     const result = await executeQuery(query, [
@@ -201,7 +201,7 @@ export class DynamicSectionService {
       updateValues.push(updates.embed_code || null);
     }
     if (updates.accordion_items !== undefined) {
-      updateFields.push('accordion_items = ?');
+      updateFields.push('accordion_items = ?::jsonb');
       updateValues.push(updates.accordion_items ? JSON.stringify(updates.accordion_items) : null);
     }
 

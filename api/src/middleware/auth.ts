@@ -5,6 +5,7 @@ export interface AuthenticatedRequest extends NextRequest {
   user?: {
     id: string;
     email: string;
+    is_admin?: number;
   };
 }
 
@@ -23,7 +24,11 @@ export function authenticateRequest(req: NextRequest): AuthenticatedRequest {
   }
   
   const authenticatedReq = req as AuthenticatedRequest;
-  authenticatedReq.user = decoded;
+  authenticatedReq.user = {
+    id: decoded.id,
+    email: decoded.email,
+    is_admin: decoded.is_admin,
+  };
   
   return authenticatedReq;
 }

@@ -1,9 +1,9 @@
-import { BUCKETS } from '../config/supabase';
-import { getSupabaseByDomain } from './supabaseByDomain';
+import { BUCKETS } from '../config/storage';
 import { getCurrentUser } from './authUtils';
 import { apiService } from './apiService';
+import { API_BASE } from '../utils/apiConfig';
 
-// ================ IMAGE OPERATIONS ================
+// ================ IMAGE OPERATIONS (Vercel Blob via API) ================
 
 export const imageService = {
   // Upload single image
@@ -14,50 +14,37 @@ export const imageService = {
         throw new Error('User not authenticated');
       }
 
-      // Get domain-specific Supabase client
-      const supabase = await getSupabaseByDomain();
+      const token = apiService.getToken();
+      if (!token) {
+        throw new Error('User not authenticated');
+      }
 
-      // Sanitize filename
-      const sanitizeFilename = (filename) => {
-        const lastDotIndex = filename.lastIndexOf('.');
-        const name = lastDotIndex !== -1 ? filename.substring(0, lastDotIndex) : filename;
-        const extension = lastDotIndex !== -1 ? filename.substring(lastDotIndex) : '';
-        
-        const sanitizedName = name
-          .replace(/[^a-zA-Z0-9.-]/g, '_')
-          .replace(/_+/g, '_')
-          .replace(/^_+|_+$/g, '')
-          .substring(0, 100);
-        
-        return sanitizedName + extension;
-      };
+      const form = new FormData();
+      form.append('file', file);
+      form.append('bucket', bucket);
 
-      // Generate unique filename with user folder
-      const timestamp = Date.now();
-      const sanitizedFilename = sanitizeFilename(file.name);
-      const fileName = `${user.id}/${timestamp}_${sanitizedFilename}`;
-      
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file);
+      const res = await fetch(`${API_BASE}/storage/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
 
-      if (error) throw error;
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || res.statusText || 'Upload failed');
+      }
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
-
+      const d = json.data;
       return {
         success: true,
         data: {
-          path: fileName,
-          url: urlData.publicUrl,
-          name: sanitizedFilename,
-          original_name: file.name,
-          size: file.size,
-          type: file.type
-        }
+          path: d.path,
+          url: d.url,
+          name: d.name,
+          original_name: d.original_name,
+          size: d.size,
+          type: d.type,
+        },
       };
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -78,12 +65,21 @@ export const imageService = {
   // Delete image
   async deleteImage(imagePath, bucket = BUCKETS.IMAGES) {
     try {
-      const supabase = await getSupabaseByDomain();
-      const { error } = await supabase.storage
-        .from(bucket)
-        .remove([imagePath]);
+      const token = apiService.getToken();
+      if (!token) {
+        throw new Error('User not authenticated');
+      }
 
-      if (error) throw error;
+      const q = new URLSearchParams({ path: imagePath, bucket });
+      const res = await fetch(`${API_BASE}/storage/delete?${q.toString()}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || res.statusText || 'Delete failed');
+      }
       return { success: true };
     } catch (error) {
       console.error('Error deleting image:', error);
@@ -91,13 +87,12 @@ export const imageService = {
     }
   },
 
-  // Get image URL
-  async getImageUrl(imagePath, bucket = BUCKETS.IMAGES) {
-    const supabase = await getSupabaseByDomain();
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(imagePath);
-    return data.publicUrl;
+  // Get image URL (full URL if already absolute; otherwise return path for callers that resolve later)
+  async getImageUrl(imagePath) {
+    if (typeof imagePath === 'string' && imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    return imagePath;
   },
 
   // List images for user
@@ -108,35 +103,24 @@ export const imageService = {
         throw new Error('User not authenticated');
       }
 
-      // Get domain-specific Supabase client
-      const supabase = await getSupabaseByDomain();
+      const token = apiService.getToken();
+      if (!token) {
+        throw new Error('User not authenticated');
+      }
 
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .list(user.id, {
-          limit: 1000,
-          sortBy: { column: 'created_at', order: 'desc' }
-        });
+      const res = await fetch(`${API_BASE}/gallery`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json.error || 'Failed to list gallery');
+      }
 
-      if (error) throw error;
-
-      const imageFiles = (data || [])
-        .filter(file => 
-          file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
-          !file.name.startsWith('.')
-        )
-        .map(file => {
-          const fullPath = `${user.id}/${file.name}`;
-          const { data: urlData } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(fullPath);
-          
-          return {
-            ...file,
-            fullPath,
-            url: urlData.publicUrl
-          };
-        });
+      const imageFiles = (json.data || []).map((file) => ({
+        ...file,
+        fullPath: file.fullPath,
+        url: file.url,
+      }));
 
       return { success: true, data: imageFiles };
     } catch (error) {
@@ -193,7 +177,7 @@ export const imageService = {
   // Upload project image (combines upload + metadata save)
   async uploadProjectImage(projectId, file) {
     try {
-      // Upload the image to Supabase
+      // Upload via API (Vercel Blob)
       const uploadResult = await this.uploadImage(file);
       if (!uploadResult.success) {
         throw new Error(uploadResult.error);

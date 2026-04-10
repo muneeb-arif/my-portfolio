@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Upload, X, Loader2, ArrowUp, ArrowDown, Save } from 'lucide-react';
 import { apiService } from '../../services/apiService';
 import { imageService } from '../../services/imageService';
-import { BUCKETS } from '../../config/supabase';
+import { BUCKETS } from '../../config/storage';
 import toastService from '../../services/toastService';
 import './NicheManager.css';
 

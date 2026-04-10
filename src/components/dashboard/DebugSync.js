@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '../../config/supabase';
 import { getCurrentUser } from '../../services/authUtils';
+import { apiService } from '../../services/apiService';
 
 const DebugSync = () => {
   const [logs, setLogs] = useState([]);
@@ -17,50 +17,42 @@ const DebugSync = () => {
     try {
       addLog('🧪 Starting categories sync test...', 'info');
       
-      // Test 1: Check current categories
+      // Test 1: Check current categories (API)
       addLog('📋 Test 1: Checking current categories...', 'info');
-      const { data: currentCategories, error: selectError } = await supabase
-        .from('categories')
-        .select('*');
-      
-      if (selectError) {
-        addLog(`❌ Error selecting categories: ${selectError.message}`, 'error');
+      const listRes = await apiService.getCategories();
+      if (!listRes.success) {
+        addLog(`❌ Error loading categories: ${listRes.error || 'unknown'}`, 'error');
         return;
       }
-      
-      addLog(`Current categories count: ${currentCategories?.length || 0}`, 'success');
-      currentCategories?.forEach(cat => addLog(`- ${cat.name}`, 'info'));
-      
-      // Test 2: Try to delete a specific category
+      const currentCategories = listRes.data || [];
+      addLog(`Current categories count: ${currentCategories.length}`, 'success');
+      currentCategories.forEach(cat => addLog(`- ${cat.name}`, 'info'));
+
+      // Test 2: Try to delete a specific category (API)
       addLog('🗑️ Test 2: Trying to delete "Web Development" category...', 'info');
-      const { data: deleteResult, error: deleteError } = await supabase
-        .from('categories')
-        .delete()
-        .eq('name', 'Web Development');
-      
-      if (deleteError) {
-        addLog(`❌ Error deleting category: ${deleteError.message}`, 'error');
-        addLog(`Error details: ${JSON.stringify(deleteError)}`, 'error');
+      const toDelete = currentCategories.find(c => c.name === 'Web Development');
+      if (!toDelete) {
+        addLog('⚠️ No category named "Web Development" — skip delete', 'warning');
       } else {
-        addLog(`✅ Delete successful: ${deleteResult?.length || 0} rows affected`, 'success');
+        const delRes = await apiService.deleteCategory(toDelete.id);
+        if (!delRes.success) {
+          addLog(`❌ Error deleting category: ${delRes.error}`, 'error');
+        } else {
+          addLog('✅ Delete successful', 'success');
+        }
       }
-      
-      // Test 3: Try to insert a new category
+
+      // Test 3: Insert a test category (API)
       addLog('➕ Test 3: Trying to insert a test category...', 'info');
-      const { data: insertResult, error: insertError } = await supabase
-        .from('categories')
-        .insert({
-          name: 'Test Category Debug',
-          description: 'Test Description',
-          color: '#ff0000'
-        })
-        .select();
-      
-      if (insertError) {
-        addLog(`❌ Error inserting category: ${insertError.message}`, 'error');
-        addLog(`Error details: ${JSON.stringify(insertError)}`, 'error');
+      const insRes = await apiService.createCategory({
+        name: 'Test Category Debug',
+        description: 'Test Description',
+        color: '#ff0000',
+      });
+      if (!insRes.success) {
+        addLog(`❌ Error inserting category: ${insRes.error}`, 'error');
       } else {
-        addLog(`✅ Insert successful: ${insertResult?.length || 0} rows inserted`, 'success');
+        addLog('✅ Insert successful', 'success');
       }
       
       // Test 4: Check authentication
@@ -73,17 +65,13 @@ const DebugSync = () => {
         addLog('⚠️ Not authenticated', 'warning');
       }
       
-      // Test 5: Check table structure
-      addLog('📊 Test 5: Checking table structure...', 'info');
-      const { data: tableInfo, error: tableError } = await supabase
-        .from('categories')
-        .select('id, name, description, color')
-        .limit(1);
-      
-      if (tableError) {
-        addLog(`❌ Table structure error: ${tableError.message}`, 'error');
+      // Test 5: Sample row shape from API
+      addLog('📊 Test 5: Checking category row shape...', 'info');
+      const sample = (await apiService.getCategories()).data?.[0];
+      if (sample && 'id' in sample && 'name' in sample) {
+        addLog('✅ Category fields id, name present', 'success');
       } else {
-        addLog('✅ Table structure check passed', 'success');
+        addLog('⚠️ No categories or unexpected shape', 'warning');
       }
       
     } catch (error) {

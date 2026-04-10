@@ -1,4 +1,3 @@
-import { supabase } from '../config/supabase';
 import { API_BASE } from '../utils/apiConfig';
 
 /**
@@ -729,14 +728,14 @@ export class AutomaticUpdateService {
    */
   async triggerAutomaticUpdate(updateId) {
     try {
-      // Get update info
-      const { data: updateInfo, error } = await supabase
-        .from('shared_hosting_updates')
-        .select('*')
-        .eq('id', updateId)
-        .single();
-
-      if (error) throw error;
+      const res = await fetch(
+        `${API_BASE}/shared-hosting-updates?id=${encodeURIComponent(updateId)}`
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success || !Array.isArray(json.data) || json.data.length === 0) {
+        throw new Error(json.error || 'Update not found or inactive');
+      }
+      const updateInfo = json.data[0];
 
       // Create progress modal
       const modal = this.createProgressModal();

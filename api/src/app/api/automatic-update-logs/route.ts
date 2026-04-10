@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Insert the log entry
     const insertQuery = `
-      INSERT INTO automatic_update_logs (id, update_id, client_id, activity, details, user_agent, domain, timestamp)
+      INSERT INTO automatic_update_logs (id, update_id, client_id, activity, details, user_agent, domain, logged_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Add ordering and limit
-    query += ' ORDER BY timestamp DESC LIMIT ?';
+    query += ' ORDER BY logged_at DESC LIMIT ?';
     params.push(parseInt(limit));
 
     const result = await executeQuery(query, params);

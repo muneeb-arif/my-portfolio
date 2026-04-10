@@ -22,7 +22,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
         created_at,
         updated_at
       FROM backup_files 
-      WHERE user_id = ? AND is_active = 1
+      WHERE user_id = ? AND is_active = TRUE
       ORDER BY upload_date DESC
     `;
 
@@ -134,7 +134,7 @@ export const DELETE = withAuth(async (request: AuthenticatedRequest) => {
 
     const query = `
       UPDATE backup_files 
-      SET is_active = 0, updated_at = NOW()
+      SET is_active = FALSE, updated_at = NOW()
       WHERE id = ? AND user_id = ?
     `;
 
@@ -147,8 +147,7 @@ export const DELETE = withAuth(async (request: AuthenticatedRequest) => {
       }, { status: 500 });
     }
 
-    // Check if any rows were affected
-    const affectedRows = Array.isArray(result.data) ? result.data.length : 0;
+    const affectedRows = (result as { rowCount?: number }).rowCount ?? 0;
     if (affectedRows === 0) {
       return NextResponse.json({ 
         success: false, 

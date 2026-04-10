@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../config/supabase';
 import { themeUpdateService } from '../../services/themeUpdateService';
 import { apiService } from '../../services/apiService';
 import './ThemeUpdateManager.css';
@@ -56,41 +55,33 @@ const ThemeUpdateManager = () => {
 
   const loadUpdateStats = async () => {
     try {
-      const { data: clientsData, error: clientsError } = await supabase
-        .from('theme_clients')
-        .select('*');
+      const clientsRes = await apiService.getThemeClients();
+      if (!clientsRes.success) throw new Error(clientsRes.error || 'theme clients');
+      const clientsData = clientsRes.data || [];
 
-      if (clientsError) throw clientsError;
-
-      // Use apiService to get active updates
       const result = await apiService.getThemeUpdates({ is_active: true });
-      
+
       let activeUpdates = 0;
       if (result.success) {
         activeUpdates = result.data?.length || 0;
       }
 
-      const { data: logsData, error: logsError } = await supabase
-        .from('theme_update_logs')
-        .select('*')
-        .order('applied_at', { ascending: false })
-        .limit(100);
+      const logsRes = await apiService.getThemeUpdateLogs(100);
+      if (!logsRes.success) throw new Error(logsRes.error || 'theme logs');
+      const logsData = logsRes.data || [];
 
-      if (logsError) throw logsError;
-
-      // Calculate stats
-      const totalClients = clientsData?.length || 0;
-      const successfulUpdates = logsData?.filter(log => log.status === 'success').length || 0;
-      const totalUpdateAttempts = logsData?.length || 0;
-      const successRate = totalUpdateAttempts > 0 ? (successfulUpdates / totalUpdateAttempts) * 100 : 0;
+      const totalClients = clientsData.length;
+      const successfulUpdates = logsData.filter((log) => log.status === 'success').length;
+      const totalUpdateAttempts = logsData.length;
+      const successRate =
+        totalUpdateAttempts > 0 ? (successfulUpdates / totalUpdateAttempts) * 100 : 0;
 
       setUpdateStats({
         totalClients,
         activeUpdates,
         pendingUpdates: totalClients * activeUpdates,
-        successRate: Math.round(successRate)
+        successRate: Math.round(successRate),
       });
-
     } catch (error) {
       console.error('❌ Failed to load update stats:', error);
     }
@@ -98,14 +89,9 @@ const ThemeUpdateManager = () => {
 
   const loadClients = async () => {
     try {
-      const { data, error } = await supabase
-        .from('theme_clients')
-        .select('*')
-        .order('last_seen', { ascending: false });
-
-      if (error) throw error;
-      
-      setClients(data || []);
+      const res = await apiService.getThemeClients();
+      if (!res.success) throw new Error(res.error || 'theme clients');
+      setClients(res.data || []);
     } catch (error) {
       console.error('❌ Failed to load clients:', error);
     }

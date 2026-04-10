@@ -110,24 +110,26 @@ export class AdminService {
   ): Promise<DbResult<boolean>> {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     
+    const permissionId = crypto.randomUUID();
     const query = `
       INSERT INTO admin_section_permissions (id, user_id, section_id, can_access, can_edit, can_delete, created_at, updated_at)
-      VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        can_access = VALUES(can_access),
-        can_edit = VALUES(can_edit),
-        can_delete = VALUES(can_delete),
-        updated_at = VALUES(updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (user_id, section_id) DO UPDATE SET
+        can_access = EXCLUDED.can_access,
+        can_edit = EXCLUDED.can_edit,
+        can_delete = EXCLUDED.can_delete,
+        updated_at = EXCLUDED.updated_at
     `;
-    
+
     const result = await executeQuery(query, [
+      permissionId,
       userId,
       sectionId,
       permissions.can_access || false,
       permissions.can_edit || false,
       permissions.can_delete || false,
       now,
-      now
+      now,
     ]);
     
     return { success: result.success, data: result.success };

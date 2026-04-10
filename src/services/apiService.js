@@ -498,6 +498,22 @@ class ApiService {
     });
   }
 
+  async getAutomaticUpdateDashboard(days = 30) {
+    return await this.makeRequest(`/automatic-update/dashboard?days=${days}`);
+  }
+
+  async listStorageFiles(bucket = 'updates') {
+    return await this.makeRequest(`/storage/list?bucket=${encodeURIComponent(bucket)}`);
+  }
+
+  async getThemeClients() {
+    return await this.makeRequest('/theme-clients');
+  }
+
+  async getThemeUpdateLogs(limit = 100) {
+    return await this.makeRequest(`/theme-update-logs?limit=${limit}`);
+  }
+
   // ================ GALLERY ================
 
   async getGalleryImages() {

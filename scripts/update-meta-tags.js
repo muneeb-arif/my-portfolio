@@ -1,23 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
 const https = require('https');
 const http = require('http');
 require('dotenv').config();
-
-// Supabase setup
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Missing required environment variables');
-  console.log('Required variables:');
-  console.log('- REACT_APP_SUPABASE_URL');
-  console.log('- REACT_APP_SUPABASE_ANON_KEY'); 
-  process.exit(1);
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Function to escape HTML attributes properly
 function escapeHtmlAttribute(value) {
@@ -145,7 +130,7 @@ async function updateMetaTags() {
     const rawCurrentDomain = String(settings.site_url || 'https://farid.theexpertways.com').trim();
     
     if (rawAvatarImage.startsWith('http')) {
-      // Already a full URL (from Supabase storage)
+      // Already a full URL (e.g. CDN / Blob)
       imageUrl = rawAvatarImage;
     } else if (rawAvatarImage.startsWith('%PUBLIC_URL%')) {
       // Replace %PUBLIC_URL% with domain

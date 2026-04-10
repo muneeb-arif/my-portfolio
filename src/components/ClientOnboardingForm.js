@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Building, Users, FileText, Palette, Settings, Shield, Calendar, Target, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { saveOnboardingQuery } from '../services/supabaseService';
+import { saveOnboardingQuery } from '../services/contactQueriesApi';
 import { sendOnboardingEmail } from '../services/emailService';
 
 const ClientOnboardingForm = ({ isOpen, onClose }) => {

@@ -4,11 +4,12 @@ import { projectsService } from '../../services/projectsService';
 import { syncService } from '../../services/syncService';
 import { dashboardService } from '../../services/dashboardService';
 import { imageService } from '../../services/imageService';
-import { supabase } from '../../config/supabase'; // Keep for storage operations
+import { BUCKETS } from '../../config/storage';
 import { getCurrentUser } from '../../services/authUtils';
 import { useSettings } from '../../services/settingsContext';
 import { adminService } from '../../services/adminService';
 import { API_BASE } from '../../utils/apiConfig';
+import { apiService } from '../../services/apiService';
 import ProjectsManager from './ProjectsManager';
 import PromptsManager from './PromptsManager';
 import GallerySection from './GallerySection';
@@ -20,7 +21,6 @@ import DynamicSectionsManager from './DynamicSectionsManager';
 import MenusManager from './MenusManager';
 import DebugSync from './DebugSync';
 import ProgressDisplay from './ProgressDisplay';
-import AutomaticUpdateDashboard from './AutomaticUpdateDashboard';
 import SharedHostingUpdateManager from './SharedHostingUpdateManager';
 import UpdateNotificationBar from './UpdateNotificationBar';
 import DashboardMobileNav from './DashboardMobileNav';
@@ -1593,23 +1593,12 @@ const AppearanceSection = () => {
     }
   };
 
-  const uploadFile = async (file, folder) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from(folder)
-        .upload(`${Date.now()}-${file.name}`, file);
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(folder)
-        .getPublicUrl(data.path);
-
-      return publicUrl;
-    } catch (error) {
-      // console.error('Error uploading file:', error);
-      throw error;
+  const uploadFile = async (file, folder = BUCKETS.IMAGES) => {
+    const result = await imageService.uploadImage(file, folder);
+    if (!result.success) {
+      throw new Error(result.error || 'Upload failed');
     }
+    return result.data.url;
   };
 
   const handleSave = async () => {
@@ -2689,46 +2678,36 @@ const BackupFilesSection = () => {
         }
       }
 
-      // Also get files from Supabase storage as fallback
-      const { data: storageFiles, error } = await supabase.storage
-        .from('updates')
-        .list('', {
-          limit: 1000,
-          sortBy: { column: 'created_at', order: 'desc' }
-        });
-
-      if (error) {
-        console.warn('Error loading from Supabase storage:', error);
+      const listRes = await apiService.listStorageFiles('updates');
+      let storageBackupFiles = [];
+      if (listRes.success && Array.isArray(listRes.data)) {
+        storageBackupFiles = listRes.data.filter(
+          (file) =>
+            file.name &&
+            file.name.match(/\.(zip|tar|gz|rar|7z)$/i) &&
+            !file.name.startsWith('.')
+        );
+      } else if (!listRes.success) {
+        console.warn('Error loading from Blob storage:', listRes.error);
       }
 
-      // Filter backup files from storage
-      const storageBackupFiles = (storageFiles || []).filter(file => 
-        file.name.match(/\.(zip|tar|gz|rar|7z)$/i) && 
-        !file.name.startsWith('.')
-      );
-
-      // Combine database and storage files, prioritizing database entries
       const combinedFiles = [...databaseFiles];
-      
-      // Add storage files that aren't in database
-      storageBackupFiles.forEach(storageFile => {
-        const existsInDb = databaseFiles.some(dbFile => dbFile.file_name === storageFile.name);
+
+      storageBackupFiles.forEach((storageFile) => {
+        const existsInDb = databaseFiles.some((dbFile) => dbFile.file_name === storageFile.name);
         if (!existsInDb) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('updates')
-            .getPublicUrl(storageFile.name);
-          
           combinedFiles.push({
             id: null,
             file_name: storageFile.name,
-            name: storageFile.name, // For compatibility
-            url: publicUrl,
-            public_url: publicUrl,
-            size: storageFile.metadata?.size || 0,
-            file_size: storageFile.metadata?.size || 0,
-            created_at: storageFile.created_at,
-            upload_date: storageFile.created_at,
-            updated_at: storageFile.updated_at
+            name: storageFile.name,
+            url: storageFile.url,
+            public_url: storageFile.url,
+            size: storageFile.size || 0,
+            file_size: storageFile.size || 0,
+            created_at: storageFile.uploadedAt,
+            upload_date: storageFile.uploadedAt,
+            updated_at: storageFile.uploadedAt,
+            storage_path: storageFile.pathname,
           });
         }
       });
@@ -2759,23 +2738,17 @@ const BackupFilesSection = () => {
       setError('');
 
       for (const file of files) {
-        // Generate unique filename with timestamp
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const fileName = `backup-${timestamp}-${file.name}`;
-        
-        // Upload to Supabase storage
-        const { error: uploadError } = await supabase.storage
-          .from('updates')
-          .upload(fileName, file);
+        const logicalName = `backup-${timestamp}-${file.name}`;
 
-        if (uploadError) throw uploadError;
+        const up = await imageService.uploadImage(file, BUCKETS.UPDATES);
+        if (!up.success) {
+          throw new Error(up.error || 'Upload failed');
+        }
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('updates')
-          .getPublicUrl(fileName);
+        const publicUrl = up.data.url;
+        const relPath = up.data.path;
 
-        // Create database entry via API
         const response = await fetch(`${API_BASE}/backup-files`, {
           method: 'POST',
           headers: {
@@ -2783,10 +2756,10 @@ const BackupFilesSection = () => {
             'Authorization': `Bearer ${localStorage.getItem('api_token')}`
           },
           body: JSON.stringify({
-            file_name: fileName,
+            file_name: logicalName,
             file_size: file.size,
             file_type: file.type,
-            storage_path: `updates/${fileName}`,
+            storage_path: `updates/${relPath}`,
             public_url: publicUrl,
             description: `Backup file uploaded on ${new Date().toLocaleDateString()}`
           })
@@ -2841,14 +2814,17 @@ const BackupFilesSection = () => {
     }
 
     try {
-      // Delete from Supabase storage
       const fileName = file.name || file.file_name;
-      const { error: storageError } = await supabase.storage
-        .from('updates')
-        .remove([fileName]);
-
-      if (storageError) {
-        console.warn('Error deleting from storage:', storageError);
+      let blobRel = null;
+      if (file.storage_path && typeof file.storage_path === 'string') {
+        const p = file.storage_path.replace(/^updates\//, '');
+        if (p) blobRel = p;
+      }
+      if (blobRel) {
+        const delRes = await imageService.deleteImage(blobRel, BUCKETS.UPDATES);
+        if (!delRes.success) {
+          console.warn('Error deleting from Blob storage:', delRes.error);
+        }
       }
 
       // Delete from database if it has an ID

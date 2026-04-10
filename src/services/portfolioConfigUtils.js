@@ -1,4 +1,3 @@
-import { supabase } from '../config/supabase';
 import { API_BASE } from '../utils/apiConfig';
 
 // Centralized portfolio config cache with promise deduplication
@@ -48,20 +47,17 @@ export const getPortfolioConfig = async () => {
         return null;
       }
       
-      // Query portfolio_config table
-      const { data, error } = await supabase
-        .from('portfolio_config')
-        .select('*')
-        .eq('owner_email', envEmail)
-        .eq('is_active', true)
-        .single();
-      
-      if (error) {
+      const res = await fetch(
+        `${API_BASE}/portfolio-config?owner_email=${encodeURIComponent(envEmail)}`
+      );
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json.success || !json.data) {
         console.log('🔧 PORTFOLIO CONFIG: Config not found for email:', envEmail);
         configCache.config = null;
       } else {
         console.log('🔧 PORTFOLIO CONFIG: Config found for:', envEmail);
-        configCache.config = data;
+        configCache.config = json.data;
       }
       
       configCache.cachedEmail = envEmail;

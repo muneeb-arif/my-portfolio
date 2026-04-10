@@ -5,22 +5,25 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Checking project images in database...');
     
-    // Check if table exists
-    const tableCheck = await executeQuery(`
-      SHOW TABLES LIKE 'project_images'
-    `);
-    
-    if (!tableCheck.success || (tableCheck.data as any[]).length === 0) {
+    const tableCheck = await executeQuery(
+      `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'project_images' LIMIT 1`,
+      []
+    );
+
+    if (!tableCheck.success || !(tableCheck.data as any[])?.length) {
       return NextResponse.json({
         success: false,
-        error: 'project_images table does not exist'
+        error: 'project_images table does not exist',
       });
     }
-    
-    // Check table structure
-    const structureCheck = await executeQuery(`
-      DESCRIBE project_images
-    `);
+
+    const structureCheck = await executeQuery(
+      `SELECT column_name, data_type, is_nullable
+       FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'project_images'
+       ORDER BY ordinal_position`,
+      []
+    );
     
     // Get all images
     const imagesResult = await executeQuery(`

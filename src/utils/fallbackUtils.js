@@ -1,5 +1,4 @@
 import { API_BASE } from './apiConfig';
-import { supabase } from '../config/supabase';
 
 let fallbackNotificationShown = false;
 
@@ -16,7 +15,7 @@ export const fallbackUtils = {
           <div class="fallback-notification-icon">⚠️</div>
           <div class="fallback-notification-text">
             <strong>Demo Mode</strong>
-            <p>Pre-filled data is loading from JSON, update .env to connect supabase and load dynamic data from dashboard</p>
+            <p>Pre-filled data is loading from JSON. Set REACT_APP_API_URL to use live data.</p>
           </div>
           <button class="fallback-notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
         </div>

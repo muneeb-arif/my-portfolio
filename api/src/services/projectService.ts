@@ -137,7 +137,7 @@ export class ProjectService {
         id, user_id, title, description, category, overview, 
         technologies, features, live_url, github_url, status, 
         is_prompt, views, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?, ?, 0, ?, ?)
     `;
     
     const params = [
@@ -194,12 +194,12 @@ export class ProjectService {
     }
     
     if (projectData.technologies !== undefined) {
-      updateFields.push('technologies = ?');
+      updateFields.push('technologies = ?::jsonb');
       params.push(projectData.technologies ? JSON.stringify(projectData.technologies) : null);
     }
-    
+
     if (projectData.features !== undefined) {
-      updateFields.push('features = ?');
+      updateFields.push('features = ?::jsonb');
       params.push(projectData.features ? JSON.stringify(projectData.features) : null);
     }
     

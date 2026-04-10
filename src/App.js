@@ -23,7 +23,7 @@ import RainLoader from './components/RainLoader';
 import portfolioService from './services/portfolioService';
 import { SettingsProvider, useSettings } from './services/settingsContext';
 import { AuthProvider } from './services/authContext';
-import { checkEnvMissing } from './config/supabase';
+import { checkEnvMissing } from './config/env';
 import metaTagService from './services/metaTagService';
 
 function App() {
@@ -293,7 +293,7 @@ function AppContent() {
         {/* Environment Variables Missing Toast */}
         {showEnvToast && (
           <Toast
-            message="Missing .env file with Supabase credentials. The app is running in demo mode with fallback data."
+            message="Missing REACT_APP_API_URL in .env. The app cannot reach the portfolio API and may use fallback data."
             type="warning"
             duration={10000}
             onClose={() => setShowEnvToast(false)}

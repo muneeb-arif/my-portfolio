@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const isActive = searchParams.get('is_active');
     const limit = searchParams.get('limit');
+    const id = searchParams.get('id');
+    const channel = searchParams.get('channel');
     let order = searchParams.get('order') || 'created_at DESC';
     
     // Fix order parameter format (convert dot notation to space)
@@ -19,13 +21,22 @@ export async function GET(request: NextRequest) {
     // Start with a simple query and build it up
     let query = 'SELECT * FROM theme_updates';
     const params: any[] = [];
+    const where: string[] = [];
 
-    // Add filters
+    if (id) {
+      where.push('id = ?');
+      params.push(id);
+    }
     if (isActive !== null) {
-      query += ' WHERE is_active = ?';
-      // Ensure we're passing a proper integer
-      const activeValue = isActive === 'true' ? 1 : 0;
-      params.push(activeValue);
+      where.push('is_active = ?');
+      params.push(isActive === 'true' || isActive === '1');
+    }
+    if (channel) {
+      where.push('channel = ?');
+      params.push(channel);
+    }
+    if (where.length > 0) {
+      query += ' WHERE ' + where.join(' AND ');
     }
 
     // Add ordering - use safe column names
@@ -101,11 +112,11 @@ export async function POST(request: NextRequest) {
     
     const insertQuery = `
       INSERT INTO theme_updates (id, version, title, description, files, is_active, channel, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?)
     `;
 
     const filesJson = files ? JSON.stringify(files) : null;
-    const activeValue = is_active ? 1 : 0;
+    const activeValue = Boolean(is_active);
 
     const result = await executeQuery(insertQuery, [
       themeUpdateId,
@@ -184,12 +195,12 @@ export async function PUT(request: NextRequest) {
       params.push(body.description);
     }
     if (body.files !== undefined) {
-      updates.push('files = ?');
+      updates.push('files = ?::jsonb');
       params.push(JSON.stringify(body.files));
     }
     if (body.is_active !== undefined) {
       updates.push('is_active = ?');
-      params.push(body.is_active ? 1 : 0);
+      params.push(Boolean(body.is_active));
     }
     if (body.channel !== undefined) {
       updates.push('channel = ?');

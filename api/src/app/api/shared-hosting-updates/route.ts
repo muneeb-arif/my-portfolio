@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const isActive = searchParams.get('is_active');
     const limit = searchParams.get('limit');
+    const id = searchParams.get('id');
     let order = searchParams.get('order') || 'created_at DESC';
     
     // Fix order parameter format (convert dot notation to space)
@@ -18,13 +19,22 @@ export async function GET(request: NextRequest) {
     // Start with a simple query and build it up
     let query = 'SELECT * FROM shared_hosting_updates';
     const params: any[] = [];
+    const conditions: string[] = [];
 
-    // Add filters
-    if (isActive !== null) {
-      query += ' WHERE is_active = ?';
-      // Ensure we're passing a proper integer
-      const activeValue = isActive === 'true' ? 1 : 0;
-      params.push(activeValue);
+    if (id) {
+      conditions.push('id = ?');
+      params.push(id);
+      conditions.push('is_active = TRUE');
+    } else if (isActive !== null) {
+      conditions.push('is_active = ?');
+      params.push(isActive === 'true' || isActive === '1');
+    } else {
+      // Public list: active packages only (avoid exposing inactive rows)
+      conditions.push('is_active = TRUE');
+    }
+
+    if (conditions.length) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
 
     // Add ordering - use safe column names
@@ -56,7 +66,8 @@ export async function GET(request: NextRequest) {
       
       // Try a simpler query as fallback
       console.log('🔄 Trying fallback query...');
-      const fallbackQuery = 'SELECT * FROM shared_hosting_updates ORDER BY created_at DESC LIMIT 10';
+      const fallbackQuery =
+        'SELECT * FROM shared_hosting_updates WHERE is_active = TRUE ORDER BY created_at DESC LIMIT 10';
       result = await executeQuery(fallbackQuery, []);
       
       if (!result.success) {
@@ -71,14 +82,15 @@ export async function GET(request: NextRequest) {
     // Transform the data to include package_url for automatic update service compatibility
     const data = result.data as any[];
     const transformedData = data.map((update: any) => {
-      // Extract package_url from files array for automatic update service
-      const packageUrl = update.files && update.files.length > 0 && update.files[0].url 
-        ? update.files[0].url 
-        : null;
-      
+      const fromFiles =
+        update.files && Array.isArray(update.files) && update.files.length > 0 && update.files[0].url
+          ? update.files[0].url
+          : null;
+      const packageUrl = update.package_url || fromFiles;
+
       return {
         ...update,
-        package_url: packageUrl
+        package_url: packageUrl,
       };
     });
 
@@ -96,36 +108,62 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/shared-hosting-updates - Create new shared hosting update
-export async function POST(request: NextRequest) {
+// POST /api/shared-hosting-updates - Create (authenticated)
+async function postSharedHostingUpdate(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
-    const { version, title, description, files, is_active = true } = body;
+    const {
+      version,
+      title,
+      description,
+      files,
+      release_notes,
+      package_url,
+      special_instructions,
+      channel = 'stable',
+      is_critical = false,
+      is_active = true,
+    } = body;
 
-    // Validate required fields
-    if (!version || !title || !description) {
+    const descText =
+      description ||
+      release_notes ||
+      (package_url ? 'Update package' : '');
+
+    if (!version || !title || !descText) {
       return NextResponse.json(
-        { error: 'Missing required fields: version, title, description' },
+        { error: 'Missing required fields: version, title, and description or release_notes' },
         { status: 400 }
       );
     }
 
-    // Generate UUID for the update
+    let filesPayload = files;
+    if (!filesPayload && package_url) {
+      filesPayload = [{ url: package_url }];
+    }
+
     const updateId = crypto.randomUUID();
 
-    // Insert the update
     const insertQuery = `
-      INSERT INTO shared_hosting_updates (id, version, title, description, files, is_active)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO shared_hosting_updates (
+        id, version, title, description, files, release_notes, package_url,
+        special_instructions, channel, is_critical, is_active
+      )
+      VALUES (?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?)
     `;
 
     const result = await executeQuery(insertQuery, [
       updateId,
       version,
       title,
-      description,
-      files ? JSON.stringify(files) : null,
-      is_active ? 1 : 0
+      descText,
+      filesPayload ? JSON.stringify(filesPayload) : null,
+      release_notes || null,
+      package_url || null,
+      special_instructions || null,
+      channel,
+      Boolean(is_critical),
+      Boolean(is_active),
     ]);
 
     if (!result.success) {
@@ -148,13 +186,16 @@ export async function POST(request: NextRequest) {
 
     // Transform the data to include package_url for automatic update service compatibility
     const updateData = getResult.data[0] as any;
-    const packageUrl = updateData.files && updateData.files.length > 0 && updateData.files[0].url 
-      ? updateData.files[0].url 
-      : null;
-    
+    const fromFiles =
+      updateData.files &&
+      Array.isArray(updateData.files) &&
+      updateData.files.length > 0 &&
+      updateData.files[0].url
+        ? updateData.files[0].url
+        : null;
     const transformedData = {
       ...updateData,
-      package_url: packageUrl
+      package_url: updateData.package_url || fromFiles,
     };
 
     return NextResponse.json({
@@ -172,13 +213,27 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT /api/shared-hosting-updates - Update existing shared hosting update
-export async function PUT(request: NextRequest) {
+export const POST = withAuth(postSharedHostingUpdate);
+
+// PUT /api/shared-hosting-updates - Update (authenticated)
+async function putSharedHostingUpdate(request: AuthenticatedRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
-    const { version, title, description, files, is_active } = body;
+    const {
+      version,
+      title,
+      description,
+      files,
+      is_active,
+      release_notes,
+      package_url,
+      special_instructions,
+      channel,
+      is_critical,
+      pushed_at,
+    } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -204,12 +259,36 @@ export async function PUT(request: NextRequest) {
       params.push(description);
     }
     if (files !== undefined) {
-      updates.push('files = ?');
+      updates.push('files = ?::jsonb');
       params.push(JSON.stringify(files));
     }
     if (is_active !== undefined) {
       updates.push('is_active = ?');
-      params.push(is_active ? 1 : 0);
+      params.push(Boolean(is_active));
+    }
+    if (release_notes !== undefined) {
+      updates.push('release_notes = ?');
+      params.push(release_notes);
+    }
+    if (package_url !== undefined) {
+      updates.push('package_url = ?');
+      params.push(package_url);
+    }
+    if (special_instructions !== undefined) {
+      updates.push('special_instructions = ?');
+      params.push(special_instructions);
+    }
+    if (channel !== undefined) {
+      updates.push('channel = ?');
+      params.push(channel);
+    }
+    if (is_critical !== undefined) {
+      updates.push('is_critical = ?');
+      params.push(Boolean(is_critical));
+    }
+    if (pushed_at !== undefined) {
+      updates.push('pushed_at = ?');
+      params.push(pushed_at);
     }
 
     if (updates.length === 0) {
@@ -245,8 +324,10 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE /api/shared-hosting-updates - Delete shared hosting update
-export async function DELETE(request: NextRequest) {
+export const PUT = withAuth(putSharedHostingUpdate);
+
+// DELETE /api/shared-hosting-updates (authenticated)
+async function deleteSharedHostingUpdate(request: AuthenticatedRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -279,4 +360,6 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
+
+export const DELETE = withAuth(deleteSharedHostingUpdate);

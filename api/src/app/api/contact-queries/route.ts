@@ -63,26 +63,116 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/contact-queries - Create new contact query (protected)
+// POST /api/contact-queries — contact or onboarding (authenticated)
 export const POST = withAuth(async (request: AuthenticatedRequest) => {
   try {
     const body = await request.json();
-    const { 
-      form_type, 
-      name, 
-      email, 
-      phone, 
-      company, 
-      subject, 
-      message, 
-      budget, 
-      timeline, 
-      inquiry_type, 
-      status, 
-      priority 
+    const formType = body.form_type || 'contact';
+    const queryId = crypto.randomUUID();
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+    const st = body.status;
+    const pr = body.priority;
+    const status = ['new', 'in_progress', 'completed', 'cancelled'].includes(st) ? st : 'new';
+    const priority = ['low', 'medium', 'high', 'urgent'].includes(pr) ? pr : 'medium';
+
+    if (formType === 'onboarding') {
+      const companyName = body.company_name ?? body.companyName;
+      const contactPerson = body.contact_person ?? body.contactPerson;
+      const businessDescription = body.business_description ?? body.businessDescription;
+
+      if (!companyName || !contactPerson || !businessDescription) {
+        return NextResponse.json(
+          { success: false, error: 'company_name, contact_person, and business_description are required' },
+          { status: 400 }
+        );
+      }
+
+      const onboardingPriority = pr === undefined ? 'high' : priority;
+
+      const insert = `
+        INSERT INTO contact_queries (
+          id, user_id, form_type, name, email,
+          company_name, contact_person, communication_channel, business_description,
+          target_customer, unique_value, problem_solving, core_features,
+          existing_system, technical_constraints, competitors,
+          brand_guide, color_preferences, tone_of_voice,
+          payment_gateways, integrations, admin_control,
+          gdpr_compliance, terms_privacy, launch_date, budget_range,
+          post_mvp_features, long_term_goals, status, priority, created_at, updated_at
+        ) VALUES (
+          ?, ?, 'onboarding', ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?
+        )
+      `;
+
+      const result = await executeQuery(insert, [
+        queryId,
+        request.user!.id,
+        body.name || null,
+        body.email || null,
+        companyName,
+        contactPerson,
+        body.communication_channel ?? body.communicationChannel ?? null,
+        businessDescription,
+        body.target_customer ?? body.targetCustomer ?? null,
+        body.unique_value ?? body.uniqueValue ?? null,
+        body.problem_solving ?? body.problemSolving ?? null,
+        body.core_features ?? body.coreFeatures ?? null,
+        body.existing_system ?? body.existingSystem ?? null,
+        body.technical_constraints ?? body.technicalConstraints ?? null,
+        body.competitors ?? null,
+        body.brand_guide ?? body.brandGuide ?? null,
+        body.color_preferences ?? body.colorPreferences ?? null,
+        body.tone_of_voice ?? body.toneOfVoice ?? null,
+        body.payment_gateways ?? body.paymentGateways ?? null,
+        body.integrations ?? null,
+        body.admin_control ?? body.adminControl ?? null,
+        Boolean(body.gdpr_compliance ?? body.gdprCompliance),
+        Boolean(body.terms_privacy ?? body.termsPrivacy),
+        (body.launch_date ?? body.launchDate) || null,
+        body.budget_range ?? body.budgetRange ?? null,
+        body.post_mvp_features ?? body.postMvpFeatures ?? null,
+        body.long_term_goals ?? body.longTermGoals ?? null,
+        status,
+        onboardingPriority,
+        now,
+        now,
+      ]);
+
+      if (!result.success) {
+        return NextResponse.json({ success: false, error: result.error }, { status: 500 });
+      }
+
+      const getResult = await executeQuery('SELECT * FROM contact_queries WHERE id = ?', [queryId]);
+      return NextResponse.json(
+        {
+          success: true,
+          data: (getResult.data as any[])?.[0],
+          message: 'Onboarding query created successfully',
+        },
+        { status: 201 }
+      );
+    }
+
+    const {
+      name,
+      email,
+      phone,
+      company,
+      subject,
+      message,
+      budget,
+      timeline,
+      inquiry_type,
     } = body;
 
-    // Validate input
     if (!name || !email || !subject || !message) {
       return NextResponse.json(
         { success: false, error: 'Name, email, subject, and message are required' },
@@ -90,62 +180,49 @@ export const POST = withAuth(async (request: AuthenticatedRequest) => {
       );
     }
 
-    const queryId = crypto.randomUUID();
-    // Ensure queryId is a valid 36-character UUID string
-    if (!queryId || typeof queryId !== 'string' || queryId.length !== 36) {
-      throw new Error('Generated id is not a valid UUID');
-    }
-    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    
     const query = `
       INSERT INTO contact_queries (
-        id, user_id, form_type, name, email, phone, company, subject, message, 
+        id, user_id, form_type, name, email, phone, company, subject, message,
         budget, timeline, inquiry_type, status, priority, created_at, updated_at
-      ) 
+      )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    
+
     const result = await executeQuery(query, [
-      queryId, 
-      request.user!.id, 
-      form_type || 'contact', 
-      name, 
-      email, 
-      phone || null, 
-      company || null, 
-      subject, 
-      message, 
-      budget || null, 
-      timeline || null, 
-      inquiry_type || 'General Inquiry', 
-      // Ensure status and priority are valid ENUM values for MySQL
-      ['new', 'in_progress', 'completed', 'cancelled'].includes(status) ? status : 'new',
-      ['low', 'medium', 'high', 'urgent'].includes(priority) ? priority : 'medium',
+      queryId,
+      request.user!.id,
+      'contact',
+      name,
+      email,
+      phone || null,
+      company || null,
+      subject,
+      message,
+      budget || null,
+      timeline || null,
+      inquiry_type || 'General Inquiry',
+      status,
+      priority,
       now,
-      now
+      now,
     ]);
 
     if (!result.success) {
-      return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: result.error }, { status: 500 });
     }
 
-    // Get the created query
-    const getQuery = 'SELECT * FROM contact_queries WHERE id = ?';
-    const getResult = await executeQuery(getQuery, [queryId]);
+    const getResult = await executeQuery('SELECT * FROM contact_queries WHERE id = ?', [queryId]);
 
-    return NextResponse.json({
-      success: true,
-      data: (getResult.data as any[])?.[0],
-      message: 'Contact query created successfully'
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        data: (getResult.data as any[])?.[0],
+        message: 'Contact query created successfully',
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Create contact query error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }); 

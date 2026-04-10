@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Mail, User, MessageSquare, Tag, AlertCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useSettings } from '../services/settingsContext';
-import { saveContactQuery } from '../services/supabaseService';
+import { saveContactQuery } from '../services/contactQueriesApi';
 import { sendContactEmail } from '../services/emailService';
 
 const ContactForm = ({ isOpen, onClose, prefillData = {} }) => {

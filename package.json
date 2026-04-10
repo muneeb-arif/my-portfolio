@@ -9,7 +9,6 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.10.0",
     "lucide-react": "^0.513.0",
-    "mysql2": "^3.14.2",
     "node-fetch": "^3.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -41,7 +40,11 @@
     "release": "npm run create-update",
     "upload-package": "node scripts/upload-update-package.js",
     "list-clients": "node scripts/upload-update-package.js --list-clients",
-    "list-updates": "node scripts/upload-update-package.js --list-updates"
+    "list-updates": "node scripts/upload-update-package.js --list-updates",
+    "build:vercel": "npm run update-meta && react-scripts build",
+    "migrate:mysql-to-pg": "node scripts/migrate-mysql-to-vercel-postgres.js",
+    "migrate:supabase-to-blob": "node scripts/migrate-supabase-storage-to-vercel-blob.js",
+    "remap:urls": "node scripts/remap-urls-from-map.js"
   },
   "eslintConfig": {
     "extends": [
@@ -62,9 +65,12 @@
     ]
   },
   "devDependencies": {
+    "@vercel/blob": "^0.27.0",
     "@supabase/supabase-js": "^2.50.2",
     "autoprefixer": "^10.4.14",
     "dotenv": "^17.0.0",
+    "mysql2": "^3.14.2",
+    "pg": "^8.13.1",
     "postcss": "^8.4.24",
     "puppeteer": "^24.11.2",
     "serve": "^14.2.4",

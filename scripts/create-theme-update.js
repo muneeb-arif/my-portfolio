@@ -8,37 +8,24 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { createClient } = require('@supabase/supabase-js');
+const { Client } = require('pg');
+const crypto = require('crypto');
 
-// Load environment variables from .env file
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'api', '.env') });
 
-// Configuration
 const CONFIG = {
-  supabaseUrl: process.env.REACT_APP_SUPABASE_URL,
-  supabaseKey: process.env.REACT_APP_SUPABASE_ANON_KEY,
+  databaseUrl: process.env.DATABASE_URL,
   buildDir: 'build',
   tempDir: 'temp-update',
   packageFile: 'package.json',
-  supportedFileTypes: ['css', 'js', 'json', 'html']
+  supportedFileTypes: ['css', 'js', 'json', 'html'],
 };
 
-// Validate environment variables
-if (!CONFIG.supabaseUrl || !CONFIG.supabaseKey) {
-  console.error('❌ Missing required environment variables!');
-  console.error('');
-  console.error('Please make sure your .env file contains:');
-  console.error('REACT_APP_SUPABASE_URL=your-supabase-url');
-  console.error('REACT_APP_SUPABASE_ANON_KEY=your-supabase-anon-key');
-  console.error('');
-  console.error('Current values:');
-  console.error(`REACT_APP_SUPABASE_URL: ${CONFIG.supabaseUrl ? '✅ Set' : '❌ Missing'}`);
-  console.error(`REACT_APP_SUPABASE_ANON_KEY: ${CONFIG.supabaseKey ? '✅ Set' : '❌ Missing'}`);
+if (!CONFIG.databaseUrl) {
+  console.error('❌ DATABASE_URL required (Vercel Postgres). Set in .env or api/.env');
   process.exit(1);
 }
-
-// Initialize Supabase client
-const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 
 class ThemeUpdateCreator {
   constructor() {
@@ -208,27 +195,28 @@ class ThemeUpdateCreator {
         filesCount: this.updateFiles.length
       });
 
-      const { data, error } = await supabase
-        .from('theme_updates')
-        .insert({
-          title: this.updateTitle,
-          description: this.updateDescription || 'No description provided',
-          version: this.newVersion,
-          channel: this.updateChannel,
-          files: this.updateFiles,
-          is_active: true,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('📊 Supabase error details:', error);
-        throw error;
+      const id = crypto.randomUUID();
+      const client = new Client({ connectionString: CONFIG.databaseUrl });
+      await client.connect();
+      try {
+        await client.query(
+          `INSERT INTO theme_updates (id, title, description, version, channel, files, is_active, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6::jsonb,true,NOW(),NOW())`,
+          [
+            id,
+            this.updateTitle,
+            this.updateDescription || 'No description provided',
+            this.newVersion,
+            this.updateChannel,
+            JSON.stringify(this.updateFiles),
+          ]
+        );
+      } finally {
+        await client.end();
       }
 
-      console.log('✅ Update created successfully:', data.id);
-      return data;
+      console.log('✅ Update created successfully:', id);
+      return { id };
     } catch (error) {
       console.error('❌ Failed to create update:', error);
       console.error('❌ Error details:', {
@@ -341,50 +329,19 @@ Generated on ${new Date().toISOString()}
    * Test Supabase connection and setup
    */
   async testConnection() {
-    console.log('🔌 Testing Supabase connection...');
-    
-    // First test basic connection
+    console.log('🔌 Testing Postgres (DATABASE_URL)...');
+    const client = new Client({ connectionString: CONFIG.databaseUrl });
     try {
-      const { data: authData, error: authError } = await supabase.auth.getSession();
-      console.log('✅ Basic Supabase connection successful');
-    } catch (error) {
-      console.error('❌ Basic Supabase connection failed:', error.message);
-      console.error('Check your REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY');
-      return false;
-    }
-
-    // Test if theme_updates table exists
-    try {
-      console.log('🔍 Checking if theme_updates table exists...');
-      const { data, error } = await supabase
-        .from('theme_updates')
-        .select('count', { count: 'exact', head: true });
-      
-      if (error) {
-        if (error.code === '42P01') { // Table does not exist
-          console.error('❌ theme_updates table does not exist!');
-          console.error('');
-          console.error('🔧 Setup required:');
-          console.error('1. Open your Supabase SQL Editor');
-          console.error('2. Copy and run the contents of sql/theme-update-system.sql');
-          console.error('3. Try running this script again');
-          console.error('');
-          console.error('The SQL file creates all necessary tables for the theme update system.');
-          return false;
-        }
-        throw error;
-      }
-      
-      console.log('✅ theme_updates table found');
+      await client.connect();
+      await client.query('SELECT 1 FROM theme_updates LIMIT 1');
+      console.log('✅ theme_updates reachable');
       return true;
     } catch (error) {
-      console.error('❌ Database setup check failed:', error.message);
-      console.error('');
-      console.error('Possible issues:');
-      console.error('1. Run sql/theme-update-system.sql in Supabase SQL Editor');
-      console.error('2. Check Row Level Security policies');
-      console.error('3. Verify your API key has the right permissions');
+      console.error('❌ Postgres check failed:', error.message);
+      console.error('Apply sql/postgres/schema.sql to your Vercel Postgres database first.');
       return false;
+    } finally {
+      await client.end().catch(() => {});
     }
   }
 

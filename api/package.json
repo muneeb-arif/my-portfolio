@@ -4,7 +4,7 @@
   "description": "Next.js API server for portfolio management system",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev -p 5001",
     "build": "echo '🚀 Starting build process...' && next build --debug",
     "build:verbose": "echo '🚀 Starting verbose build process...' && NODE_ENV=production next build --debug --verbose",
     "build:progress": "echo '🚀 Starting build with progress...' && NODE_ENV=production next build --debug --progress",
@@ -15,14 +15,15 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.5",
+    "@vercel/blob": "^0.27.0",
     "axios": "^1.10.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.14.2",
     "next": "^14.0.0",
+    "pg": "^8.13.1",
     "nodemailer": "^6.9.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -35,6 +36,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.0.0",
+    "@types/pg": "^8.11.10",
     "@types/nodemailer": "^6.4.14",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
@@ -46,7 +48,7 @@
   "keywords": [
     "nextjs",
     "api",
-    "mysql",
+    "postgresql",
     "portfolio",
     "dashboard"
   ],

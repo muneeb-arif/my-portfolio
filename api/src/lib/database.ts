@@ -1,35 +1,33 @@
-import mysql from 'mysql2/promise';
+import { Pool, PoolClient } from 'pg';
 
-// Database configuration
-const dbConfig = {
-  host: process.env.MYSQL_HOST || 'localhost',
-  port: parseInt(process.env.MYSQL_PORT || '3306'),
-  user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || 'root',
-  database: process.env.MYSQL_DATABASE || 'portfolio',
-  waitForConnections: true,
-  connectionLimit: 20, // Maximum number of connections in the pool
-  queueLimit: 10, // Maximum number of connection requests queued
-  // MySQL2 compatible timeout settings
-  acquireTimeout: 60000, // Timeout for getting a connection from the pool
-  timeout: 60000, // Query timeout
-  // Connection pool settings
-  idleTimeout: 30000, // Close idle connections after 30 seconds
-  // Remove invalid options that cause warnings
-  // acquireTimeoutMillis: 60000,  // Invalid for mysql2
-  // connectionTimeoutMillis: 60000, // Invalid for mysql2
-  // maxIdle: 10, // Invalid for mysql2
-};
+/** Convert MySQL-style `?` placeholders to Postgres `$1`, `$2`, ... */
+export function toPostgresParams(sql: string, params: unknown[] = []): { text: string; values: unknown[] } {
+  let n = 0;
+  const text = sql.replace(/\?/g, () => `$${++n}`);
+  return { text, values: params };
+}
 
-// Create connection pool
-const pool = mysql.createPool(dbConfig);
+function getPool(): Pool {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error('DATABASE_URL is not set');
+  }
+  if (!(globalThis as any).__pgPool) {
+    (globalThis as any).__pgPool = new Pool({
+      connectionString: url,
+      max: 10,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 60_000,
+    });
+  }
+  return (globalThis as any).__pgPool as Pool;
+}
 
-// Test database connection
 export async function testConnection() {
   try {
-    const connection = await pool.getConnection();
+    const pool = getPool();
+    await pool.query('SELECT 1 AS test');
     console.log('✅ Database connected successfully');
-    connection.release();
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error);
@@ -37,67 +35,63 @@ export async function testConnection() {
   }
 }
 
-// Execute query with error handling
 export async function executeQuery(query: string, params: any[] = []) {
-  let connection;
+  const pool = getPool();
   try {
-    // Get connection from pool
-    connection = await pool.getConnection();
-    
-    // Log connection status for debugging
-    console.log(`🔗 DB Connection - Executing query: ${query.substring(0, 50)}...`);
-    
-    const [rows] = await connection.execute(query, params);
-    return { success: true, data: rows };
+    const { text, values } = toPostgresParams(query, params);
+    console.log(`🔗 DB - Executing query: ${text.substring(0, 80)}...`);
+    const result = await pool.query(text, values);
+    return {
+      success: true,
+      data: result.rows as any[],
+      rowCount: result.rowCount ?? 0,
+    };
   } catch (error) {
     console.error('Database query error:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-  } finally {
-    // Always release the connection back to the pool
-    if (connection) {
-      connection.release();
-    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
 }
 
-// Execute transaction
 export async function executeTransaction(queries: { query: string; params?: any[] }[]) {
-  const connection = await pool.getConnection();
-  
+  const pool = getPool();
+  const client: PoolClient = await pool.connect();
   try {
-    await connection.beginTransaction();
-    
-    const results = [];
+    await client.query('BEGIN');
+    const results: any[] = [];
     for (const { query, params = [] } of queries) {
-      const [rows] = await connection.execute(query, params);
-      results.push(rows);
+      const { text, values } = toPostgresParams(query, params);
+      const r = await client.query(text, values);
+      results.push(r.rows);
     }
-    
-    await connection.commit();
+    await client.query('COMMIT');
     return { success: true, data: results };
   } catch (error) {
-    await connection.rollback();
+    await client.query('ROLLBACK');
     console.error('Transaction error:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Transaction failed' };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Transaction failed',
+    };
   } finally {
-    connection.release();
+    client.release();
   }
 }
 
-// Monitor connection pool status
 export function getPoolStatus() {
   return {
-    config: {
-      connectionLimit: dbConfig.connectionLimit,
-      queueLimit: dbConfig.queueLimit
-    }
+    config: { driver: 'pg', max: 10 },
   };
 }
 
-// Log pool status every 30 seconds for debugging
-// setInterval(() => {
-//   const status = getPoolStatus();
-//   // console.log('📊 DB Pool Status:', status);
-// }, 30000);
+const poolExport = {
+  query: async (text: string, params?: any[]) => {
+    const pool = getPool();
+    const { text: t, values } = toPostgresParams(text, params || []);
+    return pool.query(t, values);
+  },
+};
 
-export default pool; 
+export default poolExport as unknown as Pool;

@@ -270,3 +270,4 @@ optimized-images/
 optimized-images-backup/
 build-optimized.zip
 backup-urls.txt
+migration-blob-url-map.jsonl

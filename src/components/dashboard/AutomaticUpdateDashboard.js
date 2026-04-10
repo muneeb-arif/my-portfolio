@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../config/supabase';
+import { apiService } from '../../services/apiService';
 import AutoUpdateDebugPanel from './AutoUpdateDebugPanel';
 import './AutomaticUpdateDashboard.css';
 
@@ -36,69 +36,21 @@ const AutomaticUpdateDashboard = () => {
   const loadAutomaticData = async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        loadAutomaticCapabilities(),
-        loadAutomaticStats(),
-        loadRecentActivity(),
-        loadUpdates(),
-        loadClients()
-      ]);
+      const res = await apiService.getAutomaticUpdateDashboard(30);
+      if (!res.success) {
+        throw new Error(res.error || 'Dashboard load failed');
+      }
+      setAutomaticCapabilities(res.capabilities || []);
+      setAutomaticStats(res.automaticStats || {});
+      setRecentActivity((res.recentActivity || []).slice(0, 20));
+      setUpdates(res.updates || []);
+      setClients(res.clients || []);
     } catch (err) {
       console.error('Failed to load automatic update data:', err);
       setError('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadAutomaticCapabilities = async () => {
-    const { data, error } = await supabase
-      .from('automatic_update_capabilities')
-      .select('*')
-      .eq('is_active', true)
-      .order('updated_at', { ascending: false });
-
-    if (error) throw error;
-    setAutomaticCapabilities(data || []);
-  };
-
-  const loadAutomaticStats = async () => {
-    const { data, error } = await supabase.rpc('get_automatic_update_stats', {
-      p_days_back: 30
-    });
-
-    if (error) throw error;
-    setAutomaticStats(data || {});
-  };
-
-  const loadRecentActivity = async () => {
-    const { data, error } = await supabase
-      .from('recent_automatic_activity')
-      .select('*')
-      .limit(20);
-
-    if (error) throw error;
-    setRecentActivity(data || []);
-  };
-
-  const loadUpdates = async () => {
-    const { data, error } = await supabase
-      .from('shared_hosting_updates')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    setUpdates(data || []);
-  };
-
-  const loadClients = async () => {
-    const { data, error } = await supabase
-      .from('shared_hosting_clients')
-      .select('*')
-      .order('last_seen', { ascending: false });
-
-    if (error) throw error;
-    setClients(data || []);
   };
 
   const createUpdate = async (e) => {
@@ -111,17 +63,21 @@ const AutomaticUpdateDashboard = () => {
         throw new Error('Please fill in all required fields');
       }
 
-      // Insert new update
-      const { data, error } = await supabase
-        .from('shared_hosting_updates')
-        .insert([{
-          ...newUpdate,
-          created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
+      const createRes = await apiService.createSharedHostingUpdate({
+        version: newUpdate.version,
+        title: newUpdate.title,
+        description: newUpdate.description,
+        release_notes: newUpdate.release_notes,
+        package_url: newUpdate.package_url,
+        special_instructions: newUpdate.special_instructions,
+        channel: newUpdate.channel,
+        is_critical: newUpdate.is_critical,
+        is_active: newUpdate.is_active,
+      });
 
-      if (error) throw error;
+      if (!createRes.success) {
+        throw new Error(createRes.error || 'Create failed');
+      }
 
       // Reset form
       setNewUpdate({
@@ -154,14 +110,12 @@ const AutomaticUpdateDashboard = () => {
   const toggleUpdateStatus = async (updateId, currentStatus) => {
     try {
       setUpdating(updateId);
-      const { error } = await supabase
-        .from('shared_hosting_updates')
-        .update({ is_active: !currentStatus })
-        .eq('id', updateId);
+      const upRes = await apiService.updateSharedHostingUpdate(updateId, {
+        is_active: !currentStatus,
+      });
+      if (!upRes.success) throw new Error(upRes.error || 'Update failed');
 
-      if (error) throw error;
-
-      await loadUpdates();
+      await loadAutomaticData();
       alert(currentStatus ? '✅ Update deactivated' : '✅ Update activated');
     } catch (err) {
       console.error('Failed to toggle update status:', err);
@@ -178,17 +132,13 @@ const AutomaticUpdateDashboard = () => {
       // Simulate distribution process
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const { error } = await supabase
-        .from('shared_hosting_updates')
-        .update({ 
-          pushed_at: new Date().toISOString(),
-          is_active: true
-        })
-        .eq('id', updateId);
+      const distRes = await apiService.updateSharedHostingUpdate(updateId, {
+        pushed_at: new Date().toISOString(),
+        is_active: true,
+      });
+      if (!distRes.success) throw new Error(distRes.error || 'Distribute failed');
 
-      if (error) throw error;
-
-      await loadUpdates();
+      await loadAutomaticData();
       alert('✅ Update distributed successfully!');
     } catch (err) {
       console.error('Failed to distribute update:', err);
