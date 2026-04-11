@@ -24,7 +24,10 @@ export const SettingsProvider = ({ children }) => {
   const [retryCount, setRetryCount] = useState(0);
 
   // Check if we're in dashboard mode (memoized to prevent re-calculations)
-  const isDashboard = useMemo(() => window.location.pathname === '/dashboard', []);
+  const isDashboard = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.pathname === '/dashboard';
+  }, []);
 
   // Enhanced default settings - single source of truth
   const defaultSettings = useMemo(() => ({

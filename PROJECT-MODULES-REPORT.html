@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Project — Modules &amp; Features Report</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4d;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3d8bfd;
+      --accent-dim: #2563eb;
+      --ok: #34d399;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--bg);
+      margin: 0;
+      padding: 2rem 1.5rem 4rem;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    h2 {
+      font-size: 1.25rem;
+      margin: 2.25rem 0 0.75rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+      color: #fff;
+    }
+    h3 {
+      font-size: 1.05rem;
+      margin: 1.5rem 0 0.5rem;
+      color: #c5d4e8;
+    }
+    p { margin: 0.65rem 0; color: #c9d6e8; }
+    a { color: var(--accent); }
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+    }
+    .toc ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .toc li { margin: 0.35rem 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin: 0.75rem 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.65rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--surface);
+      color: #fff;
+      font-weight: 600;
+    }
+    tr:nth-child(even) td { background: rgba(26, 35, 50, 0.5); }
+    code, .path {
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      font-size: 0.82em;
+      background: rgba(61, 139, 253, 0.12);
+      padding: 0.12em 0.35em;
+      border-radius: 4px;
+      color: #93c5fd;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.2em 0.5em;
+      border-radius: 4px;
+      margin-right: 0.35rem;
+    }
+    .badge-cra { background: #1e3a5f; color: #7dd3fc; }
+    .badge-api { background: #1a3d2e; color: #6ee7b7; }
+    .badge-db { background: #3d2a1e; color: #fcd34d; }
+    .note {
+      border-left: 3px solid var(--accent);
+      padding: 0.65rem 1rem;
+      margin: 1rem 0;
+      background: var(--surface);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+    }
+    ul.dense { margin: 0.4rem 0; padding-left: 1.2rem; }
+    ul.dense li { margin: 0.25rem 0; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <h1>Portfolio project — modules &amp; features</h1>
+  <p class="subtitle">
+    Generated for repository <strong>muneeb-portfolio</strong> (v2.0.0). This document maps the split architecture:
+    <span class="badge badge-cra">CRA frontend</span>
+    <span class="badge badge-api">Next.js API</span>
+    <span class="badge badge-db">Postgres + integrations</span>
+  </p>
+
+  <nav class="toc" aria-label="Table of contents">
+    <strong>Contents</strong>
+    <ul>
+      <li><a href="#architecture">1. Architecture overview</a></li>
+      <li><a href="#stack">2. Technology stack</a></li>
+      <li><a href="#frontend-entry">3. Frontend entry &amp; routing</a></li>
+      <li><a href="#public-site">4. Public portfolio site (features &amp; UI)</a></li>
+      <li><a href="#dashboard">5. Dashboard (admin CMS)</a></li>
+      <li><a href="#frontend-modules">6. Frontend module inventory</a></li>
+      <li><a href="#api">7. API server (Next.js)</a></li>
+      <li><a href="#data">8. Data &amp; SQL</a></li>
+      <li><a href="#scripts">9. Build &amp; maintenance scripts</a></li>
+      <li><a href="#tests">10. Tests &amp; diagnostics</a></li>
+      <li><a href="#deploy">11. Deployment &amp; static assets</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="architecture">1. Architecture overview</h2>
+  <p>
+    The repository is a <strong>two-part application</strong>:
+  </p>
+  <ul class="dense">
+    <li><strong>Root package</strong> (<code>package.json</code>): <strong>Create React App</strong> (<code>react-scripts</code>) single-page app. Source lives under <code>src/</code>. It talks to the backend via <code>REACT_APP_API_URL</code> (see <code>src/utils/apiConfig.js</code>).</li>
+    <li><strong>API package</strong> (<code>api/package.json</code>): <strong>Next.js 14</strong> project used primarily as an <strong>HTTP API</strong>. Routes are implemented under <code>api/src/app/api/</code> and dispatched through a generated catch-all route <code>api/src/app/api/[[...slug]]/route.ts</code> plus <code>api/src/lib/api-router.generated.ts</code> (regenerated by <code>api/scripts/generate-api-router.mjs</code> on prebuild).</li>
+  </ul>
+  <div class="note">
+    <strong>Implication:</strong> “Full Next.js” migration would merge these two packages so pages and <code>/api/*</code> ship from one Next app; today they are intentionally separated for CRA + API hosting (e.g. Vercel with SPA rewrites for the frontend).
+  </div>
+
+  <h2 id="stack">2. Technology stack</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Layer</th>
+        <th>Technologies</th>
+        <th>Location / notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Public UI</td>
+        <td>React 18, React Router DOM 7, Tailwind CSS 3, PostCSS, lucide-react, SweetAlert2, EmailJS</td>
+        <td><code>src/</code>, <code>tailwind.config.js</code></td>
+      </tr>
+      <tr>
+        <td>API runtime</td>
+        <td>Next.js 14, Node, TypeScript</td>
+        <td><code>api/</code></td>
+      </tr>
+      <tr>
+        <td>Primary database</td>
+        <td>PostgreSQL via <code>pg</code> pool; SQL uses <code>?</code> placeholders converted to Postgres <code>$n</code></td>
+        <td><code>api/src/lib/database.ts</code>, <code>sql/postgres/schema.sql</code></td>
+      </tr>
+      <tr>
+        <td>Auth</td>
+        <td>JWT (<code>jsonwebtoken</code>), bcrypt (<code>bcryptjs</code>); frontend stores <code>api_token</code> in <code>localStorage</code></td>
+        <td><code>api/src/utils/auth.ts</code>, <code>api/src/middleware/auth.ts</code>, <code>src/services/authContext.js</code></td>
+      </tr>
+      <tr>
+        <td>File storage</td>
+        <td>Vercel Blob, Supabase (legacy / per-domain config in schema)</td>
+        <td><code>@vercel/blob</code>, <code>api/src/lib/supabase.ts</code>, <code>src/config/storage.js</code></td>
+      </tr>
+      <tr>
+        <td>Email</td>
+        <td>Nodemailer (API), EmailJS (browser contact)</td>
+        <td><code>api</code> handlers, <code>src/services/emailService.js</code></td>
+      </tr>
+      <tr>
+        <td>HTTP client</td>
+        <td>Axios (frontend + some API usage)</td>
+        <td><code>src/services/apiService.js</code> and related services</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="frontend-entry">3. Frontend entry &amp; routing</h2>
+  <table>
+    <thead>
+      <tr><th>File</th><th>Role</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>src/index.js</code></td>
+        <td>React DOM root; mounts <code>App</code></td>
+      </tr>
+      <tr>
+        <td><code>src/App.js</code></td>
+        <td>
+          <code>BrowserRouter</code>: <code>/dashboard</code> → <code>Dashboard</code>; <code>/signup</code> → <code>Signup</code>;
+          <code>/</code> and catch-all <code>*</code> → <code>SettingsProvider</code> + <code>AppContent</code> (public portfolio).
+          Hash <code>#/dashboard</code> is normalized to path <code>/dashboard</code> on load.
+        </td>
+      </tr>
+      <tr>
+        <td><code>src/SimpleRouterFix.js</code></td>
+        <td>Utility related to routing edge cases (legacy / fix helper)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="public-site">4. Public portfolio site (features &amp; UI)</h2>
+  <p>Rendered by <code>AppContent</code> in <code>src/App.js</code> when the route is the main site (not dashboard/signup-only routes).</p>
+  <h3>4.1 Data loading &amp; UX</h3>
+  <ul class="dense">
+    <li><strong>Settings-first load:</strong> <code>SettingsProvider</code> / <code>useSettings</code> loads site configuration before portfolio data.</li>
+    <li><strong>Portfolio data:</strong> <code>portfolioService.getPublishedProjects()</code>, <code>getCategories()</code>, category filtering via <code>getPublishedProjectsByCategory</code> with client-side fallback.</li>
+    <li><strong>Loaders:</strong> <code>RainLoader</code> for initial settings load; <code>additionalDataLoading</code> drives header/section loading hints.</li>
+    <li><strong>Environment guard:</strong> <code>checkEnvMissing()</code> from <code>src/config/env.js</code> + warning <code>Toast</code> if API URL missing.</li>
+    <li><strong>Meta tags:</strong> <code>DynamicHead</code> + <code>metaTagService.updateMetaTags(settings)</code> after settings load.</li>
+    <li><strong>Toasts:</strong> <code>ToastContainer</code>, <code>Toast</code>, <code>toastService</code>.</li>
+  </ul>
+  <h3>4.2 Section visibility (CMS-driven)</h3>
+  <p>Blocks toggled via settings keys (examples): hero, portfolio, technologies, domains, project lifecycle, prompts, gallery, footer — see <code>sectionVisibility</code> in <code>App.js</code>.</p>
+  <h3>4.3 Page sections &amp; components (public)</h3>
+  <table>
+    <thead>
+      <tr><th>Feature</th><th>Primary components / services</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Header &amp; nav</td><td><code>Header.js</code>, <code>MobileBottomNav.js</code></td></tr>
+      <tr><td>Hero</td><td><code>Hero.js</code></td></tr>
+      <tr><td>User-defined blocks between sections</td><td><code>DynamicSections.js</code>, <code>DynamicSection.js</code>, <code>DynamicSectionsRenderer.js</code>, <code>dynamicSectionService.js</code></td></tr>
+      <tr><td>Portfolio grid &amp; filters</td><td><code>FilterMenu.js</code>, <code>PortfolioGrid.js</code>, <code>Card.js</code></td></tr>
+      <tr><td>Project detail modal</td><td><code>Modal.js</code> with prev/next navigation</td></tr>
+      <tr><td>Technologies &amp; skills</td><td><code>Technologies.js</code>, <code>TechnologyCard.js</code>, <code>technologiesService.js</code></td></tr>
+      <tr><td>Domains &amp; niche showcase</td><td><code>DomainsNiche.js</code>, <code>DomainCard.js</code>, <code>DomainModal.js</code>, <code>nichesService.js</code></td></tr>
+      <tr><td>Project lifecycle narrative</td><td><code>ProjectLifeCycle.js</code></td></tr>
+      <tr><td>AI / prompts showcase</td><td><code>PromptsSection.js</code></td></tr>
+      <tr><td>Gallery</td><td><code>Gallery.js</code>, lightbox via <code>ImageLightbox.js</code></td></tr>
+      <tr><td>Footer &amp; contact</td><td><code>Footer.js</code>, <code>ContactForm.js</code>, <code>emailService.js</code>, <code>contactQueriesApi.js</code></td></tr>
+      <tr><td>Theming &amp; appearance</td><td><code>ColorSchemeProvider.js</code>, <code>colorSchemes.js</code>, <code>themeUtils.js</code></td></tr>
+      <tr><td>Scroll &amp; motion</td><td><code>ScrollToTop.js</code>, <code>FadeInContent.js</code></td></tr>
+      <tr><td>Misc loaders / polish</td><td><code>IOSLoader.js</code>, <code>PremiumLoader.js</code>, <code>SkeletonLoader.js</code>, <code>LoadingOverlay.js</code></td></tr>
+      <tr><td>Resilience</td><td><code>ErrorBoundary.js</code>, <code>fallbackDataService.js</code>, <code>fallbackUtils.js</code>, <code>hybridService.js</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="dashboard">5. Dashboard (admin CMS)</h2>
+  <p><code>src/components/dashboard/Dashboard.js</code>: auth gate via <code>AuthProvider</code> / <code>useAuth</code> — shows <code>Login</code> or <code>DashboardLayout</code> wrapped in <code>SettingsProvider</code>. Handles URL success flags <code>?verified=true</code> and <code>?reset=true</code>.</p>
+  <h3>5.1 Dashboard navigation (from <code>DashboardLayout.js</code>)</h3>
+  <p>Sidebar/mobile nav items (filtered by admin section ACL and public section visibility settings):</p>
+  <table>
+    <thead>
+      <tr><th>Section ID</th><th>Label (concept)</th><th>Admin-only</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>overview</code></td><td>Overview / stats</td><td>No</td></tr>
+      <tr><td><code>projects</code></td><td>Projects CRUD, publishing, images</td><td>No</td></tr>
+      <tr><td><code>prompts</code></td><td>Prompts manager</td><td>No</td></tr>
+      <tr><td><code>gallery</code></td><td>Gallery management</td><td>No</td></tr>
+      <tr><td><code>dynamic-sections</code></td><td>Custom dynamic sections</td><td>No</td></tr>
+      <tr><td><code>menus</code></td><td>Menus / links (incl. sections ordering)</td><td>No</td></tr>
+      <tr><td><code>queries</code></td><td>Contact queries inbox</td><td>No</td></tr>
+      <tr><td><code>domains-technologies</code></td><td>Technologies &amp; skills</td><td>No</td></tr>
+      <tr><td><code>niche</code></td><td>Domains / niche content</td><td>No</td></tr>
+      <tr><td><code>media</code></td><td>Media library, image positioning</td><td>No</td></tr>
+      <tr><td><code>backup-files</code></td><td>Backup files</td><td>Yes (ACL)</td></tr>
+      <tr><td><code>categories</code></td><td>Categories</td><td>No</td></tr>
+      <tr><td><code>appearance</code></td><td>Themes / color schemes</td><td>No</td></tr>
+      <tr><td><code>theme-updates</code></td><td>Theme update distribution</td><td>Yes (ACL)</td></tr>
+      <tr><td><code>settings</code></td><td>Site settings</td><td>No</td></tr>
+      <tr><td><code>export</code></td><td>Import / export</td><td>Yes (ACL)</td></tr>
+      <tr><td><code>debug</code></td><td>Debug sync tools</td><td>Yes (ACL)</td></tr>
+    </tbody>
+  </table>
+  <h3>5.2 Major dashboard components</h3>
+  <ul class="dense">
+    <li><code>Login.js</code> — authentication UI.</li>
+    <li><code>DashboardLayout.js</code> — shell: nav, URL <code>?section=</code> sync, stats, sync/backup/import/reset flows, admin section loading, theme application.</li>
+    <li><code>ProjectsManager.js</code>, <code>CategoriesManager.js</code>, <code>PromptsManager.js</code>, <code>GallerySection.js</code>, <code>DynamicSectionsManager.js</code>, <code>MenusManager.js</code>, <code>QueriesManager.js</code>, <code>DomainsTechnologiesManager.js</code>, <code>NicheManager.js</code>.</li>
+    <li><code>ThemeUpdateManager.js</code>, <code>SharedHostingUpdateManager.js</code>, <code>AutomaticUpdateDashboard.js</code>, <code>UpdateNotificationBar.js</code> — theme/update distribution and shared-hosting update pipelines.</li>
+    <li><code>ImagePositioner.js</code>, <code>MediaSelectionModal.js</code> — media UX.</li>
+    <li><code>ProgressDisplay.js</code>, <code>DebugSync.js</code>, <code>AutoUpdateDebugPanel.js</code> — operations feedback / debugging.</li>
+    <li><code>DashboardMobileNav.js</code> — responsive dashboard navigation.</li>
+  </ul>
+  <h3>5.3 Signup &amp; onboarding</h3>
+  <ul class="dense">
+    <li><code>Signup.js</code> — public registration route.</li>
+    <li><code>ClientOnboardingForm.js</code> — client onboarding UI.</li>
+  </ul>
+
+  <h2 id="frontend-modules">6. Frontend module inventory</h2>
+  <div class="grid-2">
+    <div>
+      <h3>6.1 <code>src/components/</code> (public)</h3>
+      <ul class="dense">
+        <li><code>Card.js</code>, <code>ContactForm.js</code>, <code>DomainCard.js</code>, <code>DomainModal.js</code></li>
+        <li><code>DomainsNiche.js</code>, <code>DynamicHead.js</code>, <code>DynamicSection.js</code>, <code>DynamicSections.js</code>, <code>DynamicSectionsRenderer.js</code></li>
+        <li><code>ErrorBoundary.js</code>, <code>FadeInContent.js</code>, <code>FilterMenu.js</code>, <code>Footer.js</code>, <code>Gallery.js</code></li>
+        <li><code>Header.js</code>, <code>Hero.js</code>, <code>ImageLightbox.js</code>, <code>IOSLoader.js</code>, <code>LoadingOverlay.js</code></li>
+        <li><code>MobileBottomNav.js</code>, <code>Modal.js</code>, <code>PortfolioGrid.js</code>, <code>PremiumLoader.js</code></li>
+        <li><code>ProjectLifeCycle.js</code>, <code>PromptsSection.js</code>, <code>RainLoader.js</code>, <code>ScrollToTop.js</code></li>
+        <li><code>SkeletonLoader.js</code>, <code>Technologies.js</code>, <code>TechnologyCard.js</code>, <code>Toast.js</code>, <code>ToastContainer.js</code></li>
+        <li><code>ColorSchemeProvider.js</code>, <code>Signup.js</code>, <code>ClientOnboardingForm.js</code></li>
+        <li>CSS co-located: <code>*.css</code> next to many components</li>
+      </ul>
+      <h3>6.2 <code>src/components/dashboard/</code></h3>
+      <ul class="dense">
+        <li>All manager/layout/login files listed in §5; plus styles and <code>AutomaticUpdateDashboard</code>, <code>AutoUpdateDebugPanel</code>, <code>DebugSync</code>, <code>ProgressDisplay</code>, <code>UpdateNotificationBar</code>, <code>DashboardMobileNav</code>, <code>ImagePositioner</code>, <code>MediaSelectionModal</code></li>
+      </ul>
+    </div>
+    <div>
+      <h3>6.3 <code>src/services/</code></h3>
+      <ul class="dense">
+        <li><code>apiService.js</code> — HTTP client, JWT header, token storage coordination</li>
+        <li><code>authContext.js</code>, <code>authUtils.js</code> — session lifecycle</li>
+        <li><code>portfolioService.js</code>, <code>projectsService.js</code>, <code>categoriesService.js</code></li>
+        <li><code>settingsService.js</code>, <code>settingsContext.js</code> — site settings</li>
+        <li><code>dashboardService.js</code>, <code>adminService.js</code></li>
+        <li><code>technologiesService.js</code>, <code>nichesService.js</code>, <code>menuService.js</code></li>
+        <li><code>dynamicSectionService.js</code>, <code>imageService.js</code>, <code>syncService.js</code></li>
+        <li><code>contactQueriesApi.js</code>, <code>emailService.js</code></li>
+        <li><code>fallbackDataService.js</code>, <code>hybridService.js</code></li>
+        <li><code>metaTagService.js</code>, <code>portfolioConfigUtils.js</code></li>
+        <li><code>themeUpdateService.js</code>, <code>sharedHostingUpdateService.js</code>, <code>automaticUpdateService.js</code></li>
+        <li><code>colorSchemes.js</code>, <code>toastService.js</code>, <code>PublicDataContext.js</code></li>
+      </ul>
+      <h3>6.4 <code>src/config/</code></h3>
+      <ul class="dense">
+        <li><code>env.js</code>, <code>portfolio.js</code>, <code>storage.js</code> (buckets / storage helpers), <code>supabase.js</code></li>
+      </ul>
+      <h3>6.5 <code>src/utils/</code></h3>
+      <ul class="dense">
+        <li><code>apiConfig.js</code>, <code>domainUtils.js</code>, <code>fallbackUtils.js</code>, <code>manifestUtils.js</code>, <code>themeUtils.js</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 id="api">7. API server (Next.js)</h2>
+  <h3>7.1 Request dispatch</h3>
+  <ul class="dense">
+    <li>Catch-all route: <code>api/src/app/api/[[...slug]]/route.ts</code> exports <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code>, <code>OPTIONS</code>.</li>
+    <li><code>dispatchApi</code> in <code>api/src/lib/api-router.generated.ts</code> matches path segments to a handler module and HTTP method name (e.g. <code>GET</code>, <code>POST</code>).</li>
+    <li>Regeneration: <code>npm run prebuild</code> in <code>api/</code> runs <code>scripts/generate-api-router.mjs</code>.</li>
+  </ul>
+  <h3>7.2 API endpoints (logical groups)</h3>
+  <p>Paths are relative to <code>/api/</code> (slug segments below).</p>
+  <table>
+    <thead>
+      <tr><th>Group</th><th>Endpoints</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Health &amp; debug</td>
+        <td><code>GET/… health</code>, <code>… debug-domain</code>, <code>… supabase-test</code></td>
+      </tr>
+      <tr>
+        <td>Auth</td>
+        <td><code>auth/login</code>, <code>auth/register</code>, <code>auth/me</code>, <code>auth/reset-password</code>, <code>auth/update-password</code>, <code>auth/test-token</code></td>
+      </tr>
+      <tr>
+        <td>Portfolio content</td>
+        <td><code>projects</code>, <code>projects/[id]</code>, <code>projects/[id]/images</code> (projects API supports <code>is_prompt</code> for prompt-style entries), <code>categories</code>, <code>categories/[id]</code>, <code>technologies</code>, <code>technologies/[id]</code>, <code>skills</code>, <code>skills/[id]</code>, <code>niches</code>, <code>niches/[id]</code>, <code>gallery</code></td>
+      </tr>
+      <tr>
+        <td>Settings &amp; config</td>
+        <td><code>settings</code>, <code>portfolio-config</code>, <code>domains/config</code>, <code>domains/user</code></td>
+      </tr>
+      <tr>
+        <td>Dynamic sections &amp; menus</td>
+        <td><code>dynamic-sections</code>, <code>dynamic-sections/reorder</code>, <code>dynamic-sections/positioning</code>, <code>menus</code>, <code>menus/[id]</code>, <code>menus/reorder</code>, <code>menus/sections</code></td>
+      </tr>
+      <tr>
+        <td>Contact</td>
+        <td><code>contact-queries</code>, <code>contact-queries/[id]</code></td>
+      </tr>
+      <tr>
+        <td>Storage</td>
+        <td><code>storage/upload</code>, <code>storage/list</code>, <code>storage/delete</code></td>
+      </tr>
+      <tr>
+        <td>Dashboard aggregate</td>
+        <td><code>dashboard/projects</code></td>
+      </tr>
+      <tr>
+        <td>Admin</td>
+        <td><code>admin/sections</code>, <code>admin/sections/[sectionKey]/access</code>, <code>admin/check-images</code>, <code>admin/fix-image-order</code></td>
+      </tr>
+      <tr>
+        <td>Theme updates &amp; clients</td>
+        <td><code>theme-updates</code>, <code>theme-update-logs</code>, <code>theme-clients</code>, <code>theme/stats</code>, <code>theme/application-logs</code></td>
+      </tr>
+      <tr>
+        <td>Automatic / shared hosting updates</td>
+        <td><code>automatic-update/dashboard</code>, <code>automatic-update-logs</code>, <code>shared-hosting-updates</code>, <code>shared-hosting-clients</code></td>
+      </tr>
+      <tr>
+        <td>Backup</td>
+        <td><code>backup-files</code></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Exact HTTP methods per route are defined in each <code>handler.ts</code> (exported functions named <code>GET</code>, <code>POST</code>, etc.).</p>
+  <h3>7.3 API internal modules</h3>
+  <table>
+    <thead>
+      <tr><th>Path</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>api/src/lib/database.ts</code></td><td>Postgres pool, query execution, transactions, MySQL-style <code>?</code> → <code>$n</code> conversion</td></tr>
+      <tr><td><code>api/src/lib/supabase.ts</code>, <code>supabaseByDomain.ts</code></td><td>Supabase client helpers (incl. per-domain)</td></tr>
+      <tr><td><code>api/src/lib/api-router.generated.ts</code></td><td>Auto-generated route table</td></tr>
+      <tr><td><code>api/src/utils/auth.ts</code></td><td>JWT and auth helpers</td></tr>
+      <tr><td><code>api/src/middleware/auth.ts</code></td><td>Request auth middleware patterns</td></tr>
+      <tr><td><code>api/src/services/*.ts</code></td><td>Server-side <code>userService</code>, <code>projectService</code>, <code>adminService</code>, <code>menuService</code>, <code>dynamicSectionService</code></td></tr>
+      <tr><td><code>api/src/types/index.ts</code></td><td>Shared TypeScript types</td></tr>
+      <tr><td><code>api/next.config.js</code></td><td>CORS headers for <code>/api/*</code>, image domains</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="data">8. Data &amp; SQL</h2>
+  <ul class="dense">
+    <li><code>sql/postgres/schema.sql</code> — canonical Postgres schema (users, domains, categories, technologies, skills, niche, projects, images, settings, dynamic sections, menus, contact queries, theme/update logs, admin sections, etc.).</li>
+    <li><code>sql/mysql-schema.sql</code> — legacy MySQL reference (migration history).</li>
+    <li><code>sql/portfolio-bkp-*.sql</code> — backup dumps (large; not enumerated line-by-line in this report).</li>
+  </ul>
+
+  <h2 id="scripts">9. Build &amp; maintenance scripts</h2>
+  <table>
+    <thead>
+      <tr><th>Script (root <code>scripts/</code> unless noted)</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>update-meta-tags.js</code></td><td>Build-time meta tag injection for CRA <code>public/index.html</code></td></tr>
+      <tr><td><code>optimize-images.js</code>, <code>quick-optimize-images.js</code></td><td>Image optimization pipelines</td></tr>
+      <tr><td><code>replace-domain-images.js</code></td><td>Bulk URL/domain replacement for images</td></tr>
+      <tr><td><code>create-optimized-packages.js</code></td><td>Packaging optimized builds</td></tr>
+      <tr><td><code>upload-build-backup.js</code></td><td>Upload build artifacts / backup</td></tr>
+      <tr><td><code>create-theme-update.js</code></td><td>Theme update package creation (<code>npm run release</code>)</td></tr>
+      <tr><td><code>upload-update-package.js</code></td><td>Upload theme updates; <code>--list-clients</code>, <code>--list-updates</code></td></tr>
+      <tr><td><code>migrate-mysql-to-vercel-postgres.js</code></td><td>DB migration helper</td></tr>
+      <tr><td><code>migrate-supabase-storage-to-vercel-blob.js</code></td><td>Storage migration</td></tr>
+      <tr><td><code>remap-urls-from-map.js</code></td><td>URL remapping from map file</td></tr>
+      <tr><td><code>setup-mysql-database.js</code>, <code>setup-shared-hosting-mysql.js</code></td><td>Legacy / shared-hosting DB setup</td></tr>
+      <tr><td><code>update-user-passwords.js</code>, <code>fix-image-order.js</code></td><td>Maintenance utilities</td></tr>
+      <tr><td><code>api/scripts/generate-api-router.mjs</code></td><td>Generates <code>api-router.generated.ts</code></td></tr>
+      <tr><td><code>api/build-with-progress.js</code>, <code>build-simple.js</code></td><td>Alternative API build wrappers</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Root <code>package.json</code> scripts</strong> include CRA start/build/test, zip packaging (<code>build.zip</code>, minimal updates), Vercel-oriented <code>build:vercel</code>, and migration npm scripts.</p>
+
+  <h2 id="tests">10. Tests &amp; diagnostics</h2>
+  <ul class="dense">
+    <li><code>tests/</code> — ~48 Node/integration-style scripts covering APIs, auth, dashboard flows, prompts, Supabase, shared hosting, image positioning, env vars, migration, etc.</li>
+    <li><code>test-*.js</code> at repository root — ad-hoc debugging scripts for specific bugs/features.</li>
+    <li>CRA default: <code>src/</code> may include <code>*.test.js</code> via react-scripts (if present).</li>
+  </ul>
+
+  <h2 id="deploy">11. Deployment &amp; static assets</h2>
+  <ul class="dense">
+    <li><code>vercel.json</code> (root): <code>build:vercel</code>, output <code>build</code>, SPA rewrite <code>/(.*) → /index.html</code>.</li>
+    <li><code>public/</code>: <code>index.html</code>, <code>manifest.json</code>, <code>robots.txt</code>, <code>404.html</code>, <code>.htaccess</code>, <code>_redirects</code>, hero/avatar images, PHP endpoints (<code>update-endpoint.php</code>, <code>log-viewer.php</code>) for shared-hosting update workflows.</li>
+    <li><code>api/vercel.json</code> — API project deployment config (separate app).</li>
+    <li><code>example.env</code>, <code>api/.env.example</code> — environment variable templates.</li>
+  </ul>
+
+  <footer>
+    Report generated for codebase audit. File paths are relative to the repository root unless prefixed with <code>api/</code>.
+    For authoritative route methods and payloads, inspect each <code>handler.ts</code> under <code>api/src/app/api/</code>.
+  </footer>
+</body>
+</html>

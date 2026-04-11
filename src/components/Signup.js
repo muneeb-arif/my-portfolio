@@ -1,11 +1,13 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { colorSchemes } from '../services/colorSchemes';
 import { apiService } from '../services/apiService';
 import './Signup.css';
 
 const Signup = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -189,7 +191,7 @@ const Signup = () => {
         
         // Navigate to dashboard
         setTimeout(() => {
-          navigate('/dashboard');
+          router.push('/dashboard');
         }, 3000);
       } else {
         setError('Failed to complete setup');
@@ -474,7 +476,7 @@ const Signup = () => {
             <button
               type="button"
               className="btn-signin-dashboard"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => router.push('/dashboard')}
             >
               🔐 Sign in to Dashboard
             </button>
@@ -547,7 +549,7 @@ const Signup = () => {
             <button
               type="button"
               className="btn-signin-footer"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => router.push('/dashboard')}
             >
               🔐 Sign in to Dashboard
             </button>

@@ -647,10 +647,7 @@ export class ThemeUpdateService {
 // Create singleton instance
 export const themeUpdateService = new ThemeUpdateService();
 
-// Make it globally available for update notifications
-window.themeUpdateService = themeUpdateService;
-
-// Auto-initialize on import
 if (typeof window !== 'undefined') {
+  window.themeUpdateService = themeUpdateService;
   themeUpdateService.initialize();
 } 

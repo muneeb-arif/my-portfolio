@@ -7,8 +7,13 @@ import { apiService } from './apiService';
  */
 export class SharedHostingUpdateService {
   constructor() {
-    this.clientId = this.getOrCreateClientId();
-    this.currentVersion = this.getCurrentVersion();
+    if (typeof window !== 'undefined') {
+      this.clientId = this.getOrCreateClientId();
+      this.currentVersion = this.getCurrentVersion();
+    } else {
+      this.clientId = '';
+      this.currentVersion = '1.0.0';
+    }
     this.checkInterval = 24 * 60 * 60 * 1000; // Check daily for shared hosting
   }
 

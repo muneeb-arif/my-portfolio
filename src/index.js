@@ -1,3 +1,7 @@
+/**
+ * Legacy Create React App entry (unused by Next.js).
+ * Run the app with: npm run dev
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';

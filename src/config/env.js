@@ -1,4 +1,4 @@
-/** True when the CRA build is missing API base URL (migration: Supabase env no longer required). */
+/** True when the app is missing an explicit API base (unified Next app uses same-origin /api by default). */
 export function checkEnvMissing() {
-  return !process.env.REACT_APP_API_URL;
+  return false;
 }

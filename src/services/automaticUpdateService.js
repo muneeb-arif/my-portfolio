@@ -11,6 +11,7 @@ class AutoUpdateDebugLogger {
   }
 
   log(level, step, message, data = null) {
+    if (typeof window === 'undefined') return;
     const timestamp = new Date().toISOString();
     const logEntry = {
       timestamp,
@@ -59,6 +60,9 @@ class AutoUpdateDebugLogger {
   }
 
   getDebugReport() {
+    if (typeof window === 'undefined') {
+      return { sessionId: this.sessionId, totalLogs: this.logs.length, logs: this.logs, systemInfo: {} };
+    }
     return {
       sessionId: this.sessionId,
       totalLogs: this.logs.length,
@@ -78,6 +82,7 @@ class AutoUpdateDebugLogger {
   }
 
   exportLogs() {
+    if (typeof window === 'undefined') return;
     const report = this.getDebugReport();
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -99,15 +104,16 @@ export class AutomaticUpdateService {
   constructor() {
     this.apiKey = 'sk_update_2024_portfolio_secure_key_255d78d54885303d0fc7564b88b70527'; // Should match PHP endpoint
     this.updateEndpoint = this.getUpdateEndpointUrl();
-    this.clientId = this.getOrCreateClientId();
+    this.clientId = typeof window !== 'undefined' ? this.getOrCreateClientId() : '';
     this.debugLogger = new AutoUpdateDebugLogger();
-    
-    // Initialize debug logging
-    this.debugLogger.log('info', 'init', 'AutomaticUpdateService initialized', {
-      endpoint: this.updateEndpoint,
-      clientId: this.clientId,
-      origin: window.location.origin
-    });
+
+    if (typeof window !== 'undefined') {
+      this.debugLogger.log('info', 'init', 'AutomaticUpdateService initialized', {
+        endpoint: this.updateEndpoint,
+        clientId: this.clientId,
+        origin: window.location.origin
+      });
+    }
   }
 
   /**
@@ -116,8 +122,10 @@ export class AutomaticUpdateService {
    */
   getUpdateEndpointUrl() {
     // Check for environment variable first
-    if (process.env.REACT_APP_UPDATE_ENDPOINT) {
-      return process.env.REACT_APP_UPDATE_ENDPOINT;
+    const ep =
+      process.env.NEXT_PUBLIC_UPDATE_ENDPOINT || process.env.REACT_APP_UPDATE_ENDPOINT;
+    if (ep) {
+      return ep;
     }
     
     // Detect development environment
@@ -130,7 +138,9 @@ export class AutomaticUpdateService {
     //   return process.env.REACT_APP_DEV_UPDATE_ENDPOINT || 'http://localhost:8080/update-endpoint.php';
     // }
     
-    // For production, use the same origin
+    if (typeof window === 'undefined') {
+      return '';
+    }
     return window.location.origin + '/update-endpoint.php';
   }
 
@@ -971,6 +981,7 @@ export class AutomaticUpdateService {
    * Clear debug logs
    */
   clearDebugLogs() {
+    if (typeof window === 'undefined') return;
     this.debugLogger.logs = [];
     localStorage.removeItem('auto_update_debug_logs');
     localStorage.removeItem('auto_update_last_session');
@@ -978,8 +989,9 @@ export class AutomaticUpdateService {
   }
 }
 
-// Create singleton instance
+// Create singleton instance (browser only — avoid touching window during SSR)
 export const automaticUpdateService = new AutomaticUpdateService();
 
-// Make it globally available
-window.automaticUpdateService = automaticUpdateService; 
+if (typeof window !== 'undefined') {
+  window.automaticUpdateService = automaticUpdateService;
+} 

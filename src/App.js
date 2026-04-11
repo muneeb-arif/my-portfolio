@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FilterMenu from './components/FilterMenu';
@@ -14,64 +13,15 @@ import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import ScrollToTop from './components/ScrollToTop';
 import DynamicSections from './components/DynamicSections';
-import Dashboard from './components/dashboard/Dashboard';
-import Signup from './components/Signup';
-import DynamicHead from './components/DynamicHead';
 import Toast from './components/Toast';
 import ToastContainer from './components/ToastContainer';
 import RainLoader from './components/RainLoader';
 import portfolioService from './services/portfolioService';
-import { SettingsProvider, useSettings } from './services/settingsContext';
-import { AuthProvider } from './services/authContext';
+import { useSettings } from './services/settingsContext';
 import { checkEnvMissing } from './config/env';
-import metaTagService from './services/metaTagService';
 
-function App() {
-  // Debug logging
-  console.log('🔍 App.js - Current URL:', window.location.href);
-  console.log('🔍 App.js - Pathname:', window.location.pathname);
-  console.log('🔍 App.js - Hash:', window.location.hash);
-  
-  // Handle hash routing redirect (only once on initial load)
-  useEffect(() => {
-    if (window.location.hash === '#/dashboard') {
-      console.log('🔄 Initial hash routing detected, redirecting to path routing');
-      window.history.replaceState(null, '', '/dashboard');
-      // Don't reload - let React Router handle the navigation
-    }
-  }, []);
-  
-  return (
-    <Router>
-      <AuthProvider>
-        <Routes>
-          {/* Dashboard route */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          
-          {/* Signup route */}
-          <Route path="/signup" element={<Signup />} />
-          
-          {/* Main portfolio route */}
-          <Route path="/" element={
-            <SettingsProvider>
-              <AppContent />
-            </SettingsProvider>
-          } />
-          
-          {/* Catch-all route */}
-          <Route path="*" element={
-            <SettingsProvider>
-              <AppContent />
-            </SettingsProvider>
-          } />
-        </Routes>
-      </AuthProvider>
-    </Router>
-  );
-}
-
-// Separate component that can use useSettings hook
-function AppContent() {
+/** Main portfolio page body (wrapped by SettingsProvider in the Next.js app). */
+export function AppContent() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
   const [particles] = useState([]);
@@ -151,14 +101,10 @@ function AppContent() {
     }
   }, [settingsLoading, settingsInitialized]);
 
-  // Wait for settings to load, then load portfolio data and initialize theme updates
+  // Wait for settings to load, then load portfolio data
   useEffect(() => {
     if (!settingsLoading && settingsInitialized) {
-      // Settings are loaded, now load portfolio data in background
       loadPortfolioData();
-      
-      // Initialize dynamic meta tags with existing settings (no duplicate API call)
-      metaTagService.updateMetaTags(settings);
     }
   }, [settingsLoading, settingsInitialized, loadPortfolioData, settings]);
 
@@ -281,7 +227,6 @@ function AppContent() {
 
   return (
     <>
-      <DynamicHead />
       <ToastContainer />
       <div className="App">
         {/* iOS-style Full Screen Loading - Hide as soon as settings load */}
@@ -293,7 +238,7 @@ function AppContent() {
         {/* Environment Variables Missing Toast */}
         {showEnvToast && (
           <Toast
-            message="Missing REACT_APP_API_URL in .env. The app cannot reach the portfolio API and may use fallback data."
+            message="Missing NEXT_PUBLIC_API_URL in .env. The app cannot reach the portfolio API and may use fallback data."
             type="warning"
             duration={10000}
             onClose={() => setShowEnvToast(false)}
@@ -421,4 +366,7 @@ function AppContent() {
   );
 }
 
-export default App; 
+/** Unused: Next.js entry is `src/app/page.tsx`. Kept so legacy `src/index.js` imports resolve. */
+export default function UnusedCRARoot() {
+  return null;
+}

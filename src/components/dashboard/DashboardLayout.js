@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { projectsService } from '../../services/projectsService';
 import { syncService } from '../../services/syncService';
 import { dashboardService } from '../../services/dashboardService';
@@ -35,7 +35,25 @@ import { themeUpdateService } from '../../services/themeUpdateService';
 
 const DashboardLayout = ({ user, onSignOut, successMessage, onClearSuccess }) => {
   const { settings } = useSettings();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const setSearchParams = useCallback(
+    (updates) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === undefined || value === null) {
+          params.delete(key);
+        } else {
+          params.set(key, String(value));
+        }
+      });
+      const q = params.toString();
+      router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
   const [activeSection, setActiveSection] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isInitialMount = useRef(true);

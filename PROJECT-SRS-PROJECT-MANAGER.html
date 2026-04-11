@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Software Requirements Specification — Portfolio &amp; CMS (Project Manager View)</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4d;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3d8bfd;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--bg);
+      margin: 0;
+      padding: 2rem 1.5rem 4rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      margin: 0 0 0.35rem;
+      letter-spacing: -0.02em;
+    }
+    .doc-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .subtitle {
+      color: #c9d6e8;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      font-style: italic;
+    }
+    h2 {
+      font-size: 1.2rem;
+      margin: 2rem 0 0.65rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+      color: #fff;
+    }
+    h3 {
+      font-size: 1.02rem;
+      margin: 1.35rem 0 0.45rem;
+      color: #c5d4e8;
+    }
+    p { margin: 0.6rem 0; color: #c9d6e8; }
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+    }
+    .toc ul { margin: 0.45rem 0 0; padding-left: 1.25rem; }
+    .toc li { margin: 0.3rem 0; }
+    ol.req { margin: 0.5rem 0; padding-left: 1.35rem; }
+    ol.req > li { margin: 0.65rem 0; color: #c9d6e8; }
+    ol.req li strong { color: #e7ecf3; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin: 0.65rem 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.65rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--surface); color: #fff; font-weight: 600; }
+    tr:nth-child(even) td { background: rgba(26, 35, 50, 0.45); }
+    .fr-id {
+      font-family: ui-monospace, monospace;
+      font-size: 0.8em;
+      color: #93c5fd;
+      white-space: nowrap;
+    }
+    .note {
+      border-left: 3px solid var(--accent);
+      padding: 0.6rem 1rem;
+      margin: 1rem 0;
+      background: var(--surface);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+      color: #c9d6e8;
+    }
+    ul.dense { margin: 0.4rem 0; padding-left: 1.2rem; }
+    ul.dense li { margin: 0.28rem 0; color: #c9d6e8; }
+    footer {
+      margin-top: 2.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Software Requirements Specification (Summary)</h1>
+  <p class="doc-meta">
+    <strong>Product:</strong> Portfolio website with owner dashboard (content management)<br />
+    <strong>Audience:</strong> Project managers, product owners, stakeholders<br />
+    <strong>Document type:</strong> High-level SRS — capabilities and outcomes, not technical design<br />
+    <strong>Version:</strong> 1.0 &nbsp;|&nbsp; <strong>Date:</strong> April 2026
+  </p>
+  <p class="subtitle">
+    This document states what the application is for, who uses it, and what it must do from a business and user perspective.
+  </p>
+
+  <nav class="toc" aria-label="Table of contents">
+    <strong>Contents</strong>
+    <ul>
+      <li><a href="#purpose">1. Purpose and scope</a></li>
+      <li><a href="#product">2. Product overview</a></li>
+      <li><a href="#users">3. Users and stakeholders</a></li>
+      <li><a href="#capabilities">4. Major capability areas</a></li>
+      <li><a href="#functional">5. Functional requirements (summary)</a></li>
+      <li><a href="#journeys">6. Representative user journeys</a></li>
+      <li><a href="#nfr">7. Non-functional expectations (business level)</a></li>
+      <li><a href="#assumptions">8. Assumptions and boundaries</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="purpose">1. Purpose and scope</h2>
+  <h3>1.1 Purpose</h3>
+  <p>
+    This specification defines the intended purpose of the <strong>portfolio and content-management product</strong>:
+    to let a professional or studio present their work publicly on the web, while giving authenticated owners a secure
+    place to manage all content, appearance, and operational workflows (updates, backups, and client-specific distribution where applicable).
+  </p>
+  <h3>1.2 Scope — in scope</h3>
+  <ul class="dense">
+    <li>A <strong>public marketing/portfolio site</strong> visible to any visitor.</li>
+    <li>A <strong>private dashboard</strong> for registered owners to create, edit, organize, and publish content.</li>
+    <li><strong>Account lifecycle</strong>: registration, sign-in, password recovery, email verification flows as supported by the product.</li>
+    <li><strong>Operational tools</strong> for power users or administrators: controlled access to backups, theme/update distribution, import/export, and diagnostic workflows.</li>
+  </ul>
+  <h3>1.3 Scope — typical exclusions (unless explicitly contracted)</h3>
+  <ul class="dense">
+    <li>Detailed infrastructure procurement, SLA drafting, or vendor-specific runbooks.</li>
+    <li>Legal/compliance sign-off (GDPR, accessibility certification); the product may support practices but does not replace counsel.</li>
+    <li>Custom design work beyond what the product’s themes and settings provide.</li>
+  </ul>
+
+  <h2 id="product">2. Product overview</h2>
+  <p>
+    The product is a <strong>web application</strong> with two faces. <strong>Visitors</strong> see a polished portfolio:
+    projects, optional prompts or highlights, technologies, domain or niche positioning, image gallery, and ways to get in touch.
+    <strong>Owners</strong> use the same product through a separate authenticated area (the dashboard) to control what appears on the public site,
+    how it is organized, and how the brand looks—without needing developers for day-to-day changes.
+  </p>
+  <p>
+    The system is built around <strong>per-user (or per-account) content</strong>: projects, media, text blocks, navigation, and site-wide settings belong to the owner.
+    Some capabilities are restricted to <strong>administrator roles</strong> when they affect multiple clients, system-wide updates, or sensitive operations.
+  </p>
+  <div class="note">
+    <strong>In one sentence:</strong> It is an owner-operated portfolio website plus a full content, media, and operations console behind login.
+  </div>
+
+  <h2 id="users">3. Users and stakeholders</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Needs (summary)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Site visitor</strong></td>
+        <td>Browse work, understand skills and focus areas, view images, contact or follow calls-to-action; fast, readable experience on mobile and desktop.</td>
+      </tr>
+      <tr>
+        <td><strong>Portfolio owner</strong></td>
+        <td>Manage all public content and settings; upload images; organize projects and sections; read contact submissions; adjust what sections are visible.</td>
+      </tr>
+      <tr>
+        <td><strong>Administrator (elevated)</strong></td>
+        <td>Perform sensitive or cross-cutting operations: backups, pushing theme updates to clients, import/export, and debug or sync tools—only where access is granted.</td>
+      </tr>
+      <tr>
+        <td><strong>Product / delivery stakeholder</strong></td>
+        <td>Clear scope for what the app delivers to end users; predictable areas for training, support, and release communication (e.g. theme updates).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="capabilities">4. Major capability areas</h2>
+  <p>These are the product’s main “modules” described in business language.</p>
+  <table>
+    <thead>
+      <tr><th>Area</th><th>What it does for the business</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Public portfolio</strong></td>
+        <td>Presents the owner’s brand: hero, project grid with filtering, project detail views, optional custom content blocks between sections, footer and navigation.</td>
+      </tr>
+      <tr>
+        <td><strong>Projects &amp; categories</strong></td>
+        <td>Owners maintain a library of work items (including items that can be highlighted as “prompts” or special showcases), assign categories, and control what is published.</td>
+      </tr>
+      <tr>
+        <td><strong>Technologies &amp; positioning</strong></td>
+        <td>Showcase stack, skills, and domain/niche story so visitors understand how the owner works and what they specialize in.</td>
+      </tr>
+      <tr>
+        <td><strong>Gallery &amp; media</strong></td>
+        <td>Visual assets for the public site; tools to organize media and position images where the product supports it.</td>
+      </tr>
+      <tr>
+        <td><strong>Dynamic sections &amp; menus</strong></td>
+        <td>Flexible page structure and navigation: extra content blocks and menu ordering without code changes.</td>
+      </tr>
+      <tr>
+        <td><strong>Contact &amp; inquiries</strong></td>
+        <td>Visitors can reach out; owners can review and manage those inquiries in the dashboard.</td>
+      </tr>
+      <tr>
+        <td><strong>Appearance &amp; settings</strong></td>
+        <td>Site-wide options: which sections appear, branding/meta information, themes or color schemes as offered by the product.</td>
+      </tr>
+      <tr>
+        <td><strong>Theme updates &amp; distribution</strong></td>
+        <td>Where the business model requires it: package and roll out visual or functional updates to deployed sites or registered clients, with logging and visibility for operators.</td>
+      </tr>
+      <tr>
+        <td><strong>Shared-hosting / legacy deployment support</strong></td>
+        <td>Workflows for environments that are not pure cloud: update packages, client lists, and related operational screens for administrators.</td>
+      </tr>
+      <tr>
+        <td><strong>Backup &amp; data portability</strong></td>
+        <td>Administrators can work with backup files and import/export so data is recoverable and movable when the business requires it.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="functional">5. Functional requirements (summary)</h2>
+  <p>
+    The following numbered items are <strong>shall</strong>-level expectations at the product level. They are written for planning, acceptance alignment, and communication—not as technical tasks.
+  </p>
+  <ol class="req">
+    <li id="fr-01"><span class="fr-id">FR-01</span> — <strong>Public access</strong><br />
+      The system shall present a public portfolio site that does not require login, including project listing, filtering where configured, and navigation consistent with owner settings.</li>
+    <li id="fr-02"><span class="fr-id">FR-02</span> — <strong>Authenticated dashboard</strong><br />
+      The system shall provide a secure dashboard available only after successful authentication, for managing content and configuration.</li>
+    <li id="fr-03"><span class="fr-id">FR-03</span> — <strong>Account onboarding</strong><br />
+      The system shall support new account registration and sign-in, and shall support password reset and verification flows as implemented for the deployment.</li>
+    <li id="fr-04"><span class="fr-id">FR-04</span> — <strong>Project lifecycle</strong><br />
+      Owners shall be able to create, edit, publish/unpublish (or equivalent status), and organize projects, including associated imagery and links.</li>
+    <li id="fr-05"><span class="fr-id">FR-05</span> — <strong>Taxonomy</strong><br />
+      Owners shall be able to maintain categories (and related filters) used on the public project grid.</li>
+    <li id="fr-06"><span class="fr-id">FR-06</span> — <strong>Optional public sections</strong><br />
+      The system shall allow owners to enable or disable major public sections (for example hero, portfolio, technologies, domains, gallery, prompts, footer) according to product rules.</li>
+    <li id="fr-07"><span class="fr-id">FR-07</span> — <strong>Technologies and niche content</strong><br />
+      Owners shall be able to maintain technology/skill content and domain or niche narratives shown on the public site.</li>
+    <li id="fr-08"><span class="fr-id">FR-08</span> — <strong>Gallery</strong><br />
+      Owners shall be able to manage gallery content consumed by the public gallery section.</li>
+    <li id="fr-09"><span class="fr-id">FR-09</span> — <strong>Custom sections and menus</strong><br />
+      Owners shall be able to manage additional content blocks and menu structure subject to product limits.</li>
+    <li id="fr-10"><span class="fr-id">FR-10</span> — <strong>Contact queries</strong><br />
+      The system shall capture visitor contact or inquiry submissions for review in the dashboard, and support appropriate status or handling as designed.</li>
+    <li id="fr-11"><span class="fr-id">FR-11</span> — <strong>Site settings and appearance</strong><br />
+      Owners shall be able to change site-wide settings and visual theme options provided by the product.</li>
+    <li id="fr-12"><span class="fr-id">FR-12</span> — <strong>Media library</strong><br />
+      Owners shall be able to access and manage uploaded media for use across projects and sections.</li>
+    <li id="fr-13"><span class="fr-id">FR-13</span> — <strong>Role-based administration</strong><br />
+      The system shall restrict sensitive capabilities (for example backups, theme-update distribution, import/export, diagnostic tools) to users who have been granted the corresponding administrative access.</li>
+    <li id="fr-14"><span class="fr-id">FR-14</span> — <strong>Operational visibility</strong><br />
+      Where theme updates or automatic updates are used, the product shall provide operators with visibility into status, logs, or dashboards appropriate to the deployment model.</li>
+    <li id="fr-15"><span class="fr-id">FR-15</span> — <strong>Responsive use</strong><br />
+      Both the public site and the dashboard shall be usable on common mobile and desktop screen sizes.</li>
+  </ol>
+
+  <h2 id="journeys">6. Representative user journeys</h2>
+  <h3>6.1 Visitor discovers work</h3>
+  <p>
+    A visitor opens the site, scans the hero and positioning content, filters projects by category, opens a project for details, and optionally opens the gallery or uses the contact option.
+  </p>
+  <h3>6.2 Owner updates the portfolio after a new project</h3>
+  <p>
+    The owner signs in, adds or edits a project, uploads images, assigns a category, sets visibility to published, and confirms the change on the public site (same product, unauthenticated view).
+  </p>
+  <h3>6.3 Owner adjusts what the world sees</h3>
+  <p>
+    The owner turns a section off (for example prompts or gallery), reorders menus or dynamic blocks, and saves settings so the public site reflects the new structure.
+  </p>
+  <h3>6.4 Administrator rolls out a theme update</h3>
+  <p>
+    An authorized administrator uses the theme-update or client-update area to prepare or push an update, monitors logs or stats, and coordinates with clients on shared-hosting or packaged deployments where that model applies.
+  </p>
+
+  <h2 id="nfr">7. Non-functional expectations (business level)</h2>
+  <table>
+    <thead>
+      <tr><th>Theme</th><th>Expectation</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Security &amp; privacy</strong></td>
+        <td>Owner data and dashboard actions are protected; only authenticated users access management functions; elevated actions require explicit admin permission.</td>
+      </tr>
+      <tr>
+        <td><strong>Availability</strong></td>
+        <td>Public site and dashboard depend on hosting; stakeholders should align on hosting tier and monitoring outside this document.</td>
+      </tr>
+      <tr>
+        <td><strong>Usability</strong></td>
+        <td>Primary tasks (edit project, toggle section, read inquiry) should be achievable without developer assistance for trained owners.</td>
+      </tr>
+      <tr>
+        <td><strong>Maintainability (business)</strong></td>
+        <td>Content and configuration are centralized in the dashboard so marketing and portfolio updates do not require code releases for routine changes.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="assumptions">8. Assumptions and boundaries</h2>
+  <ul class="dense">
+    <li>Owners have a supported browser and internet access; the product is delivered as a web application.</li>
+    <li>Email delivery (verification, password reset, notifications) depends on correctly configured messaging services in the deployment environment.</li>
+    <li>“Administrator” capabilities are optional for single-owner deployments but exist for multi-client or commercial operator scenarios.</li>
+    <li>Detailed acceptance criteria for each screen belong in downstream user stories or test plans; this SRS is the umbrella description of the main application.</li>
+  </ul>
+
+  <footer>
+    Companion document: technical module inventory for engineering (<code>PROJECT-MODULES-REPORT.html</code>). This SRS intentionally avoids implementation stack, APIs, and database design.
+  </footer>
+</body>
+</html>

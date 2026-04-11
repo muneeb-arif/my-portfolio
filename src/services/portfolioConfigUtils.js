@@ -12,7 +12,8 @@ const CACHE_DURATION = 10000; // 10 seconds cache during initialization
 
 // Get portfolio config with caching and deduplication
 export const getPortfolioConfig = async () => {
-  const envEmail = process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
+  const envEmail =
+    process.env.NEXT_PUBLIC_PORTFOLIO_OWNER_EMAIL || process.env.REACT_APP_PORTFOLIO_OWNER_EMAIL;
   const now = Date.now();
   
   // Clear cache if email changed
