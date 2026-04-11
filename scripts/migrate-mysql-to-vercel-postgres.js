@@ -2,11 +2,11 @@
 /**
  * One-time MySQL → Vercel Postgres copy (after sql/postgres/schema.sql).
  * Usage: npm run migrate:mysql-to-pg [-- --dry-run]
- * Env: MYSQL_* + DATABASE_URL (load from .env and api/.env)
+ * Env: MYSQL_* + DATABASE_URL (load from .env and standalone-api/.env)
  */
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-require('dotenv').config({ path: path.join(__dirname, '..', 'api', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'standalone-api', '.env') });
 
 const mysql = require('mysql2/promise');
 const { Client } = require('pg');

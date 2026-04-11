@@ -11,7 +11,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { put } = require('@vercel/blob');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-require('dotenv').config({ path: path.join(__dirname, '..', 'api', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'standalone-api', '.env') });
 
 const BUCKETS_DEFAULT = ['images', 'avatars', 'documents', 'domains', 'updates'];
 

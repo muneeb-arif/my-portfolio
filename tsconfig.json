@@ -25,5 +25,5 @@
     "src/**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "api", "build", "tests"]
+  "exclude": ["node_modules", "standalone-api", "build", "tests"]
 }

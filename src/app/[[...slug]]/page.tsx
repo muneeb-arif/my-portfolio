@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildHomeMetadata(h);
 }
 
-/** Non-root paths render the same SPA-style portfolio as `/` (CRA catch-all `*`). */
-export default function SlugPortfolioPage() {
+/** `/` and all non-API paths except more specific app routes (e.g. `/project/[id]`). */
+export default function PortfolioCatchAllPage() {
   return <PortfolioHomeClient />;
 }

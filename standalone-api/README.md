@@ -88,7 +88,7 @@ curl http://localhost:3001/api/dashboard/projects \
 ## 🔧 Project Structure
 
 ```
-api/
+standalone-api/
 ├── src/
 │   ├── app/api/           # Next.js API routes
 │   │   ├── auth/          # Authentication endpoints

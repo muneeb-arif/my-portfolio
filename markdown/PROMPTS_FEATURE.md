@@ -67,7 +67,7 @@ Prompts have fewer fields compared to regular projects:
 - **Purpose**: Distinguish between projects and prompts
 
 ### ProjectService
-- **Location**: `api/src/services/projectService.ts`
+- **Location**: `standalone-api/src/services/projectService.ts`
 - **Changes**:
   - `createProject()`: Added `is_prompt` field support
   - `updateProject()`: Added `is_prompt` field support

@@ -12,7 +12,7 @@ const { Client } = require('pg');
 const crypto = require('crypto');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-require('dotenv').config({ path: path.join(__dirname, '..', 'api', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'standalone-api', '.env') });
 
 const CONFIG = {
   databaseUrl: process.env.DATABASE_URL,
@@ -23,7 +23,7 @@ const CONFIG = {
 };
 
 if (!CONFIG.databaseUrl) {
-  console.error('❌ DATABASE_URL required (Vercel Postgres). Set in .env or api/.env');
+  console.error('❌ DATABASE_URL required (Vercel Postgres). Set in .env or standalone-api/.env');
   process.exit(1);
 }
 

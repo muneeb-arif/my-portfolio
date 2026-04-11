@@ -5,12 +5,12 @@ const path = require('path');
 const { put } = require('@vercel/blob');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-require('dotenv').config({ path: path.join(__dirname, '..', 'api', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'standalone-api', '.env') });
 
 async function uploadBuildBackup() {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) {
-    console.error('❌ BLOB_READ_WRITE_TOKEN missing in .env / api/.env');
+    console.error('❌ BLOB_READ_WRITE_TOKEN missing in .env / standalone-api/.env');
     process.exit(1);
   }
 

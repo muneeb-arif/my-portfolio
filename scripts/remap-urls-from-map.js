@@ -9,7 +9,7 @@ const path = require('path');
 const { Client } = require('pg');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-require('dotenv').config({ path: path.join(__dirname, '..', 'api', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', 'standalone-api', '.env') });
 
 const DEFAULT_MAP = path.join(__dirname, '..', 'migration-blob-url-map.jsonl');
 

@@ -24,8 +24,8 @@ const CONFIG = {
     'src/components/dashboard/PromptsManager.js',
     'src/components/dashboard/NicheManager.js',
     'src/components/PromptsSection.js',
-    'api/src/app/api/dashboard/projects/route.ts',
-    'api/src/app/api/projects/route.ts'
+    'standalone-api/src/app/api/dashboard/projects/handler.ts',
+    'standalone-api/src/app/api/projects/handler.ts'
   ]
 };
 

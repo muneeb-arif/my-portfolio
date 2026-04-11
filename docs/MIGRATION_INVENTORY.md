@@ -27,7 +27,7 @@ Source: `sql/portfolio-bkp-20250718.sql` and follow-on migrations.
 
 ## Supabase Storage buckets
 
-From `src/config/supabase.js` / `api/src/lib/supabase.ts`:
+From `src/config/supabase.js` / `standalone-api/src/lib/supabase.ts`:
 
 - images, avatars, documents, domains
 
@@ -43,7 +43,7 @@ Tables/views still referenced from CRA via `supabase.from`: theme_*, shared_host
 ## Phase 6 — Vercel projects
 
 - **CRA (repo root):** Vercel project with root directory `.`, build `npm run build:vercel`, output `build`. Env: `REACT_APP_API_URL` only (no `DATABASE_URL` / `BLOB_READ_WRITE_TOKEN` / secrets).
-- **API (`api/`):** Separate Vercel project with root `api`, framework Next.js. Env: `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `JWT_SECRET`, `PORTFOLIO_OWNER_EMAIL`, etc. CORS: `api/next.config.js` allows `GET, POST, PUT, PATCH, DELETE` on `/api/*`.
+- **API (`standalone-api/`):** Separate Vercel project with root `standalone-api`, framework Next.js. Env: `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `JWT_SECRET`, `PORTFOLIO_OWNER_EMAIL`, etc. CORS: `standalone-api/next.config.js` allows `GET, POST, PUT, PATCH, DELETE` on `/api/*`.
 - Attach custom domains to the **frontend** project; allow those origins on the API if you tighten CORS beyond `*`.
 
 ## Phase 7 — Cutover checklist

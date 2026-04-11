@@ -1,5 +1,5 @@
 {
-  "name": "portfolio-api",
+  "name": "portfolio-standalone-api",
   "version": "1.0.0",
   "description": "Next.js API server for portfolio management system",
   "main": "index.js",
@@ -48,7 +48,7 @@
   },
   "keywords": [
     "nextjs",
-    "api",
+    "standalone-api",
     "postgresql",
     "portfolio",
     "dashboard"
