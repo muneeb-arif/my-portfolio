@@ -6,6 +6,7 @@ import '../index.css';
 export const metadata: Metadata = {
   title: 'Portfolio',
   description: 'Professional portfolio',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
