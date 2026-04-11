@@ -1,41 +1,9 @@
-# Robots.txt - Block all search engines
+# Robots.txt - Allow all crawlers
 User-agent: *
-Disallow: /
+Allow: /
 
-# Block specific search engines explicitly
-User-agent: Googlebot
-Disallow: /
-
-User-agent: Bingbot
-Disallow: /
-
-User-agent: Slurp
-Disallow: /
-
-User-agent: DuckDuckBot
-Disallow: /
-
-User-agent: Baiduspider
-Disallow: /
-
-User-agent: YandexBot
-Disallow: /
-
-User-agent: facebookexternalhit
-Disallow: /
-
-User-agent: Twitterbot
-Disallow: /
-
-User-agent: LinkedInBot
-Disallow: /
-
-User-agent: WhatsApp
-Disallow: /
-
-# Block all crawlers
-User-agent: *
-Disallow: /
+# Uncomment and set your canonical domain when you have a sitemap:
+# Sitemap: https://yourdomain.com/sitemap.xml
 
 # Prevent indexing of all pages
 Disallow: /dashboard
@@ -43,6 +11,3 @@ Disallow: /admin
 Disallow: /api
 Disallow: /images
 Disallow: /assets
-
-# Sitemap (optional - since we're blocking everything)
-# Sitemap: https://yourdomain.com/sitemap.xml 
