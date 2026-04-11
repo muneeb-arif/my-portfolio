@@ -6,6 +6,7 @@
  */
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 require('dotenv').config({ path: path.join(__dirname, '..', 'standalone-api', '.env') });
 
 const mysql = require('mysql2/promise');
@@ -62,9 +63,37 @@ async function pgColumns(client, table) {
   return rows.map((r) => r.column_name);
 }
 
-function normalizeForPg(col, value) {
+/** When MySQL and Postgres use different column names for the same field */
+const MYSQL_COL_TO_PG = {
+  settings: { key: 'setting_key', value: 'setting_value' },
+};
+
+function resolveMysqlPgColumns(mCols, pCols, table) {
+  const rename = MYSQL_COL_TO_PG[table] || {};
+  const mysqlRead = [];
+  const pgInsert = [];
+  for (const mc of mCols) {
+    const pgc = rename[mc] || mc;
+    if (pCols.includes(pgc)) {
+      mysqlRead.push(mc);
+      pgInsert.push(pgc);
+    }
+  }
+  return { mysqlRead, pgInsert };
+}
+
+function normalizeForPg(table, col, value) {
   if (value === undefined) return null;
   if (value === null) return null;
+  if (table === 'tech_skills' && col === 'level') {
+    if (typeof value === 'string') {
+      const rank = { beginner: 1, intermediate: 2, advanced: 3, expert: 4 };
+      const k = value.toLowerCase();
+      if (rank[k] !== undefined) return rank[k];
+    }
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 2;
+  }
   if (Buffer.isBuffer(value)) return value;
   if (typeof value === 'object' && value !== null && !(value instanceof Date)) {
     try {
@@ -92,7 +121,7 @@ async function migrateTable(pg, mysqlConn, schema, table, dryRun) {
 
   const mCols = await mysqlColumns(mysqlConn, schema, table);
   const pCols = await pgColumns(pg, table);
-  const cols = mCols.filter((c) => pCols.includes(c));
+  const { mysqlRead: cols, pgInsert: pgCols } = resolveMysqlPgColumns(mCols, pCols, table);
   if (!cols.length) {
     console.log(`[skip] ${table}: no overlapping columns`);
     return;
@@ -114,9 +143,9 @@ async function migrateTable(pg, mysqlConn, schema, table, dryRun) {
   let ok = 0;
   let err = 0;
   for (const row of rows) {
-    const vals = cols.map((c) => normalizeForPg(c, row[c]));
+    const vals = cols.map((c) => normalizeForPg(table, c, row[c]));
     const ph = vals.map((_, i) => `$${i + 1}`).join(',');
-    const colSql = cols.map(qident).join(',');
+    const colSql = pgCols.map(qident).join(',');
     const sql = conflict
       ? `INSERT INTO ${table} (${colSql}) VALUES (${ph}) ${conflict}`
       : `INSERT INTO ${table} (${colSql}) VALUES (${ph})`;

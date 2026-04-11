@@ -70,6 +70,7 @@
     "list-clients": "node scripts/upload-update-package.js --list-clients",
     "list-updates": "node scripts/upload-update-package.js --list-updates",
     "migrate:mysql-to-pg": "node scripts/migrate-mysql-to-vercel-postgres.js",
+    "compare:mysql-pg": "node scripts/compare-mysql-postgres-migration.js",
     "migrate:supabase-to-blob": "node scripts/migrate-supabase-storage-to-vercel-blob.js",
     "remap:urls": "node scripts/remap-urls-from-map.js"
   },

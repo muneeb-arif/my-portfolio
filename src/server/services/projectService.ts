@@ -1,27 +1,36 @@
 import { executeQuery, executeTransaction } from '@/lib/database';
 import { Project, ProjectImage, CreateProjectRequest, UpdateProjectRequest, DbResult } from '@/types';
 
+/** PostgreSQL aggregate for joined rows (replaces MySQL JSON_ARRAYAGG / JSON_OBJECT). */
+const PROJECT_IMAGES_AGG_SQL = `
+  COALESCE(
+    json_agg(
+      json_build_object(
+        'id', pi.id,
+        'project_id', pi.project_id,
+        'user_id', pi.user_id,
+        'url', pi.url,
+        'path', pi.path,
+        'name', pi.name,
+        'original_name', pi.original_name,
+        'size', pi.size,
+        'type', pi.type,
+        'bucket', pi.bucket,
+        'order_index', pi.order_index,
+        'created_at', pi.created_at
+      )
+      ORDER BY pi.order_index NULLS LAST, pi.created_at NULLS LAST
+    ) FILTER (WHERE pi.id IS NOT NULL),
+    '[]'::json
+  ) AS project_images
+`;
+
 export class ProjectService {
   // Get all projects for a user (dashboard)
   static async getUserProjects(userId: string): Promise<DbResult<Project[]>> {
     const query = `
-      SELECT p.*, 
-             JSON_ARRAYAGG(
-               JSON_OBJECT(
-                 'id', pi.id,
-                 'project_id', pi.project_id,
-                 'user_id', pi.user_id,
-                 'url', pi.url,
-                 'path', pi.path,
-                 'name', pi.name,
-                 'original_name', pi.original_name,
-                 'size', pi.size,
-                 'type', pi.type,
-                 'bucket', pi.bucket,
-                 'order_index', pi.order_index,
-                 'created_at', pi.created_at
-               )
-             ) as project_images
+      SELECT p.*,
+             ${PROJECT_IMAGES_AGG_SQL}
       FROM projects p
       LEFT JOIN project_images pi ON p.id = pi.project_id
       WHERE p.user_id = ?
@@ -47,23 +56,8 @@ export class ProjectService {
   // Get published projects for portfolio owner (public)
   static async getPublishedProjects(ownerEmail: string): Promise<DbResult<Project[]>> {
     const query = `
-      SELECT p.*, 
-             JSON_ARRAYAGG(
-               JSON_OBJECT(
-                 'id', pi.id,
-                 'project_id', pi.project_id,
-                 'user_id', pi.user_id,
-                 'url', pi.url,
-                 'path', pi.path,
-                 'name', pi.name,
-                 'original_name', pi.original_name,
-                 'size', pi.size,
-                 'type', pi.type,
-                 'bucket', pi.bucket,
-                 'order_index', pi.order_index,
-                 'created_at', pi.created_at
-               )
-             ) as project_images
+      SELECT p.*,
+             ${PROJECT_IMAGES_AGG_SQL}
       FROM projects p
       LEFT JOIN project_images pi ON p.id = pi.project_id
       INNER JOIN users u ON p.user_id = u.id
@@ -90,23 +84,8 @@ export class ProjectService {
   // Get project by ID
   static async getProjectById(projectId: string, userId: string): Promise<DbResult<Project>> {
     const query = `
-      SELECT p.*, 
-             JSON_ARRAYAGG(
-               JSON_OBJECT(
-                 'id', pi.id,
-                 'project_id', pi.project_id,
-                 'user_id', pi.user_id,
-                 'url', pi.url,
-                 'path', pi.path,
-                 'name', pi.name,
-                 'original_name', pi.original_name,
-                 'size', pi.size,
-                 'type', pi.type,
-                 'bucket', pi.bucket,
-                 'order_index', pi.order_index,
-                 'created_at', pi.created_at
-               )
-             ) as project_images
+      SELECT p.*,
+             ${PROJECT_IMAGES_AGG_SQL}
       FROM projects p
       LEFT JOIN project_images pi ON p.id = pi.project_id
       WHERE p.id = ? AND p.user_id = ?
@@ -114,7 +93,13 @@ export class ProjectService {
     `;
     
     const result = await executeQuery(query, [projectId, userId]);
-    if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
+    if (!result.success) {
+      return {
+        success: false,
+        error: (result as { error?: string }).error || 'Database error',
+      };
+    }
+    if (result.data && Array.isArray(result.data) && result.data.length > 0) {
       const project = result.data[0] as Project;
       
       // Sort project_images by order_index
