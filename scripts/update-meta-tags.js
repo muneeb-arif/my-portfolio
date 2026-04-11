@@ -107,8 +107,15 @@ async function updateMetaTags() {
 
     console.log('✅ Using default settings for build');
 
-    // Read the current index.html
+    // Next.js App Router uses src/app/layout.tsx + generateMetadata — no public/index.html
     const indexPath = path.join(__dirname, '..', 'public', 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      console.log(
+        'ℹ️  Skip: public/index.html missing (expected for Next.js). Use app metadata / siteMetadata for SEO.'
+      );
+      return;
+    }
+
     let html = fs.readFileSync(indexPath, 'utf8');
 
     // Extract values from settings and escape them properly
