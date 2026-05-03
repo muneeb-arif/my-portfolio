@@ -34,7 +34,22 @@ export class ProjectService {
       FROM projects p
       LEFT JOIN project_images pi ON p.id = pi.project_id
       WHERE p.user_id = ?
-      GROUP BY p.id
+      GROUP BY
+  p.id,
+  p.user_id,
+  p.title,
+  p.category,
+  p.overview,
+  p.technologies,
+  p.features,
+  p.live_url,
+  p.github_url,
+  p.status,
+  p.is_prompt,
+  p.views,
+  p.description,
+  p.created_at,
+  p.updated_at
       ORDER BY p.created_at DESC
     `;
     

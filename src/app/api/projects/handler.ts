@@ -210,7 +210,6 @@ export async function GET(request: NextRequest) {
 
     // Get user's published projects
     const result = await ProjectService.getUserProjects(userId);
-    
     if (!result.success) {
       console.log('❌ Failed to get user projects, falling back to demo data');
       return NextResponse.json({

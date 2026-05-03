@@ -1,4 +1,5 @@
 import { Pool, PoolClient } from 'pg';
+import { getPgSslOptions } from '../../../src/lib/postgres-ssl';
 
 /** Convert MySQL-style `?` placeholders to Postgres `$1`, `$2`, ... */
 export function toPostgresParams(sql: string, params: unknown[] = []): { text: string; values: unknown[] } {
@@ -15,6 +16,7 @@ function getPool(): Pool {
   if (!(globalThis as any).__pgPool) {
     (globalThis as any).__pgPool = new Pool({
       connectionString: url,
+      ssl: getPgSslOptions(),
       max: 10,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 60_000,
@@ -39,7 +41,6 @@ export async function executeQuery(query: string, params: any[] = []) {
   const pool = getPool();
   try {
     const { text, values } = toPostgresParams(query, params);
-    console.log(`🔗 DB - Executing query: ${text.substring(0, 80)}...`);
     const result = await pool.query(text, values);
     return {
       success: true,
